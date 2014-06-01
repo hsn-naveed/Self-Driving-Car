@@ -116,6 +116,20 @@ void high_level_init(void)
     // Initialize all board pins (early) that are connected internally.
     board_io_pins_initialize();
     
+    /**
+     * Initialize the Peripherals used in the system
+     * I2C2 : Used by LED Display, Acceleration Sensor, Temperature Sensor
+     * ADC0 : Used by Light Sensor
+     * SPI0 : Used by Nordic
+     * SPI1 : Used by SD Card & External SPI Flash Memory
+     */
+    adc0_init();
+    ssp1_init();
+    ssp0_init(SPI0_CLOCK_SPEED_MHZ);
+    if (!I2C2::getInstance().init(I2C2_CLOCK_SPEED_KHZ)) {
+        puts("ERROR: Possible short on SDA or SCL wire (I2C2)!");
+    }
+
     #if ENABLE_TELEMETRY
         /* Add default telemetry components */
         tlm_component_add("disk");
@@ -130,9 +144,26 @@ void high_level_init(void)
      */
     vConfigureTimerForRunTimeStats();
 
+    /* Initialize nordic wireless mesh network before setting up sys_setup_rit()
+     * callback since it may access NULL function pointers.
+     * @warning Need SSP0 init before initializing nordic wireless.
+     */
+    if (!wireless_init()) {
+        puts("ERROR: Failed to initialize wireless");
+    }
+
+    /* Set-up our RIT callback to perform some background book-keeping
+     * If FreeRTOS is running, this service is disabled and FreeRTOS
+     * tick hook will call hl_periodic_service()
+     * @warning RIT interrupt should be setup before SD card is mounted
+     *           since it relies on our timer.
+     */
+    sys_rit_setup(hl_periodic_service, g_time_per_rit_isr_ms);
+
     /**
      * Intentional delay here because this gives the user some time to
-     * close COM Port at Hyperload and Open it at Hercules
+     * close COM Port at Hyperload and Open it at Hercules.
+     * Since RIT is setup to reset watchdog, we can delay without watchdog reset.
      */
     delay_ms(STARTUP_DELAY_MS);
     hl_print_line();
@@ -158,37 +189,8 @@ void high_level_init(void)
                 (unsigned int)FAULT_PC, (unsigned int)FAULT_LR, (unsigned int)FAULT_PSR,
                 taskName);
         hl_print_line();
-        delay_ms(5000);
+        delay_ms(10 * 1000);
     }
-
-    /**
-     * Initialize the Peripherals used in the system
-     * I2C2 : Used by LED Display, Acceleration Sensor, Temperature Sensor
-     * ADC0 : Used by Light Sensor
-     * SPI0 : Used by Nordic
-     * SPI1 : Used by SD Card & External SPI Flash Memory
-     */
-    adc0_init();
-    ssp1_init();
-    ssp0_init(SPI0_CLOCK_SPEED_MHZ);
-    if (!I2C2::getInstance().init(I2C2_CLOCK_SPEED_KHZ)) {
-        puts("ERROR: Possible short on SDA or SCL wire (I2C2)!");
-    }
-
-    /* Initialize nordic wireless mesh network before setting up sys_setup_rit()
-     * callback since it may access NULL function pointers.
-     */
-    if (!wireless_init()) {
-        puts("ERROR: Failed to initialize wireless");
-    }
-
-    /* Set-up our RIT callback to perform some background book-keeping
-     * If FreeRTOS is running, this service is disabled and FreeRTOS
-     * tick hook will call hl_periodic_service()
-     * @warning RIT interrupt should be setup before SD card is mounted
-     *           since it relies on our timer.
-     */
-    sys_rit_setup(hl_periodic_service, g_time_per_rit_isr_ms);
 
     /**
      * If Flash is not mounted, it is probably a new board and the flash is not
