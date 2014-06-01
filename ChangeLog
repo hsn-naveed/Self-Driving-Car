@@ -1,0 +1,306 @@
+2014-06-01  kang  <kang@preet>
+
+	* L5_Application\main.cpp (main): Moved RNXV example's Uart init at the main()
+	* L2_Drivers\base\uart_dev.hpp: Made init() protected
+	* L3_Utils\file_logger.hpp: Changed logger completely to FreeRTOS task based logger
+	* L2_Drivers\src\adc.c: Added non-polling ADC implementation, moved inline defintions from header file to here.
+
+2014-05-24  kang  <kang@preet>
+    * L2_Drivers\src\can.c Updated tests, and made sure all API and the driver works!
+    * L2_Drivers\src\can.c (CAN_gen_sid): Can controller # should be (can -1)
+	* L2_Drivers\src\can.c (CAN_setup_filter): 
+	       Fixed CRITICAL bug.
+	       Filter WORD order was wrong, and CAN filter of standard IDs did not work.
+	       CAN ISR() would enter loop
+	       
+	* L2_Drivers\base\uart_dev.hpp (UartDev): Made the init() method virtual.
+	* L5_Application\source\cmd_handlers\prog_handlers.cpp (flashProgHandler):
+	   Fixed programming bug.  FreeRTOS kernel would re-write the register which bootloader senses to program the file.
+	* L2_Drivers\base\char_dev.hpp: Changed static members to non-static.  All char devices use thier independent buffers for printf()
+	* L2_Drivers\src\can.c: Changed bus callback from intr_berr to intr_epi because this is when bus status changes
+	* L3_Utils\soft_timer.hpp (StopWatch.getCapturedTime): Added StopWatch class and more methods to SoftTimer	* L2_Drivers\src\lpc_pwm.cpp (PWM::PWM): Avoid potential divide by zero.
+	* L2_Drivers\src\spi_sem.c (spi1_unlock): Only lock/unlock if FreeRTOS is running
+	* L2_Drivers\src\rtc.c (rtc_settime): Disable RTC while setting time, then renable it.
+	* L0_LowLevel\source\uart0_min.c (uart0_init): Added comments and removed "magic numbers"
+	* L0_LowLevel\source\sys_clock.cpp (sys_clock_configure): Removed "magic numbers" and added clock defines to sys_config.h
+	* L0_LowLevel\source\lpc_sys.c (sys_rit_setup): Removed "magic numbers".
+	* L0_LowLevel\isr_priorities.h: Commented why RIT interrupt uses higher priority than FreeRTOS.
+	* L0_LowLevel\lpc_sys.h: Used explicit values for sys_boot_t enum, and used these at low_level_init.cpp
+	* L3_Utils\circular_buffer.hpp: Added this new file.
+	* sys_config.h: Added "CAN BUS" terminal command, which can be turned off using this macro: TERMINAL_USE_CAN_BUS_HANDLER
+	* L5_Application\source\cmd_handlers\handlers.cpp (i2cIoHandler): Added support to read multiple bytes
+	* L2_Drivers\src\can.c 
+	   (CAN_init): Bugfix: lpc_pclk(pclk_can_flt, clkdiv_1);
+	   (CAN_tx):   Added: check for CAN bus in off state:  "if(!CANx || !pCanMsg || CAN_is_bus_off(can))"
+	* L5_Application\source\high_level_init.cpp (high_level_init): Delay of 5000 msec upon a crash.
+	* L1_FreeRTOS\include\FreeRTOSConfig.h: Removed "PRIORITY_IDLE" which was the same as "PRIORITY_LOW"
+	* L1_FreeRTOS\include\FreeRTOSConfig.h: Changed header to FreeRTOS 8.0
+	* L3_Utils\src\scheduler_task.cpp (scheduler_start): 
+	     Removed delay_ms() and sys_reboot() such that the file is more portable.
+
+2014-03-03  kang  <kang@preet>
+
+    --- Major Changes ---
+    * Upgraded to FreeRTOS 8.0 : Changed all the files to use the new FreeRTOS types
+    * L0_LowLevel\source\startup.cpp 
+        (HardFault_HandlerC): Used FAULT_PRESENT_VAL
+        (ResetISR): Critical fix to set MSP and PSP.
+	* L2_Drivers\base\i2c_base.cpp
+	   (I2C_Base::i2cStateMachine): Fixed critical bug.  Read was reading 1 extra byte and possibly corrupting the stack.
+	   (I2C_Base::i2cStateMachine): Reused error stats to run down to default: case
+    * L0_LowLevel\fault_registers.h: Added register to find out which FreeRTOS task was last running before a crash.
+    * L5_Application\source\high_level_init.cpp:
+        (coding standard): Changed all m_ to g_ 
+        (high_level_init): Removed the discovery and printing of external i2c devices since terminal command can do this too.
+        (high_level_init): If crash occured, it will also print potentially running OS task.
+    
+    --- Minor Changes ---
+	* L3_Utils\src\scheduler_task.cpp (scheduler_init_all): Tasks are created first, before init() is called
+	* L5_Application\source\cmd_handlers\handlers.cpp (taskListHandler): Report stack usage in bytes rather than modify FreeRTOS code
+	* L4_IO\src\I2C_Device_Base.hpp (I2C_Device_Base.get16BitRegister): "unsigned short" changed to "uint16_t"
+	* L2_Drivers\adc0.h (adc0_get_reading): "unsigned short" changed to "uint16_t"
+	* L5_Application\source\cmd_handlers\prog_handlers.cpp (flashProgHandler): Moved programming API to chip_info.h
+	* L0_LowLevel\chip_info.h: Added API to program the chip from a file
+	* L0_LowLevel\lpc_sys.h: Updated comments.  Added more members to sys_mem_t structure
+	* L0_LowLevel\source\low_level_init.cpp (print_boot_info): Used FAULT_PRESENT_VAL
+	* newlib\newlib_syscalls.c: Changed all m_ to g_ (coding standard)
+	* L4_IO\wireless\src\mesh.c: Changed all m_ to g_ (coding standard)
+	* L0_LowLevel\source\lpc_peripherals.c (lpc_pclk): divider AND'd with 0b11
+	* L0_LowLevel\source\lpc_sys.c: Changed m_ to g_ (coding standard)
+    
+
+2014-02-19  kang  <kang@preet>
+
+	* L5_Application\source\cmd_handlers\handlers.cpp (taskListHandler): Better output for task status'
+	* L3_Utils\src\utilities.c (log_boot_info): Buffer overflow bugfix during sprintf()
+	* L3_Utils\tlm\src\c_tlm_stream.c (tlm_stream_for_each_component_var): Removed compiler warnings using "PRIi32"
+	* L5_Application\source\remote.cpp (remoteTask::init): Used new API of addSharedObject()
+	* L5_Application\main.cpp (main): Added comments for Wifly task usage
+	* ChangeLog: First use of the Eclipse based ChangeLog file.  Previous revision history is below
+	
+	
+Revision History:
+02-19-2014 :
+    1)  str.cpp uses malloc/free rather than malloc/delete
+    2)  Minor changes at wireless_handlers.cpp
+    3)  Moved spi_sem.h to L2_Drivers directory from L4_IO/fat
+    4)  "info" command only reports CPU usage in ms
+    5)  Improved i2c_base.hpp (I2C driver) - no copy operation, speed optimization
+    6)  Added producer/consumer example using newer getSharedObject() and addSharedObject() API
+    7)  Moved parent or base classes to L2_Drivers/base directory
+    8)  Renamed cpp_task.hpp and .cpp to scheduler_task.hpp and .cpp
+    9)  Added shared_handles.h to add any shared handles used by tasks based on scheduler_task
+    10) "learn" terminal task now directly grabs the shared handle
+
+02-09-2014 :
+    1)  Changed timing of mesh_config.h ACK to 8ms from 5ms
+    2)  Fixed TODO and small bug at str.cpp
+    3)  Fixed bug for spi_flash.cpp for non-standard page size
+    4)  "health" command now displays highest page write count of SPI flash
+        The page write counter was moved from high_level_init() to this handler.
+    5)  "info" command displays time in ms or us
+    6)  "cr_startup_lpx17xx.cpp" renamed to "startup.cpp"
+    7)  Changed small logic at printf_lib.c to reduce the chance of buffer overflow.
+    8)  Added resume() to cpp_task.hpp
+    9)  bugfix: Acceleration sensor was returning uint rather than int
+
+01-25-2014 :
+    1)  Added lpc_pclk() and lpc_pconp() functions at lpc_17xx.h
+        Refactored all code to use this API to power on peripherals and set their clock dividers.
+    2)  Bugfix at c_list.c
+    3)  Fixed spelling error at rtc_alarm.c
+    4)  Updated str.h and str.cpp (see its revision history)
+    5)  Tested NordicStream class.  You can use this class to printf() or stream the data
+        to another Nordic
+    6)  Updated terminal.cpp to be able to accept/respond commands from NordicStream
+    7)  Updated handlers.cpp to send/receive command/response to/from another board
+    8)  Made Wireless task high priority to be able to ACK back the data in time
+    9)  Increased WIRELESS_RX_QUEUE_SIZE to 10
+    10) Netload.exe was updated along with improved prog_handlers.cpp protocol
+    11) Made nested command handler for "wireless" commands.
+    12) One board can transfer a file to another board.
+
+01-01-2014 :
+    1)  Project configured to use newlib-nano, yielding:
+        - Nearly 50% less code
+        - 80% less global RAM usage
+    2)  Reduced options for USE_REDUCED_PRINTF
+    3)  str.h now has removed dependency of supporting floats
+    4)  Modified i2c driver for polling mode (non freertos)
+    5)  spi0.h and spi1.h renamed to ssp0.h and ssp1.h for clarity.
+    6)  Added a new file "chip_info.h"
+    
+12-20-2013 :
+    1)  Refactored code to move common functions to ssp_prv.h
+    2)  Added functions to get SPI flash write counters, these are displayed by high_level_init.cpp
+
+12-10-2013 :
+    1)  Moved watchdog timeout value to sys_config.h
+    2)  Added timeout values to I2C
+    3)  Updated I2C driver to make it more stable and improve error recovery
+    4)  Added critical section to ADC conversion (adc.h)
+    5)  In combination with new bootloader, you can now see how many times
+        the CPU has been programmed.
+
+12-02-2013 :
+    1)  Updated terminal.cpp to be able to add command interface with or without echo
+    2)  Enclosed ADC conversion in a critical section so it can be used from FreeRTOS task.
+    
+12-01-2013 :
+    1)  Updated averager.hpp with more methods and renamed to "Sampler"
+    2)  Removed 4th optional parameter of command handler
+    3)  Returning "false" from command handler will display command's help
+    4)  Changed isr_priorities.h to explicitly define interrupt priorities
+    5)  UART channels can now be easily added at terminal.cpp for command
+        response with any UART device
+    6)  spi_flash.cpp now supports multiple atmel/avago spi flash
+    7)  Added high resolution timer API at lpc_sys.h
+    8)  Updated c_tlm_var.c to avoid printf warnings
+    9)  Updated ff.c to latest R0.10 and modified LD_WORD(), ST_WORD() macros
+        to use inline code to remove the "type punned" pointer warnings
+    10) Added char_dev.hpp to provide a "char" like device to be able to printf/scanf
+        and send char based data.  UART_Dev now inherits from this device and provides
+        its own version of putChar() and getChar() overrides.
+    11) high_level_init() prints BOARD ID that user can set ONCE in a lifetime
+    12) Re-adjustd stack of all examples, and changed from printf() to either puts()
+        or Uart0.printf() since printf() by itself uses a lot of stack space
+        
+10-24-2013 :
+    1) Change "inline" to "static inline"
+    2) Two more terminal command handlers
+
+10-23-2013 :
+    1) Optimized PLL search algorithm for RTC
+    2) Fixed lpc_pwm.cpp
+    
+10-20-2013 :
+    1) Add RTC as clock input with PLL to provide many ranges from 0-100Mhz
+    2) Modifications to sys_clock.cpp and sys_config.h
+    3) Modified high_level_init.cpp to print correct CPU speed (fraction was wrong).
+    
+10-10-2013 :
+    1) Fixed a bug at CAN generate sid function
+    2) Enhanced I2C driver by removing a variable
+    3) Enhanced cpp_task.hpp by providing CPU API
+    4) Updated terminal.cpp to simplify command-line input
+    5) Provided RN-XV UART driver + task
+    6) Updated UartDev to include isReady() and setReady() API
+    
+09-28-2013 :
+    1) Added (experimental) CAN driver
+    2) Fixed GPIO read() method
+    
+09-10-2013 :
+    1) Modified wireless.c and wireless.cpp to use nordic interrupt rather than polling if
+       FreeRTOS is running.  This enhances performance and uses less CPU and SPI0 bus.
+    2) Added eint.h to support Port0 and Port2 rising/falling edge interrupts
+    
+09-09-2013 : 
+    1) Improvements to mesh algorithm
+    2) Improved mesh packet handler (terminal command)
+08-26-2013 : More testing of nordic mesh, fixed one small bug.
+08-22-2013 :
+    1) Previous revision date was 8-21-2013, which is fixed below.
+    2) Upgrade FreeRTOS to 7.5.2
+    3) Changed "info" handler at handlers.cpp to use new FreeRTOS function to list tasks' info
+    4) Modified/Enhanced wireless.c to improve mesh network algorithm to repeat a packet.
+       Also fixed a critical bug at mesh network.
+    5) Modified lpc_sys.h and renamed RIT functions.
+    6) Modified high_level_init.cpp to remove s_rit_running 
+    
+08-21-2013 :
+    1) Changed sys_get_uptime_ms() from unsigned int to uint64_t
+    2) Changed softTimer class to use uint64_t
+    3) Added mesh API to form and deform a packet
+    4) Changed mesh driver at wireless.c to send delayed packets to
+        avoid data collission.
+    
+08-09-2013 :
+    1) Added wireless_send() such that all wireless api is at wireless.h
+    2) Added -fno-strict-aliasing to the project to remove warning from ff.c
+    
+08-07-2013 :
+    1) Added mesh network API and nordic wireless support for the new SJ-One board
+    2) Added more example tasks, and a test task.
+    3) Enabled parallel build to speed up compilation for the project.
+    
+07-15-2013 :
+    1) Added SPI0 driver and L4_IO/nordic folder
+    2) Changed high_level_init() to initialize Nordic and SPI0
+    3) Added bio.hpp that provides single method to initialize ALL board pins
+        that are already connected
+    4) Changed gpio.hpp and lpc_pwm.hpp for the new version of the board.
+    5) Various other changes that remove some header files and consolidate the 
+       microcontroller related api to a single file called "lpc_sys.h"
+    6) Added L4_IO/nordic to encapsulate nordic wireless api
+    
+06-12-2013 :
+    1)  Changed rtc.c to check for invalid time.
+    2)  Moved rtc_initialize() from highLevelInitialize() to lowLevelInitialize()
+    3)  Added mprintf() to printf_lib.h
+
+06-05-2013 : 
+    Major changes to optimize memory, and add examples.
+    1)  Changed rtc_alarm.h API to be more consistent and added example in header file
+    2)  Added Examples directory to L5_Application
+    3)  Added malloc lock and unlock to make it safe across FreeRTOS tasks.
+    4)  Removed unncessary hooks.h file
+    5)  Added more documentation at tasks.hpp and added handleUserEntry() for remoteTask class.
+    6)  Changed command_handler.hpp by removing output str and adding output interface.
+          Changed all commands to directly output the data at tasks.cpp
+    7)  Combined uart_base.hpp and uart_iface.hpp
+    8)  Added lpc_pwm.hpp that supports 3 PWM channels on SJ One (v1) board.
+    9)  Added tokenize() to str class (str.hpp and str.cpp)
+    10) Changed uart_dev.cpp printf() to use heap vs. stack memory to do the printf
+    11) Added printf_lib.h to do u0_dbg_printf().  See file for more documentation.
+    12) Removed handles.h and misc.c
+    13) Added spi_sem.h and spi_sem.c
+    14) Changed syscalls.c to fix stdout, stdin, and stderr I/O
+    15) Enhanced scheduler_task() such that tasks can communicate with each other.
+    16) Added SoftTime class that relies on FreeRTOS.
+    
+04-25-2013
+    1) Added newlib hooks for time functions
+    2) Fixed infinite loop when no command was sent for 60 seconds.
+    
+04-20-2013
+    1) Fixed gets() bug at uart_iface.hpp
+    2) Modified command_handler.hpp
+    
+04-13-2013
+    1) Added rit_isr.h to provide API to setup repetitive callback which also provides
+        a free running timer for free.  RIT uses higher priority than FreeRTOS and if
+        it sees that FreeRTOS is not running, it will set BASEPRI register to zero to
+        ensure that accidental use of FreeRTOS API hasn't set the BASEPRI to non-zero
+        therefore blocking our interrupts higher than IP_SYSCALL
+    2) Fixed bug at uart_base.cpp for timeout without FreeRTOS.
+    3) Changed uart_base.cpp such that last activity time is when a char was received
+        such that when a char is sent, it is not considered as any activity.
+    4) Fixed bug at uart_iface.cpp for gets()
+
+03-29-2013
+    Removed memory configuration options.  Now heap can use almost all of 64Kb memory
+    
+02-01-2013:
+    Added telemetry system.
+    Newlib hooks added to use C FILE API, such as fopen() and fclose()
+    
+10-16-2012:
+    Added option to optimize SPI Flash write operation
+    Changed UART0 PCLK to CPU Clock instead of CPU/4 to support higher baud rates
+    
+10-07-2012:
+    Fixed critical FreeRTOS Priority bug by adding interruptPriorities.h
+    Included RTC Semaphore for FreeRTOS
+    DMA for SSP1
+    Added C++ Interface inheritance for UART driver
+    Added Boot information by L0/bootType.h
+    Added bit manipulation by L0/bit_manip.h
+    Added watchdog timer L0/watchdog.h
+    Added different memory schemes by configuring it at sys_config.h
+    Added more functionality to storage.h
+    Enabled sleep-mode configuration for temperature sensor.
+    
+09-16-2012:
+    str needed str.printf() fixed when string couldn't be printed due to insufficient capacity.
+    FATFS needed fix to get_fattime() due to change to RTC API()
