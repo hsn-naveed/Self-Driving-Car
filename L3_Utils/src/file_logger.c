@@ -33,10 +33,11 @@
 
 
 
-static bool g_logger_initted = false;
 static char * gp_file_buffer = NULL;                ///< Pointer to local buffer space before it is written to file
 static QueueHandle_t g_write_buffer_queue = NULL;   ///< Log message pointers are written to this queue
 static QueueHandle_t g_empty_buffer_queue = NULL;   ///< Log message pointers are available from this queue
+
+
 
 static bool logger_write_to_file(const uint32_t bytes_to_write)
 {
@@ -79,7 +80,10 @@ static void logger_task(void *p)
         log_msg = NULL;
         xQueueReceive(g_write_buffer_queue, &log_msg, OS_MS(1000 * FILE_LOGGER_FLUSH_TIMEOUT));
 
-        /* If we receive NULL pointer, we assume it is to flush the data */
+        /* If we receive NULL pointer, we assume it is to flush the data.
+         * log_msg will also be NULL after the FILE_LOGGER_FLUSH_TIMEOUT which
+         * is another way the logger will flush the data to the file.
+         */
         if (NULL == log_msg) {
             /* We don't see the NULL pointer to the queue */
             logger_write_to_file(used_buffer);
@@ -90,11 +94,6 @@ static void logger_task(void *p)
         /* else */
         len = strlen(log_msg);
 
-        /*
-         * ub = 1000
-         * len = 25
-         * bo  = 0
-         */
         /* Find out how many bytes (if any) overflow the buffer */
         buffer_overflow_cnt = 0;
         if (len + used_buffer > FILE_LOGGER_BUFFER_SIZE) {
@@ -127,12 +126,12 @@ static void logger_init(void)
     uint32_t i = 0;
     char * ptr = NULL;
 
+    /* Create the buffer space we write the logged messages to (before we flush it to the file) */
+    gp_file_buffer = (char*) malloc(FILE_LOGGER_BUFFER_SIZE);
+
     /* Create the queues that keep track of the written buffers, and available buffers */
     g_write_buffer_queue = xQueueCreate(FILE_LOGGER_MSG_BUFFERS, sizeof(char*));
     g_empty_buffer_queue = xQueueCreate(FILE_LOGGER_MSG_BUFFERS, sizeof(char*));
-
-    /* Create the buffer space we write the logged messages to (before we flush it to the file) */
-    gp_file_buffer = (char*) malloc(FILE_LOGGER_BUFFER_SIZE);
 
     /* Create the actual buffers for log messages */
     for (i = 0; i < FILE_LOGGER_MSG_BUFFERS; i++)
@@ -144,7 +143,7 @@ static void logger_init(void)
     xTaskCreate(logger_task, "logger", FILE_LOGGER_STACK_SIZE, NULL, PRIORITY_LOW, NULL);
 }
 
-void logger_flush(void)
+void logger_send_flush_request(void)
 {
     char * null_ptr_to_flush = NULL;
     xQueueSend(g_write_buffer_queue, &null_ptr_to_flush, portMAX_DELAY);
@@ -163,9 +162,9 @@ void logger_log(logger_msg_t type, const char * filename, const char * func_name
     const char * const type_str[] = { "invalid", "info", "warn", "error" };
 
     taskENTER_CRITICAL();
-    if (!g_logger_initted)
+    /* If file buffer is NULL, that means the logger is not initialized */
+    if (NULL == gp_file_buffer)
     {
-        g_logger_initted = true;
         logger_init();
     }
     taskEXIT_CRITICAL();
@@ -189,10 +188,12 @@ void logger_log(logger_msg_t type, const char * filename, const char * func_name
     xQueueReceive(g_empty_buffer_queue, &buffer, portMAX_DELAY);
 
     /* Write the header including time, filename, function name etc */
-    len = sprintf(buffer, "%u/%u,%02d:%02d:%02d,%u,%s,%s,%s(),%u,",
+    len = sprintf(buffer, "%u/%u,%02d:%02d:%02d,%u,%s,%s,%s%s,%u,",
                     (unsigned)time.month, (unsigned)time.day, (unsigned)time.hour,
                     (unsigned)time.min, (unsigned)time.sec, uptime,
-                    type_str[type], filename, func_name, line_num
+                    type_str[type], filename, func_name,
+                    func_name[0] ? "()" : "", /* If function name exists, only then append () */
+                    line_num
                     );
 
     /* Append actual user message */

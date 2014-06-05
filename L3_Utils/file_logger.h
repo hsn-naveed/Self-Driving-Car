@@ -49,12 +49,12 @@ extern "C" {
  * the data buffer to the file.  So in an event when no logging calls occur and
  * there is data in the buffer, we will write it to the file after this time.
  */
-#define FILE_LOGGER_BUFFER_SIZE      1024       ///< Recommend multiples of 512
-#define FILE_LOGGER_MSG_BUFFERS      5          ///< Number of buffers
-#define FILE_LOGGER_MSG_MAX_LEN      128        ///< Max length of a log message
-#define FILE_LOGGER_FILENAME         "log.csv"  ///< Destination filename
-#define FILE_LOGGER_STACK_SIZE       (1200 / 4) ///< Stack size in 32-bit (1 = 4 bytes for 32-bit CPU)
-#define FILE_LOGGER_FLUSH_TIMEOUT    60         ///< Logs are flushed after this time
+#define FILE_LOGGER_BUFFER_SIZE      (4 * 512)   ///< Recommend multiples of 512
+#define FILE_LOGGER_MSG_BUFFERS      4           ///< Number of buffers
+#define FILE_LOGGER_MSG_MAX_LEN      128         ///< Max length of a log message
+#define FILE_LOGGER_FILENAME         "log.csv"   ///< Destination filename
+#define FILE_LOGGER_STACK_SIZE       (1200 / 4)  ///< Stack size in 32-bit (1 = 4 bytes for 32-bit CPU)
+#define FILE_LOGGER_FLUSH_TIMEOUT    (1 * 60)    ///< Logs are flushed after this time
 /** @} */
 
 
@@ -62,31 +62,39 @@ extern "C" {
 /**
  * @{ Macros to log a message using printf style API
  *
- * @warning As of now, the logging only works if FreeRTOS is running!
- *          If FreeRTOS is not running, you will likely crash!
+ * @warning FreeRTOS MUST BE RUNNING to use the logging facility.
+ * @note    The first logging call will actually initialize the logger memory and the task.
+ *
+ * @code
+ *      LOG_INFO("Error %i encountered", error_number);
+ * @endcode
  */
 #define LOG_ERROR(msg, p...)  logger_log (log_error, __FILE__, __FUNCTION__, __LINE__, msg, ## p)
-#define LOG_WARN(msg, p...)   logger_log (log_warn, __FILE__, __FUNCTION__, __LINE__, msg, ## p)
-#define LOG_INFO(msg, p...)   logger_log (log_info, __FILE__, __FUNCTION__, __LINE__, msg, ## p)
+#define LOG_WARN(msg, p...)   logger_log (log_warn,  __FILE__, __FUNCTION__, __LINE__, msg, ## p)
+#define LOG_INFO(msg, p...)   logger_log (log_info,  __FILE__, __FUNCTION__, __LINE__, msg, ## p)
 /** @} */
 
 
 /**
  * This macro will log INFO message without filename, function name, and line number.
- * This can save space to log simple messages when you don't want to know the
- * function name, line number and filename of where the logger function was called.
+ * This can save space to log simple messages when you don't want to know the function
+ * name, line number and filename of where the logger function was called from.
  */
-#define LOG_INFO_SIMPLE(msg)   logger_log (log_info, NULL, NULL, 0, msg)
+#define LOG_INFO_SIMPLE(msg, p...)   logger_log (log_info, NULL, NULL, 0, msg, ## p)
 
 /**
  * Flushes the cached log data to the file
+ * @post  This will send a special request on the logger queue to flush the data, so
+ *        the actual flushing will finish by the logger task at a later time.
  */
-void logger_flush(void);
+void logger_send_flush_request(void);
 
 /**
- * Macro to flush the logs, just given here to be consistent with other logger macros
+ * Macro to flush the logs.
+ * You can flush it using logger_flush() but the MACRO is provided just to be
+ * consistent with the other logger macros where a function is not used.
  */
-#define LOG_FLUSH() logger_flush()
+#define LOG_FLUSH() logger_send_flush_request()
 
 /**
  * Enumeration of the type of the log message.

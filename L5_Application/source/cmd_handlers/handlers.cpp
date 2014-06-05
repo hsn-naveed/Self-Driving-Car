@@ -196,6 +196,14 @@ CMD_HANDLER_FUNC(logHandler)
     }
     else {
         LOG_INFO(cmdParams());
+
+        /* This was done for testing purpose, so turning off this code */
+        #if 0
+        LOG_INFO_SIMPLE("test %i", 1);
+        LOG_WARN("test %i", 2);
+        LOG_ERROR("test %i", 3);
+        #endif
+
         output.printf("Logged: |%s|\n", cmdParams());
     }
     return true;
