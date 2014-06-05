@@ -90,6 +90,11 @@ static void logger_task(void *p)
         /* else */
         len = strlen(log_msg);
 
+        /*
+         * ub = 1000
+         * len = 25
+         * bo  = 0
+         */
         /* Find out how many bytes (if any) overflow the buffer */
         buffer_overflow_cnt = 0;
         if (len + used_buffer > FILE_LOGGER_BUFFER_SIZE) {
