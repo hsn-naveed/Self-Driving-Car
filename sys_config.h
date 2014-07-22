@@ -63,7 +63,7 @@ extern "C" {
 #define LOG_BOOT_INFO_FILENAME          "boot.csv"  ///< Boot info is stored at this filename
 #define DISK_TLM_NAME                   "disk"      ///< Filename to save "disk" telemetry variables
 #define MAX_FILES_OPENED                3           ///< Maximum files that can be opened at once
-#define ENABLE_TELEMETRY                1           ///< Enable telemetry system. C_FILE_IO forced enabled if enabled
+#define ENABLE_TELEMETRY                0           ///< Enable telemetry system. C_FILE_IO forced enabled if enabled
 #define ENABLE_C_FILE_IO                0           ///< Allow stdio fopen() fclose() to redirect to ff.h
 
 
@@ -100,7 +100,7 @@ unsigned int sys_get_cpu_clock();
 #define EXTERNAL_CLOCK      (12 * 1000 * 1000UL)    ///< Change according to your board specification
 #define RTC_CLOCK           (32768UL)               ///< Do not change, this is the typical RTC crystal value
 
-#define DESIRED_CPU_CLOCK	(96 * 1000 * 1000UL)    ///< Define the CPU speed you desire, must be between 1-100Mhz
+#define DESIRED_CPU_CLOCK	(48 * 1000 * 1000UL)    ///< Define the CPU speed you desire, must be between 1-100Mhz
 #define FALLBACK_CPU_CLOCK  (24 * 1000 * 1000UL)    ///< Do not change.  This is the fall-back CPU speed if DESIRED_CPU_CLOCK cannot be attained
 /**
  * Watchdog timeout in milliseconds
