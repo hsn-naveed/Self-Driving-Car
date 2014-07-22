@@ -35,6 +35,7 @@ template <typename TYPE>
 class Sampler
 {
     public:
+<<<<<<< HEAD
         Sampler(int numSamples) : mSampleArraySize(numSamples), mSampleIndex(0), mAllSamplesReady(false)
         {
             mSamples = new TYPE[numSamples];
@@ -108,6 +109,102 @@ class Sampler
         inline int getSampleCount(void)    const { return mAllSamplesReady ? mSampleArraySize : mSampleIndex; }
         inline TYPE getSampleNum(int idx)  const { return idx < mSampleArraySize ? mSamples[idx] : 0;         }
 
+=======
+        /**
+         * Constructor of the class
+         * @param [in] numSamples   The maximum number of samples after which samples are stored as circular buffer
+         */
+        Sampler(int numSamples) : mSampleArraySize(numSamples), mSampleIndex(0), mAllSamplesReady(false)
+        {
+            mSamples = new TYPE[numSamples];
+            for(int i=0; i < numSamples; i++) {
+                mSamples[i] = 0;
+            }
+        }
+
+        /// Destructor of the class
+        ~Sampler()
+        {
+            delete [] mSamples;
+        }
+
+        /**
+         * Store a sample into the circular buffer
+         * @param [in] sample   The sample value
+         */
+        void storeSample(const TYPE& sample)
+        {
+            mSamples[mSampleIndex] = sample;
+            if(++mSampleIndex >= mSampleArraySize) {
+                mSampleIndex = 0;
+                mAllSamplesReady = true;
+            }
+        }
+
+        /// @returns The average of all the samples
+        TYPE getAverage(void) const
+        {
+            const int numSamples = getSampleCount();
+            TYPE sum = 0;
+
+            for(int i=0; i < numSamples; i++) {
+                sum += mSamples[i];
+            }
+
+            return (sum / numSamples);
+        }
+
+        /// @returns The latest sample that was stored using storeSample()
+        TYPE getLatest(void) const
+        {
+            int idx = (0 == mSampleIndex) ? (mSampleArraySize - 1) : (mSampleIndex - 1);
+            return mSamples[idx];
+        }
+
+        /// @returns The highest sample available from the circular buffer
+        TYPE getHighest(void) const
+        {
+            const int numSamples = getSampleCount();
+            TYPE highest = mSamples[0];
+
+            for(int i=0; i < numSamples; i++) {
+                if (highest < mSamples[i]) {
+                    highest = mSamples[i];
+                }
+            }
+
+            return highest;
+        }
+
+        /// @returns The lowest sample available from the circular buffer
+        TYPE getLowest(void) const
+        {
+            const int numSamples = getSampleCount();
+            TYPE lowest = mSamples[0];
+
+            for(int i=0; i < numSamples; i++) {
+                if (lowest > mSamples[i]) {
+                    lowest = mSamples[i];
+                }
+            }
+
+            return lowest;
+        }
+
+        /// @returns true if all of the circular buffer has all the samples stored
+        inline bool allSamplesReady(void)  const { return mAllSamplesReady; }
+
+        /// @returns the maximum number of samples we can store
+        inline int getMaxSampleCount(void) const { return mSampleArraySize; }
+
+        /// @returns the number of samples we have actually stored using storeSample()
+        inline int getSampleCount(void)    const { return mAllSamplesReady ? mSampleArraySize : mSampleIndex; }
+
+        /// @returns the sample located at the given index
+        inline TYPE getSampleNum(int idx)  const { return mSamples[idx % mSampleArraySize]; }
+
+        /// Clears all the samples at this class, and resets allSamplesReady() flag
+>>>>>>> branch 'master' of https://gitlab.com/preet/lpc1758_freertos.git
         void clear(void)
         {
             mAllSamplesReady = false;
