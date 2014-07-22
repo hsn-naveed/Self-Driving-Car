@@ -22,7 +22,7 @@
  
 #ifndef LED_DISPLAY_HPP__
 #define LED_DISPLAY_HPP__
-#include "src/I2C_Device_Base.hpp"  // I2C Device Base class
+#include "i2c2_device.hpp"  // I2C Device Base class
 
 
 /**
@@ -30,7 +30,7 @@
  *
  * @ingroup BoardIO
  */
-class LED_Display : public I2C_Device_Base, public SingletonTemplate<LED_Display>
+class LED_Display : public i2c2_device, public SingletonTemplate<LED_Display>
 {
     public:
         bool init(); ///< Initializes this device, @returns true if successful
@@ -60,7 +60,7 @@ class LED_Display : public I2C_Device_Base, public SingletonTemplate<LED_Display
         char mNumAtDisplay[2]; ///< The number currently being displayed
 
         /// Private constructor of this Singleton class
-        LED_Display() : I2C_Device_Base(I2CAddr_LED_Display)
+        LED_Display() : i2c2_device(I2CAddr_LED_Display)
         {
         }
         friend class SingletonTemplate<LED_Display>;  ///< Friend class used for Singleton Template

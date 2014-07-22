@@ -70,17 +70,22 @@ CMD_HANDLER_FUNC(taskListHandler)
     // For percentage calculations.
     totalRunTime /= 100UL;
 
-    output.printf("%10s Sta Pr Stack CPU%%          Time\n", "Name", TIMER0_US_PER_TICK);
-    for(unsigned portBASE_TYPE i = 0; i < uxArraySize; i++)
+    output.printf("%10s Sta Pr Stack CPU%%          Time\n", "Name");
+    for(unsigned priorityNum = 0; priorityNum < configMAX_PRIORITIES; priorityNum++)
     {
-        TaskStatus_t *e = &status[i];
-        const unsigned int cpuPercent = (0 == totalRunTime) ? 0 : e->ulRunTimeCounter / totalRunTime;
-        const uint32_t timeMs = (uint64_t) e->ulRunTimeCounter * TIMER0_US_PER_TICK / 1000;
-        const uint32_t stackInBytes = 4 * e->usStackHighWaterMark;
+        /* Print in sorted priority order */
+        for (unsigned i = 0; i < uxArraySize; i++) {
+            TaskStatus_t *e = &status[i];
+            if (e->uxBasePriority == priorityNum) {
+                const uint32_t cpuPercent = (0 == totalRunTime) ? 0 : e->ulRunTimeCounter / totalRunTime;
+                const uint32_t timeMs = (uint64_t) e->ulRunTimeCounter / 1000;
+                const uint32_t stackInBytes = 4 * e->usStackHighWaterMark;
 
-        output.printf("%10s %s %2u %5u %4u %10u ms\n",
-                      e->pcTaskName, taskStatusTbl[e->eCurrentState], e->uxBasePriority,
-                      stackInBytes, cpuPercent, timeMs);
+                output.printf("%10s %s %2u %5u %4u %10u ms\n",
+                              e->pcTaskName, taskStatusTbl[e->eCurrentState], e->uxBasePriority,
+                              stackInBytes, cpuPercent, timeMs);
+            }
+        }
     }
 
     if (uxTaskGetNumberOfTasks() > maxTasks) {
@@ -151,7 +156,7 @@ CMD_HANDLER_FUNC(healthHandler)
     output.printf( "Temp : %u.%u\n"
                     "Light: %u\n"
                     "Time     : %s"
-                    "Boot Time: %02u/%02u/%04u,%02u:%02u:%02u\n"
+                    "Boot Time: %02u/%02u/%4u,%02u:%02u:%02u\n"
                     "Uart0 Watermarks: %u/%u (rx/tx)\n",
                     floatSig1, floatDec1,
                     LS.getRawValue(),
@@ -194,6 +199,10 @@ CMD_HANDLER_FUNC(logHandler)
         LOG_FLUSH();
         output.putline("Log(s) have been flushed");
     }
+    else if (cmdParams.beginsWith("raw")) {
+        cmdParams.eraseFirstWords(1);
+        logger_log_raw(cmdParams());
+    }
     else {
         LOG_INFO(cmdParams());
         output.printf("Logged: |%s|\n", cmdParams());
@@ -233,6 +242,8 @@ CMD_HANDLER_FUNC(catHandler)
     cmdParams.trimStart(" ");
     cmdParams.trimEnd(" ");
 
+    output.printf("Press a key to print one buffer at a time...\n");
+
     FIL file;
     if(FR_OK != f_open(&file, cmdParams(), FA_OPEN_EXISTING | FA_READ))
     {
@@ -241,18 +252,22 @@ CMD_HANDLER_FUNC(catHandler)
     else
     {
         // Extra char for null terminator
-        char buffer[1024 + 1] = { 0 };
-        unsigned int bytesRead = 0;
-        unsigned int totalBytesRead = 0;
+        char buffer[512] = { 0 };
+        UINT bytesRead = 0;
+        UINT totalBytesRead = 0;
 
         const unsigned int startTime = sys_get_uptime_ms();
-        while(FR_OK == f_read(&file, buffer, sizeof(buffer)-1, &bytesRead) && bytesRead > 0)
+        while(FR_OK == f_read(&file, buffer, sizeof(buffer), &bytesRead) && bytesRead > 0)
         {
             totalBytesRead += bytesRead;
-            buffer[bytesRead] = '\0';
 
             if(printToScreen) {
-                output.put(buffer);
+                for (UINT i = 0; i < bytesRead; i++) {
+                    output.putChar(buffer[i]);
+                }
+
+                char c = 0;
+                output.getChar(&c, portMAX_DELAY);
             }
         }
         f_close(&file);
@@ -561,8 +576,13 @@ static void stream_tlm(const char *s, void *arg)
 
 CMD_HANDLER_FUNC(telemetryHandler)
 {
-    if(cmdParams.getLen() == 0) {
-        tlm_stream_all(stream_tlm, &output);
+    if(cmdParams.getLen() == 0)
+    {
+        tlm_stream_all(stream_tlm, &output, false);
+    }
+    else if (cmdParams.beginsWithIgnoreCase("ascii"))
+    {
+        tlm_stream_all(stream_tlm, &output, true);
     }
     else if(cmdParams == "save") {
         FILE *fd = fopen(DISK_TLM_NAME, "w");

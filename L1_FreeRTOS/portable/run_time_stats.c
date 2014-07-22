@@ -17,30 +17,31 @@
  */
 
 #include "FreeRTOSConfig.h"
-#include "LPC17xx.h"
+#include "lpc_sys.h"
+
 
 
 #if (1 == configGENERATE_RUN_TIME_STATS)
+/**
+ * This stores the "start" time value.  The system timer keeps running, and this
+ * variable provides us the capability to reset the FreeRTOS timer without having
+ * to reset the source or originating timer.
+ */
+static uint64_t g_freertos_runtime_timer_start = 0;
+
+
+
 void vConfigureTimerForRunTimeStats( void )
 {
-    LPC_TIM0->TCR = 1;  // Enable Timer
-    LPC_TIM0->CTCR = 0; // Increment on PCLK
-
-    // Set CPU / 1 PCLK
-    lpc_pclk(pclk_timer0, clkdiv_1);
-
-    /**
-     * Enable resolution of 2 uS per timer tick.
-     * This provides 2uS * 2^32 = 140 minutes of runtime before counter over-flows
-     */
-    LPC_TIM0->PR = (sys_get_cpu_clock() * TIMER0_US_PER_TICK) / (1000*1000);
+    /* Nothing to do, system timer should already be setup by high_level_init.cpp */
+    g_freertos_runtime_timer_start = sys_get_uptime_us();
 }
 unsigned int uxGetTimerForRunTimeStats()
 {
-    return LPC_TIM0->TC;
+    return (sys_get_uptime_us() - g_freertos_runtime_timer_start);
 }
 void resetRunTimeCounter()
 {
-    LPC_TIM0->TC = 0;
+    g_freertos_runtime_timer_start = sys_get_uptime_us();
 }
 #endif

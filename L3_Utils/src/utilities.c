@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -39,19 +40,12 @@
  */
 void delay_us(unsigned int microsec)
 {
-    const unsigned int ticksForThisDelay = microsec / TIMER0_US_PER_TICK;
-    const unsigned int targetTick = LPC_TIM0->TC + ticksForThisDelay;
+    const uint64_t now = sys_get_uptime_us();
+    const uint64_t target = now + microsec;
 
-    // Take care of TC overflow case by allowing TC value to go beyond
-    // targetTick, and then the next loop will handle the rest.
-    if(targetTick < LPC_TIM0->TC) {
-        while(LPC_TIM0->TC > targetTick) {
-            ;
-        }
-    }
-
-    // Wait until the TC value reaches targetTick
-    while(LPC_TIM0->TC < targetTick) {
+    /* Overflow shouldn't occur with 64-bit variable */
+    while (sys_get_uptime_us() < target)
+    {
         ;
     }
 }

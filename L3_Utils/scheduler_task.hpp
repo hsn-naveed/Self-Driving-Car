@@ -246,14 +246,14 @@ class scheduler_task
          *       because the status of init() is checked and reported, but a failure at constructor
          *       will not be easily caught (or reported).
          */
-        virtual bool init()   { return true; }
+        virtual bool init(void)   { return true; }
 
         /**
          * Optional: Override this function to register your telemetry before FreeRTOS starts.
          * @return   true upon success.
          * @warning  DO NOT USE FreeRTOS blocking API in this function
          */
-        virtual bool regTlm() { return true; }
+        virtual bool regTlm(void) { return true; }
 
         /**
          * Optional : Override this function which is called ONCE after FreeRTOS starts
@@ -265,7 +265,7 @@ class scheduler_task
          * @warning  Do not suspend your task otherwise all tasks will get suspended.
          * @return   true upon success.
          */
-        virtual bool taskEntry() { return true; }
+        virtual bool taskEntry(void) { return true; }
 
         /**
          * MUST override this function to run your tasks' code
@@ -286,6 +286,9 @@ class scheduler_task
          * @note By default, run() method is called continuously without a delay.
          */
         inline void setRunDuration(uint32_t milliseconds) { mTaskDelayMs = milliseconds; }
+
+        /// @returns the run duration set by setRunDuration()
+        inline uint32_t getRunDuration(void) const { return mTaskDelayMs; }
 
     #if (0 != configUSE_QUEUE_SETS)
         /**
@@ -336,8 +339,8 @@ class scheduler_task
     #endif
 
         /**
-         * Set the update rate in milliseconds that the free stack
-         * size is calculated at.  Default rate is 60 seconds.
+         * Set the update rate in milliseconds that the free stack size is calculated at.
+         * Default rate is 60 seconds; zero is to disable it.
          */
         inline void setStatUpdateRate(uint32_t rateMs) { mStatUpdateRateMs = rateMs; }
 

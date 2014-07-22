@@ -77,17 +77,19 @@ typedef void (*stream_callback_type)(const char* str, void *arg);
 
 /**
  * Streams the telemetry for one component and its variables
- * @param stream The callback stream function that will receive the strings to print
- * @param arg    This argument will be passed to your stream function as its argument
+ * @param stream        The callback stream function that will receive the strings to print
+ * @param print_ascii   If non-null, the data will be printed as ASCII values rather than hex values
+ * @param arg           This argument will be passed to your stream function as its argument
  */
-void tlm_stream_one(tlm_component *comp, stream_callback_type stream, void *arg);
+void tlm_stream_one(tlm_component *comp, stream_callback_type stream, void *print_ascii, void *arg);
 
 /**
  * Streams the telemetry for ALL registered components and their variables
  * @param stream The callback stream function that will receive the strings to print
  * @param arg    This argument will be passed to your stream function as its argument
+ * @parm  ascii  If true, ASCII values are printed, rather than hex value of the data
  */
-void tlm_stream_all(stream_callback_type stream_func, void *arg);
+void tlm_stream_all(stream_callback_type stream_func, void *arg, bool ascii);
 
 /**
  * Streams your provided component telemetry into a file pointer

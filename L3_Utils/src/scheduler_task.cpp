@@ -155,7 +155,7 @@ void scheduler_c_task_private(void *task_ptr)
     xSemaphoreTake(gRunTaskSemaphore, portMAX_DELAY);
 
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    TickType_t xNextStatTime = 0;
+    TickType_t xNextStatTime = xTaskGetTickCount();
 
     for (;;)
     {
@@ -173,7 +173,7 @@ void scheduler_c_task_private(void *task_ptr)
         ++(task.mRunCount);
 
         // Update the task statistics once in a short while :
-        if (xTaskGetTickCount() > xNextStatTime) {
+        if (0 != task.mStatUpdateRateMs && xTaskGetTickCount() > xNextStatTime) {
             xNextStatTime = xTaskGetTickCount() + (task.mStatUpdateRateMs / MS_PER_TICK());
             task.mFreeStack = uxTaskGetStackHighWaterMark(task.mHandle);
             // Convert to stack size in bytes instead of 4 bytes for this ARM CPU

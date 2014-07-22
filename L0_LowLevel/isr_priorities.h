@@ -63,21 +63,17 @@ typedef enum
      *
      * If you don't want interrupts to nest, set them to the same priority as IP_DEFAULT
      */
-        /* Higher priority interrupts than FreeRTOS (no FreeRTOS API) */
-
-        /**
-         * RIT must be higher priority than FreeRTOS because if FreeRTOS is not running
-         * and FreeRTOS API is used such as Queues for UART, then it leaves the interrupts
-         * disabled for all interrupts with lower priority than IP_SYSCALL.  So this RIT
-         * interrupt is used to reset the interrupt mask
-         */
-        IP_RIT  = IP_SYSCALL - 1,
+        /* Higher priority interrupts than FreeRTOS (cannot use FreeRTOS API!) */
+        IP_above_freertos = IP_SYSCALL - 1,
 
         /* Suggested interrupt priorities for popular peripherals */
         IP_Default = 20,          /**< Default priority of most interrupts */
-        IP_ssp  = IP_Default - 5, /**< SSP can be super fast, so needs higher priority */
-        IP_can  = IP_Default - 4, /**< CAN can be fast, so use higher priority than other communication BUSes */
-        IP_eint = IP_Default - 3, /**< User probably needs fast EINT than UART or I2C */
+
+        IP_eint = IP_Default - 9, /**< Need high priority EINT for flight controller */
+
+        IP_ssp  = IP_Default - 6, /**< SSP can be super fast, so needs higher priority */
+        IP_can  = IP_Default - 5, /**< CAN can be fast, so use higher priority than other communication BUSes */
+
         IP_i2c  = IP_Default - 2, /**< I2C set to higher priority than UART */
         IP_uart = IP_Default - 1, /**< UART set to higher priority than default */
 
@@ -99,6 +95,7 @@ typedef enum
         IP_enet = IP_Default,
         IP_mcpwm = IP_Default,
         IP_qei    = IP_Default,
+        IP_RIT    = IP_Default,
         IP_pll1   = IP_Default,
         IP_usbact = IP_Default,
         IP_canact = IP_Default,

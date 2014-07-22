@@ -217,11 +217,19 @@ bool tlm_variable_set_value(const char *comp_name, const char *name, const char 
 
 bool tlm_variable_get_value(const char *comp_name, const char *name, char *buffer, int len)
 {
-    uint16_t i = 0;
     const tlm_reg_var_type *reg_var = tlm_variable_get_by_comp_and_name(comp_name, name);
-    if (NULL == reg_var) {
-        return false;
+    bool success = false;
+
+    if (NULL != reg_var) {
+        success = tlm_variable_print_value(reg_var, buffer, len);
     }
+
+    return success;
+}
+
+bool tlm_variable_print_value(const tlm_reg_var_type *reg_var, char *buffer, int len)
+{
+    uint16_t i = 0;
 
     #define tlm_variable_print_array(format, var, buffer)           \
         for ( i=1; i < reg_var->elm_arr_size; i++) {                \
@@ -353,36 +361,3 @@ bool tlm_variable_get_value(const char *comp_name, const char *name, char *buffe
 
     return success;
 }
-
-#if 0
-typedef union {
-    float var_float;
-    double var_double;
-    uint32_t var_32bit;
-    uint64_t var_64bit;
-    uint8_t  bytes[8];
-} tlm_var_type;
-
-static bool tlm_variable_print_one(void *p_elm, void *p)
-{
-    tlm_reg_var_type *p_var = p_elm;
-    tlm_var_type v = { 0 };
-    uint32_t size = p_var->data_size_bytes;
-    if(size > sizeof(v.var_64bit)) {
-        size = sizeof(v.var_64bit);
-    }
-    memcpy(&(v.var_64bit), p_var->p_data, size);
-
-    printf("%s : %u bytes : 0x%X\n",
-            p_var->name,
-            p_var->data_size_bytes,
-            v.var_32bit);
-
-    return true;
-}
-
-void tlm_variables_print(tlm_component *p_comp)
-{
-    c_list_for_each_elm(p_comp->tlm_var_list, tlm_variable_print_one, NULL);
-}
-#endif /* Just testing */

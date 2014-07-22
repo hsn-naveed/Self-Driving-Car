@@ -31,13 +31,15 @@
 
 bool UartDev::getChar(char* pInputChar, unsigned int timeout)
 {
-    if (taskSCHEDULER_RUNNING == xTaskGetSchedulerState()) {
+    if (!pInputChar || !mRxQueue) {
+        return false;
+    }
+    else if (taskSCHEDULER_RUNNING == xTaskGetSchedulerState()) {
         return xQueueReceive(mRxQueue, pInputChar, timeout);
     }
     else {
-        long dummy = 0;
         unsigned int timeout_of_char = sys_get_uptime_ms() + timeout;
-        while (! xQueueReceiveFromISR(mRxQueue, pInputChar, &dummy)) {
+        while (! xQueueReceiveFromISR(mRxQueue, pInputChar, NULL)) {
             if (sys_get_uptime_ms() > timeout_of_char) {
                 return false;
             }

@@ -1,3 +1,6 @@
+2014-08-01  kang  <kang@preet>
+    * Moved changelog to Gitlab.  Changes are no longer documented here.
+    
 2014-06-01  kang  <kang@preet>
 
 	* L5_Application\main.cpp (main): Moved RNXV example's Uart init at the main()

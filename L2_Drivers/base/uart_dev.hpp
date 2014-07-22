@@ -20,7 +20,6 @@
  * @file
  * @brief Provides UART Base class functionality for UART peripherals
  *
- * 20140601  : Made init() protected such that only parent class can call the init
  *  12012013 : Split functionality to char_dev.hpp and inherited this object
  *  10102013 : Make init() public, and protect from re-init leaking memory through xQueueCreate()
  *  05122013 : Added version history
@@ -62,6 +61,7 @@
 class UartDev : public CharDev
 {
     public:
+
         /// Reset the baud-rate after UART has been initialized
         void setBaudRate(unsigned int baudRate);
 

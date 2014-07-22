@@ -68,7 +68,7 @@
 #include "sys_config.h"
 #define configUSE_PREEMPTION		            1   ///< One task can preempt another task (if equal or higher priority)
 #define configUSE_IDLE_HOOK			            1   ///< Using IDLE task can put CPU to low power mode
-#define configUSE_TICK_HOOK 		            1   ///< Every timer interrupt calls the tick function
+#define configUSE_TICK_HOOK 		            0   ///< Every timer interrupt calls the tick function
 #define configUSE_MALLOC_FAILED_HOOK            1   ///< If memory runs out, the hook function is called
 
 #define configCPU_CLOCK_HZ			            (DESIRED_CPU_CLOCK)

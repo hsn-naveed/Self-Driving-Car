@@ -150,6 +150,14 @@ int16_t Acceleration_Sensor::getZ()
  */
 static unsigned int LAST_DECODED_IR_SIGNAL = 0;
 #define TIMER1_US_PER_TICK  (100)
+
+/**
+ * Disabling this code because in case we go with TIMER1 CAPTURE for RC receiver.
+ * The idea is that 6-channels can be OR'd to the capture pin, and we can use
+ * the hardware to capture the timestamp of timer1 rather than capturing it
+ * in software because the FreeRTOS kernel interrupt may skew the timing.
+ */
+#if 0
 extern "C"
 {
     void TIMER1_IRQHandler()
@@ -247,6 +255,13 @@ bool IR_Sensor::init()
 
     return true;
 }
+#else
+bool IR_Sensor::init()
+{
+    return false;
+}
+#endif
+
 bool IR_Sensor::isIRCodeReceived()
 {
     return (0 != LAST_DECODED_IR_SIGNAL);
@@ -318,6 +333,11 @@ void LED::off(int ledNum)
 {
     mLedValue &= ~(1 << (ledNum-1));
     setAll(mLedValue);
+}
+void LED::set(int ledNum, bool o)
+{
+    if (o) on(ledNum);
+    else   off(ledNum);
 }
 void LED::setAll(char value)
 {

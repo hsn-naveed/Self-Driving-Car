@@ -103,7 +103,7 @@ void HardFault_HandlerC(unsigned long *hardfault_args){
 
         FAULT_EXISTS = FAULT_PRESENT_VAL;
         FAULT_PC = stacked_pc;
-        FAULT_LR = stacked_lr;
+        FAULT_LR = stacked_lr - 1;
         FAULT_PSR = stacked_psr;
 
         sys_set_outchar_func(uart0_putchar);

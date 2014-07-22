@@ -103,29 +103,15 @@ void sys_set_inchar_func(char_func_t func);
 
 
 /**
- * Setup Periodic RIT callback.
- * @param function  Your function to callback.  You should not use FreeRTOS API in this callback.
- * @param time_ms    The frequency of callback in milliseconds.
+ * Sets up the system timer that drives the time needed to get uptime in ms and us.
  */
-void sys_rit_setup(void_func_t function, uint32_t time_ms);
-void sys_rit_disable(void); ///< Disable RIT timer and interrupt
-bool sys_rit_running(void); ///< @return true if RIT is running
+void lpc_sys_setup_system_timer(void);
 
-/**
- * Gets the system up time in milliseconds.
- * This is defined at high_level_init.cpp
- */
-uint64_t sys_get_uptime_ms(void);
+/// @returns the system up time in microseconds
+uint64_t sys_get_uptime_us(void);
 
-/**
- * Gets the value of the high resolution timer.
- * This timer is shared with FreeRTOS CPU usage, and may reset by the terminal 'info' command.
- * This can eventually overflow after ~12 hours of runtime granted 10us per tick
- */
-static inline uint64_t sys_get_high_res_timer_us(void)
-{
-    return ((uint64_t)TIMER0_US_PER_TICK * LPC_TIM0->TC);
-}
+/// @returns the system up time in milliseconds.
+static inline uint64_t sys_get_uptime_ms(void) { return sys_get_uptime_us() / 1000; }
 
 
 

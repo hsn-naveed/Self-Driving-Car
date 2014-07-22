@@ -50,7 +50,8 @@ extern "C" {
 
 #define TERMINAL_USE_NRF_WIRELESS       0             ///< Terminal command can be sent through nordic wireless
 #define TERMINAL_END_CHARS              {3, 3, 4, 4}  ///< The last characters sent after processing a terminal command
-#define TERMINAL_USE_CAN_BUS_HANDLER    0             ///< CAN bus terminal command xxx
+#define TERMINAL_USE_CAN_BUS_HANDLER    0             ///< CAN bus terminal command
+
 
 
 #define SPI1_CLOCK_SPEED_MHZ            24          ///< Max speed of SPI1 for SD Card and Flash memory
@@ -60,7 +61,6 @@ extern "C" {
 #define STARTUP_DELAY_MS                2000        ///< Start-up delay in milliseconds
 #define LOG_BOOT_INFO_TO_FILE           0           ///< Log a boot message to "boot.csv" file upon every boot
 #define LOG_BOOT_INFO_FILENAME          "boot.csv"  ///< Boot info is stored at this filename
-#define LOGGER_FILE_NAME                "log"       ///< Logger file name
 #define DISK_TLM_NAME                   "disk"      ///< Filename to save "disk" telemetry variables
 #define MAX_FILES_OPENED                3           ///< Maximum files that can be opened at once
 #define ENABLE_TELEMETRY                0           ///< Enable telemetry system. C_FILE_IO forced enabled if enabled
@@ -102,9 +102,6 @@ unsigned int sys_get_cpu_clock();
 
 #define DESIRED_CPU_CLOCK	(48 * 1000 * 1000UL)    ///< Define the CPU speed you desire, must be between 1-100Mhz
 #define FALLBACK_CPU_CLOCK  (24 * 1000 * 1000UL)    ///< Do not change.  This is the fall-back CPU speed if DESIRED_CPU_CLOCK cannot be attained
-
-#define TIMER0_US_PER_TICK  (10)                    ///< Microseconds per tick for Timer0 that is used by FreeRTOS run-time stats
-
 /**
  * Watchdog timeout in milliseconds
  * Value cannot be greater than 1,000,000 which is too large of a value
@@ -123,7 +120,7 @@ unsigned int sys_get_cpu_clock();
  */
 #define USE_REDUCED_PRINTF        0     ///< Configure your printf version here
 #define UART0_DEFAULT_RATE_BPS    38400 ///< UART0 is configured at this BPS by start-up code - before main()
-#define UART0_TXQ_SIZE            1024  ///< UART0 transmit queue size before blocking starts to occur
+#define UART0_TXQ_SIZE            256   ///< UART0 transmit queue size before blocking starts to occur
 /** @} */
 
 

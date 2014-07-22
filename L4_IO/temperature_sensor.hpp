@@ -24,16 +24,16 @@
 #define TEMPERATURE_SENSOR_HPP_
 
 #include "singleton_template.hpp"
-#include "src/I2C_Device_Base.hpp"  // I2C Device base class
+#include "i2c2_device.hpp"  // I2C Device base class
 
 
 /**
  * Base class of an I2C temperature sensor
  */
-class I2C_Temp : private I2C_Device_Base
+class I2C_Temp : private i2c2_device
 {
     public:
-        I2C_Temp(char addr) : I2C_Device_Base(addr), mOffsetCelcius(0) {}
+        I2C_Temp(char addr) : i2c2_device(addr), mOffsetCelcius(0) {}
         bool init();
 
         float getCelsius();   ///< @returns floating-point reading of temperature in Celsius

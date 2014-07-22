@@ -131,6 +131,15 @@ bool tlm_variable_set_value(const char *comp_name, const char *name, const char 
  */
 bool tlm_variable_get_value(const char *comp_name, const char *name, char *buffer, int len);
 
+/**
+ * Prints the value of the given variable
+ * @param reg_var       A registered variable, possibly obtained from tlm_variable_get_by_name()
+ * @param buffer        The buffer at which to print the data
+ * @param len           The length of the buffer
+ * @returns             true upon success
+ */
+bool tlm_variable_print_value(const tlm_reg_var_type *reg_var, char *buffer, int len);
+
 
 
 #ifdef __cplusplus

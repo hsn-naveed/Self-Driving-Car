@@ -46,73 +46,26 @@
 
 
 static void hl_print_line() { puts("------------------------------------------------------"); }
-static void hl_periodic_service(void);
 static bool hl_mount_storage(FileSystemObject& drive, const char* pDescStr);
 static bool hl_init_board_io(void);
 static void hl_wireless_set_addr_from_file(void);
 static void hl_handle_board_id(void);
 static void hl_show_prog_info(void);
 
-static volatile uint64_t g_system_uptime_ms = 0;
-static const unsigned int g_time_per_rit_isr_ms = 1;
-#if (1 != configUSE_TICK_HOOK)
-#error "configUSE_TICK_HOOK is required to be 1 to provide system timer service"
-#endif
-extern "C"
-{
-    // This function is called at every FreeRTOS OS Tick
-    void vApplicationTickHook( void )
-    {
-        hl_periodic_service();
-    }
-    uint64_t sys_get_uptime_ms(void)
-    {
-        return g_system_uptime_ms;
-    }
-}
 
-/* If FreeRTOS is not running, then we rely on RIT service to call this function,
- * otherwise we rely on FreeRTOS tick hook to provide system timer
- */
-static void hl_periodic_service(void)
-{
-    sys_watchdog_feed();
-
-    /* If FreeRTOS is running, user should use a dedicated task to call mesh service,
-     * so we will not call it if freertos is running
-     */
-    if (taskSCHEDULER_RUNNING == xTaskGetSchedulerState()) {
-        g_system_uptime_ms += MS_PER_TICK();
-
-        /* We don't need RIT if FreeRTOS is running */
-        if (sys_rit_running()) {
-            sys_rit_disable();
-
-            /* The timer value so far may be an odd number, and if MS_PER_TICK() is not 1
-             * then we may increment it like 12, 22, 32, etc. so round this number once.
-             */
-            g_system_uptime_ms = (g_system_uptime_ms / 10) * 10;
-        }
-    }
-    else {
-        g_system_uptime_ms += g_time_per_rit_isr_ms;
-        wireless_service();
-
-        /**
-         * Small hack to support interrupts if FreeRTOS is not running :
-         * FreeRTOS API resets our base priority register, then all
-         * interrupts higher priority than IP_SYSCALL will not get locked out.
-         *   @see more notes at isr_priorities.h.  @see IP_SYSCALL
-         */
-        __set_BASEPRI(0);
-    }
-}
 
 /**
  * Initializes the High Level System such as IO Pins and Drivers
  */
 void high_level_init(void)
 {
+    /**
+     * Set-up the timer so that delay_ms(us) functions will work.
+     * This timer is also used by FreeRTOS run time statistics.
+     * This is needed early since SD card init() also relies on system timer services.
+     */
+    lpc_sys_setup_system_timer();
+
     // Initialize all board pins (early) that are connected internally.
     board_io_pins_initialize();
     
@@ -136,14 +89,6 @@ void high_level_init(void)
         tlm_component_add("debug");
     #endif
 
-    /**
-     * Set-up Timer0 so that delay_ms(us) functions will work.
-     * This function is used by FreeRTOS run time statistics.
-     * If FreeRTOS is used, timer will be set-up anyway.
-     * If FreeRTOS is not used, call it here such that delay_ms(us) functions will work.
-     */
-    vConfigureTimerForRunTimeStats();
-
     /* Initialize nordic wireless mesh network before setting up sys_setup_rit()
      * callback since it may access NULL function pointers.
      * @warning Need SSP0 init before initializing nordic wireless.
@@ -151,14 +96,6 @@ void high_level_init(void)
     if (!wireless_init()) {
         puts("ERROR: Failed to initialize wireless");
     }
-
-    /* Set-up our RIT callback to perform some background book-keeping
-     * If FreeRTOS is running, this service is disabled and FreeRTOS
-     * tick hook will call hl_periodic_service()
-     * @warning RIT interrupt should be setup before SD card is mounted
-     *           since it relies on our timer.
-     */
-    sys_rit_setup(hl_periodic_service, g_time_per_rit_isr_ms);
 
     /**
      * Intentional delay here because this gives the user some time to
@@ -200,7 +137,13 @@ void high_level_init(void)
     {
         printf("FLASH not formatted, formatting now ... ");
         printf("%s\n", FR_OK == Storage::getFlashDrive().format() ? "Done" : "Error");
-        hl_mount_storage(Storage::getFlashDrive(), " Flash ");
+
+        if (!hl_mount_storage(Storage::getFlashDrive(), " Flash "))
+        {
+            printf("SPI FLASH is possibly damaged!\n");
+            printf("Page size: %u\n", (unsigned) flash_get_page_size());
+            printf("Mem  size: %u (raw bytes)\n", (unsigned) (flash_get_page_count() * flash_get_page_size()));
+        }
     }
 
     hl_mount_storage(Storage::getSDDrive(), "SD Card");
@@ -256,8 +199,8 @@ static bool hl_mount_storage(FileSystemObject& drive, const char* pDescStr)
 
     if(mounted && FR_OK == drive.getDriveInfo(&totalKb, &availKb))
     {
-        const char *size = (totalKb < 1000) ? "KB" : "MB";
-        unsigned int div = (totalKb < 1000) ? 1 : 1024;
+        const char *size = (totalKb < (32*1024)) ? "KB" : "MB";
+        unsigned int div = (totalKb < (32*1024)) ? 1 : 1024;
 
         printf("%s: OK -- Capacity %-5d%s, Available: %-5u%s\n",
                pDescStr, totalKb/div, size, availKb/div, size);

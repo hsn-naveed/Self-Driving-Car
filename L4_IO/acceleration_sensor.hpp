@@ -24,7 +24,7 @@
 #ifndef ACCELERATION_SENSOR_HPP_
 #define ACCELERATION_SENSOR_HPP_
 #include <stdint.h>
-#include "src/I2C_Device_Base.hpp"  // I2C Device Base Class
+#include "i2c2_device.hpp"  // I2C Device Base Class
 
 
 
@@ -35,7 +35,7 @@
  *
  * @ingroup BoardIO
  */
-class Acceleration_Sensor : private I2C_Device_Base, public SingletonTemplate<Acceleration_Sensor>
+class Acceleration_Sensor : private i2c2_device, public SingletonTemplate<Acceleration_Sensor>
 {
     public:
         bool init();   ///< Initializes the sensor
@@ -46,7 +46,7 @@ class Acceleration_Sensor : private I2C_Device_Base, public SingletonTemplate<Ac
 
     private:
         /// Private constructor of this Singleton class
-        Acceleration_Sensor() : I2C_Device_Base(I2CAddr_AccelerationSensor)
+        Acceleration_Sensor() : i2c2_device(I2CAddr_AccelerationSensor)
         {
         }
         friend class SingletonTemplate<Acceleration_Sensor>;  ///< Friend class used for Singleton Template

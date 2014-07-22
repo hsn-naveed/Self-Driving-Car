@@ -43,6 +43,11 @@ class Sampler
             }
         }
 
+        ~Sampler()
+        {
+            delete [] mSamples;
+        }
+
         void storeSample(const TYPE& sample)
         {
             mSamples[mSampleIndex] = sample;
@@ -102,6 +107,12 @@ class Sampler
         inline int getMaxSampleCount(void) const { return mSampleArraySize; }
         inline int getSampleCount(void)    const { return mAllSamplesReady ? mSampleArraySize : mSampleIndex; }
         inline TYPE getSampleNum(int idx)  const { return idx < mSampleArraySize ? mSamples[idx] : 0;         }
+
+        void clear(void)
+        {
+            mAllSamplesReady = false;
+            mSampleIndex = 0;
+        }
 
     private:
         /// Do not use this constructor

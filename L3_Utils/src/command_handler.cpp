@@ -16,6 +16,7 @@
  *          p r e e t . w i k i @ g m a i l . c o m
  */
 
+#include <stdio.h>
 #include <string.h> // strlen()
 #include "command_handler.hpp"
 
@@ -123,13 +124,21 @@ bool CommandProcessor::handleCommand(str& cmd, CharDev& output)
 
 void CommandProcessor::getRegisteredCommandList(CharDev& output)
 {
+    char buffer[64];
     output.put(SUPPORTED_COMMANDS_STR);
+    char *ptr = NULL;
 
     for(unsigned int i=0; i<mCmdHandlerVector.size(); i++)
     {
         CmdProcessorType& c = mCmdHandlerVector[i];
         if (strlen(c.pCmdHelpText) > 32) {
-            output.printf("\n %10s : %.32s ...", c.pCommandStr, c.pCmdHelpText);
+            sprintf(buffer, "\n %10s : %.32s ...", c.pCommandStr, c.pCmdHelpText);
+
+            /* If a command's help has a newline, truncate it there .. */
+            if ((ptr = strrchr(buffer, '\n')) > buffer) {
+                strcpy(ptr, "...");
+            }
+            output.printf(buffer);
         } else {
             output.printf("\n %10s : %s", c.pCommandStr, c.pCmdHelpText);
         }

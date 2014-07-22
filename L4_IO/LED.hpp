@@ -36,6 +36,7 @@ class LED : public SingletonTemplate<LED>
 
         void on(int ledNum);            ///< Turns  ON LED. @param ledNum The LED # from 1-4
         void off(int ledNum);           ///< Turns OFF LED. @param ledNum The LED # from 1-4
+        void set(int ledNum, bool on);  ///< Turns on/off led based on @param on
         void setAll(char value);        ///< Sets 8-bit value of 8 LEDs; 1 bit per LED
         uint8_t getValues(void) const;  ///< Get the LED bit values currently set
 

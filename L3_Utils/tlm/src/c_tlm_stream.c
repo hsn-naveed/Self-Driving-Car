@@ -20,9 +20,9 @@
 
 #include "c_tlm_stream.h"
 #include "c_tlm_var.h"
-#include <string.h> /* strlen() etc. */
-#include <stdlib.h> /* atoi() */
-#include <ctype.h>  /* tolower() isdigit() etc. */
+#include <string.h>     /* strlen() etc. */
+#include <stdlib.h>     /* atoi() */
+#include <ctype.h>      /* tolower() isdigit() etc. */
 #include <inttypes.h>
 
 
@@ -52,9 +52,9 @@ static void tlm_stream_file_ptr(const char *str, void *fptr)
 /**
  * Callback function for each component's variables
  */
-static bool tlm_stream_for_each_component_var(void *elm_ptr, void *arg1, void *arg2, void *arg3)
+static bool tlm_stream_for_each_component_var(void *elm_ptr, void *arg1, void *arg2, void *print_ascii)
 {
-    char buff[16] = { 0 };
+    char buff[256];
     tlm_reg_var_type *var = elm_ptr;
     stream_callback_type stream = arg1;
     void *stream_arg = arg2;
@@ -74,16 +74,25 @@ static bool tlm_stream_for_each_component_var(void *elm_ptr, void *arg1, void *a
     sprintf(buff, "%i:", var->elm_type);
     stream(buff, stream_arg);
 
-    /* A variable has at least one data byte */
-    sprintf(buff, "%02X", ((*p++) & 0xFF));
-    stream(buff, stream_arg);
-
-    /* Stream rest of the data bytes */
-    for(i=(var->elm_size_bytes) * (var->elm_arr_size); /* Total bytes */
-        i > 1; i--) { /* note: 1 byte already streamed above */
-        sprintf(buff, ",%02X", ((*p++) & 0xFF) );
+    if (print_ascii)
+    {
+        tlm_variable_print_value(var, buff, sizeof(buff));
         stream(buff, stream_arg);
     }
+    else
+    {
+        /* A variable has at least one data byte */
+        sprintf(buff, "%02X", ((*p++) & 0xFF));
+        stream(buff, stream_arg);
+
+        /* Stream rest of the data bytes */
+        for(i=(var->elm_size_bytes) * (var->elm_arr_size); /* Total bytes */
+            i > 1; i--) { /* note: 1 byte already streamed above */
+            sprintf(buff, ",%02X", ((*p++) & 0xFF) );
+            stream(buff, stream_arg);
+        }
+    }
+
     stream("\n", stream_arg);
 
     return true;
@@ -163,7 +172,7 @@ static bool tlm_stream_decode(FILE *file, tlm_component *p_comp)
  * Callback function for each component
  * @param sca  Stream callback argument
  */
-void tlm_stream_one(tlm_component *comp, stream_callback_type stream, void *sca)
+void tlm_stream_one(tlm_component *comp, stream_callback_type stream, void *print_ascii, void *sca)
 {
     if (NULL == comp || NULL == stream) {
         return;
@@ -183,7 +192,10 @@ void tlm_stream_one(tlm_component *comp, stream_callback_type stream, void *sca)
      * component for each function that will stream data of each variable
      */
     c_list_for_each_elm((comp->var_list), tlm_stream_for_each_component_var,
-                        stream, sca, NULL);
+                        stream,     /* arg1 */
+                        sca,        /* arg2 */
+                        print_ascii /* arg3 */
+                        );
 
     /* Send: "END:<name>\n" */
     stream("END:", sca);
@@ -191,30 +203,63 @@ void tlm_stream_one(tlm_component *comp, stream_callback_type stream, void *sca)
     stream("\n", sca);
 }
 
-void tlm_stream_all(stream_callback_type stream_func, void *arg)
+static void tlm_stream_all_args(tlm_component *comp_ptr, void *arg1, void *arg2)
 {
+    /* Recall the arguments set by tlm_stream_all() */
+    void **args = (void**) arg1;
+    stream_callback_type stream_func = args[0];
+    void *user_arg = args[1];
+    void *print_ascii_arg = args[2];
+
+    /* Now pass the arguments to tlm_stream_one() */
+    tlm_stream_one(comp_ptr, stream_func, print_ascii_arg, user_arg);
+}
+
+void tlm_stream_all(stream_callback_type stream_func, void *arg, bool ascii)
+{
+    /* We need to pass 3 args, but only have 2 possible arguments that we can pass to
+     * tlm_component_for_each() API, so use a double pointer here.
+     */
+    void *print_ascii_arg = ascii ? (void*) 1 : (void*) NULL;
+    void *args[] = { (void*) stream_func, arg, print_ascii_arg };
+
     /*
      * Simply tell the telemetry component to call our call-back with our
      * stream function as the argument.  We will get the callback function
      * called with pointer to each telemetry component, along with our
      * argument which is the stream function itself
      */
-    tlm_component_for_each((tlm_comp_callback)tlm_stream_one,
-                           (void*)stream_func, arg);
+    tlm_component_for_each((tlm_comp_callback)tlm_stream_all_args, args, NULL);
 }
 
 void tlm_stream_one_file(tlm_component *comp_ptr, FILE *file)
 {
+    void * print_ascii = NULL; /* Do not print ASCII (print hex instead) */
     if(file) {
-        tlm_stream_one(comp_ptr, tlm_stream_file_ptr, file);
+        tlm_stream_one(comp_ptr, tlm_stream_file_ptr, print_ascii, file);
     }
+}
+
+/* We need this "wrapper" function because tlm_component_for_each() callback is
+ * called with just two arguments, and we cannot just pass tlm_stream_one() function
+ * as callback because it takes three arguments.
+ */
+static void tlm_stream_all_file_args(tlm_component *comp_ptr, void *arg1, void *arg2)
+{
+    stream_callback_type sc = arg1;
+    void *file = arg2;
+    void *print_ascii = NULL;
+
+    tlm_stream_one(comp_ptr, sc, print_ascii, file);
 }
 
 void tlm_stream_all_file(FILE *file)
 {
     if(file) {
-        tlm_component_for_each((tlm_comp_callback)tlm_stream_one,
-                               (void*)tlm_stream_file_ptr, file);
+        tlm_component_for_each((tlm_comp_callback)tlm_stream_all_file_args,
+                               (void*)tlm_stream_file_ptr, /* arg1 at tlm_stream_all_file_args() */
+                               file                        /* arg2 at tlm_stream_all_file_args() */
+                               );
     }
 }
 
