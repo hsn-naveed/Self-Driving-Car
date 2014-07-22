@@ -39,7 +39,7 @@ bool UartDev::getChar(char* pInputChar, unsigned int timeout)
     }
     else {
         unsigned int timeout_of_char = sys_get_uptime_ms() + timeout;
-        while (! xQueueReceiveFromISR(mRxQueue, pInputChar, NULL)) {
+        while (! xQueueReceive(mRxQueue, pInputChar, 0)) {
             if (sys_get_uptime_ms() > timeout_of_char) {
                 return false;
             }
@@ -58,7 +58,6 @@ bool UartDev::putChar(char out, unsigned int timeout)
     }
 
     /* FreeRTOS running, so send to queue and if queue is full, return false */
-    long yieldRequired = 0;
     if(! xQueueSend(mTxQueue, &out, timeout)) {
         return false;
     }
@@ -69,7 +68,7 @@ bool UartDev::putChar(char out, unsigned int timeout)
     const int uart_tx_is_idle = (1 << 6);
     if (mpUARTRegBase->LSR & uart_tx_is_idle)
     {
-        if (xQueueReceiveFromISR(mTxQueue, &out, &yieldRequired)) {
+        if (xQueueReceive(mTxQueue, &out, 0)) {
             mpUARTRegBase->THR = out;
         }
     }

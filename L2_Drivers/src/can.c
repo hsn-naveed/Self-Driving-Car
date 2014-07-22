@@ -392,7 +392,7 @@ bool CAN_tx (can_t can, can_msg_t *pCanMsg, uint32_t timeout_ms)
             ok = xQueueSend(g_can_tx_qs[cidx], pCanMsg, OS_MS(timeout_ms));
         }
         else {
-            ok = xQueueSendFromISR(g_can_tx_qs[cidx], pCanMsg, NULL);
+            ok = xQueueSend(g_can_tx_qs[cidx], pCanMsg, 0);
         }
 
         /* There is possibility that before we queued the message, we got interrupted
@@ -404,7 +404,7 @@ bool CAN_tx (can_t can, can_msg_t *pCanMsg, uint32_t timeout_ms)
         do {
             can_msg_t msg;
             if (tx_all_avail == (CANx->SR & tx_all_avail) &&
-                xQueueReceiveFromISR(g_can_tx_qs[cidx], &msg, NULL)
+                xQueueReceive(g_can_tx_qs[cidx], &msg, 0)
             ) {
                 ok = CAN_tx_now(CANx, &msg);
             }
@@ -426,7 +426,7 @@ bool CAN_rx (can_t can, can_msg_t *pCanMsg, uint32_t timeout_ms)
         }
         else {
             uint64_t msg_timeout = sys_get_uptime_ms() + timeout_ms;
-            while (! (ok = xQueueReceiveFromISR(g_can_rx_qs[CAN_INDEX(can)], pCanMsg, NULL))) {
+            while (! (ok = xQueueReceive(g_can_rx_qs[CAN_INDEX(can)], pCanMsg, 0))) {
                 if (sys_get_uptime_ms() > msg_timeout) {
                     break;
                 }

@@ -108,7 +108,10 @@ uint16_t adc0_get_reading(uint8_t channel_num)
     else
     {
         adc0_start_conversion(channel_num);
-        while(! xQueueReceiveFromISR(g_adc_result_queue, &result, NULL));
+        while(! xQueueReceive(g_adc_result_queue, &result, 0))
+        {
+            ;
+        }
     }
 
     return result;

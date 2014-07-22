@@ -67,38 +67,38 @@ typedef enum
         IP_above_freertos = IP_SYSCALL - 1,
 
         /* Suggested interrupt priorities for popular peripherals */
-        IP_Default = 20,          /**< Default priority of most interrupts */
+        IP_default = 20,          /**< Default priority of most interrupts */
 
-        IP_eint = IP_Default - 9, /**< Need high priority EINT for flight controller */
+        IP_eint = IP_default - 9, /**< Port0 and Port2 interrupt */
 
-        IP_ssp  = IP_Default - 6, /**< SSP can be super fast, so needs higher priority */
-        IP_can  = IP_Default - 5, /**< CAN can be fast, so use higher priority than other communication BUSes */
+        IP_ssp  = IP_default - 6, /**< SSP can be super fast, so needs higher priority */
+        IP_can  = IP_default - 5, /**< CAN can be fast, so use higher priority than other communication BUSes */
 
-        IP_i2c  = IP_Default - 2, /**< I2C set to higher priority than UART */
-        IP_uart = IP_Default - 1, /**< UART set to higher priority than default */
+        IP_i2c  = IP_default - 2, /**< I2C set to higher priority than UART */
+        IP_uart = IP_default - 1, /**< UART set to higher priority than default */
 
         /* Rest of the interrupts probably don't need a fast response so set them
          * to default priority.  You don't want to overcomplicate a system by
          * changing too many priorities unless absolutely needed.
          */
-        IP_watchdog = IP_Default,
-        IP_timers = IP_Default,
-        IP_pwm1 = IP_Default,
-        IP_pll = IP_Default,
-        IP_spi = IP_Default,
-        IP_rtc = IP_Default,
-        IP_adc = IP_Default,
-        IP_bod = IP_Default,
-        IP_usb = IP_Default,
-        IP_dma = IP_Default,
-        IP_i2s = IP_Default,
-        IP_enet = IP_Default,
-        IP_mcpwm = IP_Default,
-        IP_qei    = IP_Default,
-        IP_RIT    = IP_Default,
-        IP_pll1   = IP_Default,
-        IP_usbact = IP_Default,
-        IP_canact = IP_Default,
+        IP_watchdog = IP_default,
+        IP_timers = IP_default,
+        IP_pwm1 = IP_default,
+        IP_pll = IP_default,
+        IP_spi = IP_default,
+        IP_rtc = IP_default,
+        IP_adc = IP_default,
+        IP_bod = IP_default,
+        IP_usb = IP_default,
+        IP_dma = IP_default,
+        IP_i2s = IP_default,
+        IP_enet = IP_default,
+        IP_mcpwm = IP_default,
+        IP_qei    = IP_default,
+        IP_RIT    = IP_default,
+        IP_pll1   = IP_default,
+        IP_usbact = IP_default,
+        IP_canact = IP_default,
     /** @} */
 } intr_priorities_t;
 

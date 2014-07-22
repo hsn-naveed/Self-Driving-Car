@@ -84,7 +84,7 @@ bool I2C_Base::transfer(char deviceAddress, char firstReg, char* pData, unsigned
 
         // Wait for transfer to finish
         const uint64_t timeout = sys_get_uptime_ms() + I2C_TIMEOUT_MS;
-        while (!xSemaphoreTakeFromISR(mTransferCompleteSignal, NULL)) {
+        while (!xSemaphoreTake(mTransferCompleteSignal, 0)) {
             if (sys_get_uptime_ms() > timeout) {
                 break;
             }
