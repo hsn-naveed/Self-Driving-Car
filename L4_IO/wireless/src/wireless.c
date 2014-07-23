@@ -67,6 +67,7 @@ static char wireless_get_queued_pkt(QueueHandle_t qhandle, mesh_packet_t *pkt, c
     return ok;
 }
 
+/// ISR callback function upon NRF IRQ rising edge interrupt
 static void nrf_irq_callback(void)
 {
     long yieldRequired = 0;
@@ -130,7 +131,7 @@ void wireless_service(void)
         }
         mesh_service();
     }
-    /* RIT is calling us, so we can't use FreeRTOS API, hence we poll */
+    /* A timer ISR is calling us, so we can't use FreeRTOS API, hence we poll */
     else {
         if (nordic_intr_signal() || mesh_get_pnd_pkt_count() > 0) {
             mesh_service();
