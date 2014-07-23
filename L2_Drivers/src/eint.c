@@ -109,7 +109,7 @@ void EINT3_IRQHandler(void)
  * @param [in] int_en_reg_ptr The pointer of CPU register to enable the interrupt
  */
 static void eint3_enable(uint8_t pin_num, eint_intr_t type, void_func_t func,
-                         eint3_entry_t *list_head_ptr, volatile uint32_t *int_en_reg_ptr)
+                         eint3_entry_t **list_head_ptr, volatile uint32_t *int_en_reg_ptr)
 {
     const uint32_t pin_mask = (UINT32_C(1) << pin_num);
     eint3_entry_t *e = NULL;
@@ -119,8 +119,8 @@ static void eint3_enable(uint8_t pin_num, eint_intr_t type, void_func_t func,
         /* Insert new entry at the head of the list */
         e->callback = func;
         e->pin_mask = pin_mask;
-        e->next = list_head_ptr;
-        list_head_ptr = e;
+        e->next = *list_head_ptr;
+        *list_head_ptr = e;
 
         /* Enable the interrupt */
         *int_en_reg_ptr |= e->pin_mask;
@@ -133,13 +133,13 @@ static void eint3_enable(uint8_t pin_num, eint_intr_t type, void_func_t func,
 void eint3_enable_port0(uint8_t pin_num, eint_intr_t type, void_func_t func)
 {
     eint3_enable(pin_num, type, func,
-                 (eint_rising_edge == type) ? gp_port0_rising_list : gp_port0_falling_list,
+                 (eint_rising_edge == type) ? &gp_port0_rising_list : &gp_port0_falling_list,
                  (eint_rising_edge == type) ? &(LPC_GPIOINT->IO0IntEnR) : &(LPC_GPIOINT->IO0IntEnF));
 }
 
 void eint3_enable_port2(uint8_t pin_num, eint_intr_t type, void_func_t func)
 {
     eint3_enable(pin_num, type, func,
-                 (eint_rising_edge == type) ? gp_port2_rising_list : gp_port2_falling_list,
+                 (eint_rising_edge == type) ? &gp_port2_rising_list : &gp_port2_falling_list,
                  (eint_rising_edge == type) ? &(LPC_GPIOINT->IO2IntEnR) : &(LPC_GPIOINT->IO2IntEnF));
 }
