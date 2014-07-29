@@ -35,6 +35,7 @@
 #include "ssp0.h"            // SPI-0 init
 #include "ssp1.h"            // SPI-1 init
 
+#include "file_logger.h"
 #include "storage.hpp"       // Mount Flash & SD Storage
 #include "bio.h"             // Init io signals
 #include "io.hpp"            // Board IO peripherals
@@ -59,18 +60,11 @@ static void hl_show_prog_info(void);
  */
 void high_level_init(void)
 {
-    /**
-     * Set-up the timer so that delay_ms(us) functions will work.
-     * This timer is also used by FreeRTOS run time statistics.
-     * This is needed early since SD card init() also relies on system timer services.
-     */
-    lpc_sys_setup_system_timer();
-
     // Initialize all board pins (early) that are connected internally.
     board_io_pins_initialize();
     
     /**
-     * Initialize the Peripherals used in the system
+     * Initialize the Peripherals used in the system.
      * I2C2 : Used by LED Display, Acceleration Sensor, Temperature Sensor
      * ADC0 : Used by Light Sensor
      * SPI0 : Used by Nordic
@@ -83,37 +77,43 @@ void high_level_init(void)
         puts("ERROR: Possible short on SDA or SCL wire (I2C2)!");
     }
 
-    #if SYS_CFG_ENABLE_TLM
-        /* Add default telemetry components */
-        tlm_component_add("disk");
-        tlm_component_add("debug");
-    #endif
-
-    /* Initialize nordic wireless mesh network before setting up sys_setup_rit()
-     * callback since it may access NULL function pointers.
+    /* After Nordic SPI is initialized, initialize the wireless system otherwise the background
+     * task may access NULL pointers of the mesh networking task.
      * @warning Need SSP0 init before initializing nordic wireless.
      */
     if (!wireless_init()) {
         puts("ERROR: Failed to initialize wireless");
     }
 
+    /* Add default telemetry components if telemetry is enabled */
+    #if SYS_CFG_ENABLE_TLM
+        tlm_component_add(SYS_CFG_DISK_TLM_NAME);
+        tlm_component_add("debug");
+    #endif
+
     /**
-     * Intentional delay here because this gives the user some time to
-     * close COM Port at Hyperload and Open it at Hercules.
-     * Since RIT is setup to reset watchdog, we can delay without watchdog reset.
+     * Set-up the timer so that delay_ms(us) functions will work.
+     * This timer is also used by FreeRTOS run time statistics.
+     * This is needed early since SD card init() also relies on system timer services.
+     */
+    lpc_sys_setup_system_timer();
+
+    /**
+     * User configured startup delay to close Hyperload COM port and re-open it at Hercules serial window.
+     * Since the timer is setup that is now resetting the watchdog, we can delay without a problem.
      */
     delay_ms(SYS_CFG_STARTUP_DELAY_MS);
     hl_print_line();
 
-    /* Print boot info */
-#if SYS_CFG_REDUCED_PRINTF
-    const unsigned int cpuClock = sys_get_cpu_clock();
-    const unsigned int sig = cpuClock / (1000 * 1000);
-    const unsigned int fraction = (cpuClock - (sig*1000*1000)) / 1000;
-    printf("System Boot @ %u.%u Mhz\n", sig, fraction);
-#else
-    printf("System Boot @ %.3f Mhz\n", sys_get_cpu_clock() / (1000 * 1000.0f));
-#endif
+    /* Print boot info regardless of the printf options (if it prints float or not) */
+    #if SYS_CFG_REDUCED_PRINTF
+        const unsigned int cpuClock = sys_get_cpu_clock();
+        const unsigned int sig = cpuClock / (1000 * 1000);
+        const unsigned int fraction = (cpuClock - (sig*1000*1000)) / 1000;
+        printf("System Boot @ %u.%u Mhz\n", sig, fraction);
+    #else
+        printf("System Boot @ %.3f Mhz\n", sys_get_cpu_clock() / (1000 * 1000.0f));
+    #endif
 
     if(boot_watchdog_recover == sys_get_boot_type()) {
         char taskName[sizeof(FAULT_LAST_RUNNING_TASK_NAME) * 2] = { 0 };
@@ -126,16 +126,16 @@ void high_level_init(void)
                 (unsigned int)FAULT_PC, (unsigned int)FAULT_LR, (unsigned int)FAULT_PSR,
                 taskName);
         hl_print_line();
-        delay_ms(10 * 1000);
+        delay_ms(SYS_CFG_CRASH_STARTUP_DELAY_MS);
     }
 
     /**
      * If Flash is not mounted, it is probably a new board and the flash is not
-     * formatted so format it, alert the user, and try to re-mount it
+     * formatted so format it, so alert the user, and try to re-mount it.
      */
     if (!hl_mount_storage(Storage::getFlashDrive(), " Flash "))
     {
-        printf("Erasing and formatting SPI flash, this can take a while ...\n");
+        printf("Erasing and formatting SPI flash, this can take a while ... ");
 
         flash_chip_erase();
         printf("%s\n", FR_OK == Storage::getFlashDrive().format() ? "Done" : "Error");
@@ -150,15 +150,21 @@ void high_level_init(void)
 
     hl_mount_storage(Storage::getSDDrive(), "SD Card");
 
-	/* After SD card is initted, set desired speed for spi1 */
+	/* SD card initialization modifies the SPI speed, so after it has been initialized, reset desired speed for spi1 */
     ssp1_set_max_clock(SYS_CFG_SPI1_CLK_MHZ);
     hl_print_line();
 
+    /* File I/O is up, so log the boot message if chosen by the user */
     #ifdef SYS_CFG_LOG_BOOT_INFO_FILENAME
     log_boot_info(__DATE__);
     #endif
 
-    /* Initialize all sensors of this board. */
+    /* File I/O is up, so initialize the logger if user chose the option */
+    #if SYS_CFG_INITIALIZE_LOGGER
+    logger_init(SYS_CFG_LOGGER_TASK_PRIORITY);
+    #endif
+
+    /* Initialize all sensors of this board and display "--" on the LED display if an error has occurred. */
     if(!hl_init_board_io()) {
         hl_print_line();
         LD.setLeftDigit('-');
@@ -171,10 +177,9 @@ void high_level_init(void)
 
     /* After Flash memory is mounted, try to set node address from a file */
     hl_wireless_set_addr_from_file();
-    srand(LS.getRawValue() + time(NULL));
 
-    // Display CPU speed in Mhz on LED display
-    // LD.setNumber(sys_get_cpu_clock()/(1000*1000));
+    /* Feed the random seed to get random numbers from the rand() function */
+    srand(LS.getRawValue() + time(NULL));
 
     /* Print memory information before we call main() */
     do {
@@ -184,10 +189,12 @@ void high_level_init(void)
         hl_print_line();
     } while(0);
 
+    /* Print miscellaneous info */
     hl_handle_board_id();
     hl_show_prog_info();
     hl_print_line();
 
+    /* and finally ... call the user's main() method */
     puts("Calling your main()");
     hl_print_line();
 }
@@ -201,8 +208,9 @@ static bool hl_mount_storage(FileSystemObject& drive, const char* pDescStr)
 
     if(mounted && FR_OK == drive.getDriveInfo(&totalKb, &availKb))
     {
-        const char *size = (totalKb < (32*1024)) ? "KB" : "MB";
-        unsigned int div = (totalKb < (32*1024)) ? 1 : 1024;
+        const unsigned int maxBytesForKbRange = (32 * 1024);
+        const char *size = (totalKb < maxBytesForKbRange) ? "KB" : "MB";
+        unsigned int div = (totalKb < maxBytesForKbRange) ? 1 : 1024;
 
         printf("%s: OK -- Capacity %-5d%s, Available: %-5u%s\n",
                pDescStr, totalKb/div, size, availKb/div, size);
@@ -238,18 +246,13 @@ static bool hl_init_board_io(void)
 static void hl_wireless_set_addr_from_file(void)
 {
     uint8_t wireless_node_addr = WIRELESS_NODE_ADDR;
-    char nAddrStr[8] = { 0 };
+    char nAddrStr[16] = { 0 };
 
     if (FR_OK == Storage::read(WIRELESS_NODE_ADDR_FILE, nAddrStr, sizeof(nAddrStr)-1, 0)) {
         wireless_node_addr = atoi(nAddrStr);
-        if (0 == wireless_node_addr || MESH_BROADCAST_ADDR == wireless_node_addr) {
-            printf("Invalid node address (%s) specified in %s\n", nAddrStr, WIRELESS_NODE_ADDR_FILE);
-        }
-        else {
-            printf("Wireless node addr set to %i from '%s' file\n",
-                    wireless_node_addr, WIRELESS_NODE_ADDR_FILE);
-            mesh_set_node_address(wireless_node_addr);
-        }
+        bool ok = mesh_set_node_address(wireless_node_addr);
+        printf("Set wireless node address to %i from '%s' file: %s\n",
+                    wireless_node_addr, WIRELESS_NODE_ADDR_FILE, ok ? "Done!" : "FAILED");
     }
 }
 

@@ -49,7 +49,7 @@ bool example_task::run(void *p)
                "Status Report: \n");
     out.printf("Temperature: %i F\n", (int)TS.getFarenheit());
     out.printf("CPU Usage : %i %%\n", getTaskCpuPercent());    /* get OUR tasks' cpu usage */
-    out.printf("Free stack: %i bytes\n", (int)getFreeStack());  /* get number of bytes of free stack of our task */
+    out.printf("Free stack: %i bytes\n", (int)getFreeStack()); /* get number of bytes of free stack of our task */
 
     for(volatile int i=0; i<0xfffff; i++) {
         ; // Do dummy work

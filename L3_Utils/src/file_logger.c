@@ -244,6 +244,14 @@ static void logger_task(void *p)
 }
 
 /**
+ * @returns true if logger has been initialized
+ */
+static bool logger_initialized(void)
+{
+    return (NULL != gp_file_buffer);
+}
+
+/**
  * Allocates the memory used for the logger.
  * @param [in] logger_priority  The priority at which the logger task will run.
  * @returns true if memory allocation succeeded.
@@ -321,7 +329,7 @@ static bool logger_internal_init(int logger_priority)
 
 void logger_send_flush_request(void)
 {
-    if (taskSCHEDULER_RUNNING == xTaskGetSchedulerState())
+    if (taskSCHEDULER_RUNNING == xTaskGetSchedulerState() && logger_initialized())
     {
         char * null_ptr_to_flush = NULL;
         xQueueSend(g_write_buffer_queue, &null_ptr_to_flush, portMAX_DELAY);
@@ -346,7 +354,7 @@ int logger_get_num_buffers_watermark(void)
 void logger_init(int logger_priority)
 {
     /* Prevent double init */
-    if (NULL == gp_file_buffer)
+    if (!logger_initialized())
     {
         if (!logger_internal_init(logger_priority)) {
             printf("ERROR: logger initialization failure\n");
@@ -357,6 +365,10 @@ void logger_init(int logger_priority)
 void logger_log(logger_msg_t type, const char * filename, const char * func_name, unsigned line_num,
                 const char * msg, ...)
 {
+    if (!logger_initialized()) {
+        return;
+    }
+
     uint32_t len = 0;
     char * buffer = NULL;
     char * temp_ptr = NULL;
@@ -425,6 +437,10 @@ void logger_log(logger_msg_t type, const char * filename, const char * func_name
 
 void logger_log_raw(const char * msg, ...)
 {
+    if (!logger_initialized()) {
+        return;
+    }
+
     const bool os_running = (taskSCHEDULER_RUNNING == xTaskGetSchedulerState());
     char * buffer = logger_get_buffer_ptr(os_running);
 

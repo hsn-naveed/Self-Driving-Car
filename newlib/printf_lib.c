@@ -28,12 +28,12 @@
 
 
 
+/// Un-used function that uses assembly symbols to bring in support for floating-point printf() / scanf()
 __attribute__((used)) void ____bring_in_floats____(void)
 {
-    /* By including ASM symbols, we can bring in floating point support
-     * from the newlib nano.
-     * We can also give it an option for linker argument, but it is more
-     * inconvenient to do it that way (in project properties).
+    /* By including ASM symbols, we can bring in floating point support from the newlib nano.
+     * We can also give it an option for linker argument, but it is more inconvenient to do
+     * it that way (in project properties).
      */
     #if (0 == SYS_CFG_REDUCED_PRINTF)
     asm (".global _printf_float");
@@ -44,7 +44,7 @@ __attribute__((used)) void ____bring_in_floats____(void)
 int u0_dbg_printf(const char *format, ...)
 {
     int len = 0;
-    char buff[128] = { 0 };
+    char buff[256] = { 0 };
 
     va_list args;
     va_start(args, format);
@@ -86,9 +86,7 @@ char* mprintf(const char *format, ...)
     {
         va_list args_copy;
         va_copy(args_copy, args);
-
         len = vsnprintf(str_ptr, mem, format, args_copy);
-
         va_end(args_copy);
 
         // If we could not print, reallocate and try again.

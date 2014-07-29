@@ -66,12 +66,11 @@ class terminalTask : public scheduler_task
         cmdChan_t getCommand(void);
         void addCommandChannel(CharDev *channel, bool echo);
         void handleEchoAndBackspace(cmdChan_t *io, char c);
-
         bool saveDiskTlm(void);
 };
 
 /**
- * Remote task is the task the monitors the IR remote control signals.
+ * Remote task is the task that monitors the IR remote control signals.
  * It can "learn" remote control codes by typing "learn" into the UART0 terminal.
  * Thereafter, if a user enters a 2-digit number through a remote control, then
  * your function handleUserEntry() is called where you can take an action.

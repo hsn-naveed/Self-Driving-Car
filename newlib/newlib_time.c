@@ -24,36 +24,39 @@
 
 
 
-static void rtc_read_to_struct (struct tm *theTime, unsigned int *milliseconds)
+/// Read the time from RTC to C-library struct tm
+static void rtc_read_to_struct (struct tm *time_ptr, unsigned int *milliseconds)
 {
     rtc_t t = rtc_gettime();
-    theTime->tm_sec   = t.sec;
-    theTime->tm_min   = t.min;
-    theTime->tm_hour  = t.hour;
-    theTime->tm_mday  = t.day;
-    theTime->tm_mon   = t.month - 1;
-    theTime->tm_year  = t.year - 1900;
-    theTime->tm_wday  = t.dow;
-    theTime->tm_yday  = t.doy - 1;
-    theTime->tm_isdst = 0;
+    time_ptr->tm_sec   = t.sec;
+    time_ptr->tm_min   = t.min;
+    time_ptr->tm_hour  = t.hour;
+    time_ptr->tm_mday  = t.day;
+    time_ptr->tm_mon   = t.month - 1;
+    time_ptr->tm_year  = t.year - 1900;
+    time_ptr->tm_wday  = t.dow;
+    time_ptr->tm_yday  = t.doy - 1;
+    time_ptr->tm_isdst = 0;
 
     // TO DO Also calculate milliseconds somehow ?
 }
 
-static void rtc_write_from_struct (struct tm *theTime)
+/// Write the time from C-library struct tm to RTC
+static void rtc_write_from_struct (struct tm *time_ptr)
 {
     rtc_t t = { 0 };
-    t.sec = theTime->tm_sec;
-    t.min = theTime->tm_min;
-    t.hour= theTime->tm_hour;
-    t.day = theTime->tm_mday;
-    t.month = theTime->tm_mon;
-    t.year = theTime->tm_year + 1900;
-    t.dow = theTime->tm_wday;
-    t.doy = theTime->tm_yday;
+    t.sec = time_ptr->tm_sec;
+    t.min = time_ptr->tm_min;
+    t.hour= time_ptr->tm_hour;
+    t.day = time_ptr->tm_mday;
+    t.month = time_ptr->tm_mon;
+    t.year = time_ptr->tm_year + 1900;
+    t.dow = time_ptr->tm_wday;
+    t.doy = time_ptr->tm_yday;
     rtc_settime(&t);
 }
 
+/// Read the milliseconds of the system
 static time_t rtc_get_epoch (unsigned int *milliseconds)
 {
     struct tm tm;
@@ -61,6 +64,7 @@ static time_t rtc_get_epoch (unsigned int *milliseconds)
     return mktime (&tm);
 }
 
+/// GCC C libraries call this function to get time of day
 __attribute__ ((used)) int _gettimeofday (struct timeval *tp, void *tzp)
 {
     if (tp)
@@ -69,9 +73,11 @@ __attribute__ ((used)) int _gettimeofday (struct timeval *tp, void *tzp)
         tp->tv_sec = rtc_get_epoch (&milliseconds);
         tp->tv_usec = milliseconds * 1000;
     }
+
     return 0;
 }
 
+/// GCC C libraries call this function to set time of day
 __attribute__ ((used)) int _settimeofday (struct timeval *tp, void *tzp)
 {
     if (tp)
@@ -79,5 +85,6 @@ __attribute__ ((used)) int _settimeofday (struct timeval *tp, void *tzp)
         struct tm * timeinfo = localtime(&(tp->tv_sec));
         rtc_write_from_struct(timeinfo);
     }
+
     return 0;
 }

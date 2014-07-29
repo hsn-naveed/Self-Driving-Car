@@ -24,8 +24,8 @@
 /**
  * @file
  * @brief This file defines the GCC functions for malloc lock and unlock.
- *        These are mainly needed when using FreeRTOS, and are harmless
- *        if FreeRTOS is not running.
+ *        These are mainly needed when using FreeRTOS, and are harmless if FreeRTOS is not running.
+ *        GCC calls these functions before and after calling the malloc() functions.
  */
 
 __attribute__ ((used)) void __malloc_lock( void *_r )

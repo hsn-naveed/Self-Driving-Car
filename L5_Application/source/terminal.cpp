@@ -119,6 +119,7 @@ bool terminalTask::taskEntry()
     #if (SYS_CFG_ENABLE_TLM)
     cp.addHandler(telemetryHandler, "telemetry", "Outputs registered telemetry: "
                                                  "'telemetry save' : Saves disk tel\n"
+                                                 "'telemetry ascii' : Prints all telemetry in human readable format\n"
                                                  "'telemetry <comp. name> <name> <value>' to set a telemetry variable\n"
                                                  "'telemetry get <comp. name> <name>' to get variable value\n");
     #endif

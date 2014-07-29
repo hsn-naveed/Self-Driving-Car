@@ -31,10 +31,10 @@
  *
  * @warning There is no check for heap memory going beyond addressable RAM region
  */
-unsigned int g_sbrk_calls = 0;
-void *g_last_sbrk_ptr = 0;
-unsigned int g_last_sbrk_size = 0;
-static char *g_next_heap_ptr = 0;
+static void *g_last_sbrk_ptr = 0;           ///< The last pointer given by _sbrk()
+static char *g_next_heap_ptr = 0;           ///< The next pointer _sbrk() may provide
+static unsigned int g_sbrk_calls = 0;       ///< Number of calls to _sbrk()
+static unsigned int g_last_sbrk_size = 0;   ///< The last size requested from _sbrk()
 
 /**
  * @{ RAM constants
@@ -61,14 +61,13 @@ extern "C" void * _sbrk(size_t req_bytes)
     ret_mem = g_next_heap_ptr;    /* Save the pointer we will return */
     g_next_heap_ptr += req_bytes; /* Increase our pointer */
 
-    /* Check if we gave out too much memory beyond the ram_region_1.
-     * We have more RAM in ram region #2 but some of it is used by
-     * global variable space.
+    /**
+     * Check if we gave out too much memory beyond the ram_region_1.
+     * We have more RAM in ram region #2 but some of it is used by global variable space.
      *
      * @note
-     * If next heap pointer is exactly at ram_region_1_end, then
-     * we've got perfectly aligned ret_mem to the end of SRAM1.
-     * If it is greater, then we've been asked for too much so try
+     * If next heap pointer is exactly at ram_region_1_end, then we've got perfectly aligned
+     * ret_mem to the end of SRAM1. If it is greater, then we've been asked for too much so try
      * to return from SRAM2.
      */
     if ((unsigned)g_next_heap_ptr > ((unsigned)ram_region_1_end) &&
@@ -88,7 +87,7 @@ extern "C" void * _sbrk(size_t req_bytes)
         ret_mem = 0;
     }
 
-    /* Seems like newlib is calling us twice with req_bytes set to zero */
+    /* Seems like newlib is calling us twice with req_bytes set to zero, so do not increment counters for this case */
     if (req_bytes > 0) {
         ++g_sbrk_calls;
         g_last_sbrk_ptr = ret_mem;
@@ -98,25 +97,12 @@ extern "C" void * _sbrk(size_t req_bytes)
     return ret_mem;        /*  Return pointer to start of new heap area.   */
 }
 
-void *operator new(size_t size)
-{
-    return malloc(size);
-}
-
-void *operator new[](size_t size)
-{
-    return malloc(size);
-}
-
-void operator delete(void *p)
-{
-    free(p);
-}
-
-void operator delete[](void *p)
-{
-    free(p);
-}
+/** @{ Redirect C++ memory functions to C */
+void *operator new(size_t size)     {   return malloc(size);    }
+void *operator new[](size_t size)   {   return malloc(size);    }
+void operator delete(void *p)       {   free(p);                }
+void operator delete[](void *p)     {   free(p);                }
+/** @} */
 
 extern "C" sys_mem_t sys_get_mem_info()
 {
@@ -124,6 +110,7 @@ extern "C" sys_mem_t sys_get_mem_info()
 
     // This is defined by linker script (loader.ld)
     extern unsigned int _pvHeapStart;
+
     // Heap pointer starts after global memory in SRAM2
     const unsigned int globalMem = (unsigned int) &_pvHeapStart - (unsigned int)ram_region_2_base;
 
@@ -174,6 +161,7 @@ extern "C" sys_mem_t sys_get_mem_info()
     meminfo.last_sbrk_ptr   = g_last_sbrk_ptr;
     meminfo.last_sbrk_size  = g_last_sbrk_size;
     meminfo.num_sbrk_calls  = g_sbrk_calls;
+
     return meminfo;
 }
 

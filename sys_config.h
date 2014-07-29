@@ -33,17 +33,16 @@ extern "C" {
  * @warning
  *      The AIR data rate, and channel number must be consistent for your wireless
  *      nodes to talk to each other.  It seems that 2000kbps works better than 250kbps
- *      although slower data rate is supposed to get you higher range.
+ *      although slower data rate is supposed to get longer higher range.
  *
  * @warning Go to   "PROJECT" --> "Clean"   if you change the settings here.
  */
 #define WIRELESS_NODE_ADDR              106    ///< Any value from 1-254
 #define WIRELESS_CHANNEL_NUM            2499   ///< 2402 - 2500 to avoid collisions among 2+ mesh networks
 #define WIRELESS_AIR_DATARATE_KBPS      2000   ///< Air data rate, can only be 250, 1000, or 2000 kbps
-#define WIRELESS_NODE_NAME             "node"  ///< Wireless node name
+#define WIRELESS_NODE_NAME             "node"  ///< Wireless node name (ping response contains this name)
 #define WIRELESS_RX_QUEUE_SIZE          3      ///< Number of payloads we can queue
-#define WIRELESS_NODE_ADDR_FILE         "naddr"/**< If this file is present, node address will be set by
-                                                     reading ASCII data from this file */
+#define WIRELESS_NODE_ADDR_FILE         "naddr"///< Node address can be read from this file and this can override WIRELESS_NODE_ADDR
 /** @} */
 
 
@@ -62,6 +61,9 @@ extern "C" {
 //#define SYS_CFG_LOG_BOOT_INFO_FILENAME        "boot.csv"
 
 #define SYS_CFG_STARTUP_DELAY_MS        2000        ///< Start-up delay in milliseconds
+#define SYS_CFG_CRASH_STARTUP_DELAY_MS  5000        ///< Start-up delay in milliseconds if a crash occurred previously.
+#define SYS_CFG_INITIALIZE_LOGGER       1           ///< If non-zero, the logger is initialized (@see file_logger.h)
+#define SYS_CFG_LOGGER_TASK_PRIORITY    0           ///< The priority of the logger task
 #define SYS_CFG_ENABLE_TLM              0           ///< Enable telemetry system. C_FILE_IO forced enabled if enabled
 #define SYS_CFG_DISK_TLM_NAME           "disk"      ///< Filename to save "disk" telemetry variables
 #define SYS_CFG_ENABLE_CFILE_IO         0           ///< Allow stdio fopen() fclose() to redirect to ff.h
@@ -70,10 +72,9 @@ extern "C" {
 
 
 /**
- * Define the timer that will be used to run the background timer service.
- * This drives the lpc_sys_get_uptime_ms(), lpc_sys_get_uptime_us() and
- * periodically resets the watchdog timer along with running the mesh
- * networking task if FreeRTOS is running.
+ * Define the timer that will be used to run the background timer service. This drives the
+ * lpc_sys_get_uptime_ms(), lpc_sys_get_uptime_us() and periodically resets the watchdog timer
+ * along with running the mesh networking task if FreeRTOS is running.
  */
 #define SYS_CFG_SYS_TIMER               1
 
@@ -126,7 +127,7 @@ unsigned int sys_get_cpu_clock();
  *        flash memory and about 300 bytes more RAM with newlib nano libraries.
  *  - 1 : printf from stdio.h without floating point printf/scanf
  */
-#define SYS_CFG_REDUCED_PRINTF      0     ///< Configure your printf version here
+#define SYS_CFG_REDUCED_PRINTF      0     ///< If non-zero, floating-point printf() and scanf() is not supported
 #define SYS_CFG_UART0_BPS           38400 ///< UART0 is configured at this BPS by start-up code - before main()
 #define SYS_CFG_UART0_TXQ_SIZE      256   ///< UART0 transmit queue size before blocking starts to occur
 /** @} */
@@ -135,16 +136,14 @@ unsigned int sys_get_cpu_clock();
 
 /**
  * Valid years for RTC.
- * If RTC year is not found to be in between these,
- * RTC will reset to 1/1/2000 00:00:00
+ * If RTC year is not found to be in between these, RTC will reset to 1/1/2000 00:00:00
  */
 #define SYS_CFG_RTC_VALID_YEARS_RANGE   {2010, 2025}
 
 
 
 /**
- * Do not change anything here.
- * Telemetry needs C file I/O so force enable it
+ * Do not change anything here, Telemetry C-File I/O is force enabled if telemetry system is in use.
  */
 #if (SYS_CFG_ENABLE_TLM)
 #undef SYS_CFG_ENABLE_CFILE_IO

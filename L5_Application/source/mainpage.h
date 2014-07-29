@@ -32,15 +32,11 @@
  *                  - Flash Acceleration setup according to CPU frequency
  *                  - FreeRTOS fully setup, just need to create tasks and start FreeRTOS scheduler
  *                  - Attempt is made to mount SD Card & Flash Memory, so File IO is ready
- *                  - If a log file is written to Flash and SD Card is present, this log file is moved to the SD Card.
  *
  * \section     Resources   The following resources are setup before main() is called
  *                  - System Tick Interrupt is setup for FreeRTOS
- *                  - Timer0 is enabled for FreeRTOS to collect Runtime status (CPU Usage of each task)
- *                  - Timer1 is enabled to capture and decode the IR signal
- *                  - Repetitive interrupt (RIT) of 1ms to service mesh wireless, and SD card timer.
- *                      If FreeRTOS runs later, RIT is disabled and FreeRTOS tick hook is used instead.
- *
+ *                  - Timer1 is enabled to to provide system timer services that also helps capture IR signal.
+ *                    Timer1 also services the mesh networking task if FreeRTOS is not running. *
  *
  * \section     Layer0  Layer 0 sets up the following items:
  *                  - Setup the System Memory and CPU Clock

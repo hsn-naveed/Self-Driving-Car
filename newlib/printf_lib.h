@@ -30,19 +30,27 @@ extern "C" {
 
 /**
  * Prints a debug statement.
- * This is same as printf(), but will ensure all data sent over uart0 is flushed completely.
- * This solves the problem where one can printf() something, but system crashes before
- * the printf is able to print any useful information.
+ * This is same as printf(), but will ensure that all data sent over uart0 is flushed completely.
+ * This solves the problem where one can printf() something immediately because it is possible that
+ * regular printf() may queue the data and the system crashes before anything useful was printed.
+ *
+ * @param [in] format   The printf format string
+ * @param [in] ...      The printf arguments
  */
 int u0_dbg_printf(const char *format, ...);
 
 /**
  * Prints a string to uart and returns after entire string is printed.
+ * @param [in] string    NULL terminated string to print
  */
 void u0_dbg_put(const char *string);
 
 /**
  * Prints a formatted string on a heap pointer and returns it back.
+ * @param [in] format   The printf format string
+ * @param [in] ...      The printf arguments
+ * @returns   The pointer to the printed string
+ *
  * @warning   Use this function carefully as it can fragment memory on a system if used excessively.
  * @warning   Pointer obtained from this function must be freed.
  */

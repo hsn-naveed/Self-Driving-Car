@@ -465,7 +465,7 @@ CMD_HANDLER_FUNC(newFileHandler)
     output.printf("Sorry, no backspace support :(\n");
 
     while (output.getChar(&c, timeout_ms) && c != end_file) {
-        if (FR_OK != f_write(&file, &c, 1, &bw) && 1 != bw) {
+        if (FR_OK != f_write(&file, &c, 1, &bw) || 1 != bw) {
             output.printf("Error occurred while writing the file\n");
         }
         else {
@@ -561,6 +561,7 @@ CMD_HANDLER_FUNC(rebootHandler)
 
     vTaskDelayMs(2000);
     sys_reboot();
+
     return true;
 }
 
