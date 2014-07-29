@@ -148,14 +148,9 @@ int16_t Acceleration_Sensor::getZ()
  *  Note that this doesn't decode into real data sent through the IR, but nevertheless,
  *  the decoded signal will be unique per button pressed on an IR remote.
  */
-static unsigned int LAST_DECODED_IR_SIGNAL = 0;
-#define TIMER1_US_PER_TICK  (100)
 
 /**
- * Disabling this code because in case we go with TIMER1 CAPTURE for RC receiver.
- * The idea is that 6-channels can be OR'd to the capture pin, and we can use
- * the hardware to capture the timestamp of timer1 rather than capturing it
- * in software because the FreeRTOS kernel interrupt may skew the timing.
+ * TODO : Move this functionality that lpc_sys.c's timer1 ISR can call.
  */
 #if 0
 extern "C"
@@ -225,51 +220,36 @@ extern "C"
         }
     }
 }
-
+#endif
 
 /**
  * IR Sensor is attached to P1.18 - CAP1.0, so it needs TIMER1 to capture the times on P1.18
  */
 bool IR_Sensor::init()
 {
-    // Enable Timer1 that is used to capture CAP1.0 signal
+    /* Power up the timer 1 in case it is off */
     lpc_pconp(pconp_timer1, true);
-    lpc_pclk(pclk_timer1, clkdiv_1);
 
-    LPC_TIM1->TCR = 1;              // Enable Timer
-    LPC_TIM1->CTCR = 0;             // Increment on PCLK
-    LPC_TIM1->PR = sys_get_cpu_clock() / (1000*1000/TIMER1_US_PER_TICK);
-
+    /* Timer 1 should be initialized by high_level_init.cpp using lpc_sys.c API
+     * We will just add on the capture functionality here.
+     */
     LPC_TIM1->CCR &= ~(7 << 0);            // Clear Bits 2:1:0
     LPC_TIM1->CCR |=  (1 << 2) | (1 << 1); // Enable Falling Edge capture0 with interrupt
-
-    // Enable MR0 interrupt
-    LPC_TIM1->MR0 = 0;
-    LPC_TIM1->MCR |= (1 << 0);
 
     // Select P1.18 as CAP1.0 by setting bits 5:4 to 0b11
     LPC_PINCON->PINSEL3 |= (3 << 4);
 
-    // Finally, enable interrupt of Timer1 to interrupt upon falling edge capture
-    NVIC_EnableIRQ(TIMER1_IRQn);
-
     return true;
 }
-#else
-bool IR_Sensor::init()
-{
-    return false;
-}
-#endif
 
 bool IR_Sensor::isIRCodeReceived()
 {
-    return (0 != LAST_DECODED_IR_SIGNAL);
+    return false; // todo
 }
 unsigned int IR_Sensor::getLastIRCode()
 {
-    unsigned int signal = LAST_DECODED_IR_SIGNAL;
-    LAST_DECODED_IR_SIGNAL = 0;
+    unsigned int signal = 0;
+    // todo
     return signal;
 }
 

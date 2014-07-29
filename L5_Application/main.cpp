@@ -51,7 +51,7 @@ int main(void)
      *      2.  Remote task allows you to use remote control to interact with the board.
      *      3.  Wireless task responsible to receive, retry, and handle mesh network.
      *
-     * Disable remote task if you are not using it.  Also, it needs ENABLE_TELEMETRY
+     * Disable remote task if you are not using it.  Also, it needs SYS_CFG_ENABLE_TLM
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing "learn" command.
      */

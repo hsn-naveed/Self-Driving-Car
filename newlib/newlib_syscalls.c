@@ -49,7 +49,7 @@
 
 #include "ff.h"
 #include "rtc.h"
-#include "sys_config.h"     // MAX_FILES_OPENED
+#include "sys_config.h"     // SYS_CFG_MAX_FILES_OPENED
 #include "uart0_min.h"
 #include "lpc_sys.h"
 
@@ -84,7 +84,7 @@ void _exit(int status)
 int _getpid(int n) { return 0; }
 int _init(void) {   return 1;   }
 
-#if (!ENABLE_C_FILE_IO)
+#if (!SYS_CFG_ENABLE_CFILE_IO)
 int _write(int fd, const char *ptr, int len)
 {
     int i = 0;
@@ -112,7 +112,7 @@ int _read(int fd, char *ptr, int len)
 
 void syscalls_init(void)
 {
-    /* ENABLE_C_FILE_IO not enabled, do nothing */
+    /* SYS_CFG_ENABLE_CFILE_IO not enabled, do nothing */
 }
 int _fstat(int fd __attribute__ ((unused)), struct stat *st __attribute__ ((unused)))
 {   return 0;   }
@@ -207,7 +207,7 @@ typedef struct
 //
 //
 //
-#define MAX_OPEN_FILES      (MAX_FILES_OPENED + 3) /* +3 to account for STDIN, STDOUT, and STDERR */
+#define MAX_OPEN_FILES      (SYS_CFG_MAX_FILES_OPENED + 3) /* +3 to account for STDIN, STDOUT, and STDERR */
 static openFiles_t openfiles[MAX_OPEN_FILES];
 
 static int findslot(int fh)
@@ -814,4 +814,4 @@ void _sync(void)
             f_sync(openfiles[slot].fatfsFCB);
 #endif
 }
-#endif /* ENABLE_C_FILE_IO */
+#endif /* SYS_CFG_ENABLE_CFILE_IO */

@@ -184,7 +184,7 @@
 /---------------------------------------------------------------------------*/
 #if 0
 #include "sys_config.h"
-#define	_FS_LOCK	    MAX_FILES_OPENED	/* 0:Disable or >=1:Enable */
+#define	_FS_LOCK	    SYS_CFG_MAX_FILES_OPENED	/* 0:Disable or >=1:Enable */
 #else
 #define _FS_LOCK        0                   /* 0:Disable or >=1:Enable */
 #endif

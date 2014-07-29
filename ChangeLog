@@ -127,7 +127,7 @@ Revision History:
     1)  Project configured to use newlib-nano, yielding:
         - Nearly 50% less code
         - 80% less global RAM usage
-    2)  Reduced options for USE_REDUCED_PRINTF
+    2)  Reduced options for SYS_CFG_REDUCED_PRINTF
     3)  str.h now has removed dependency of supporting floats
     4)  Modified i2c driver for polling mode (non freertos)
     5)  spi0.h and spi1.h renamed to ssp0.h and ssp1.h for clarity.

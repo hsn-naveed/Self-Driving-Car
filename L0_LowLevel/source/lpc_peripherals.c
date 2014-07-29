@@ -19,9 +19,6 @@
 /**
  * @file
  * @brief This file provides LPC peripheral numbers according to LPC17xx datasheet
- *
- * DO NOT INCLUDE THIS FILE DIRECTLY.  IT IS AUTOMATICALLY INCLUDED WHEN YOU
- * INCLUDE LPC17xx.h
  */
 #include <stdint.h>
 #include "LPC17xx.h"

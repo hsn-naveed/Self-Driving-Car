@@ -45,7 +45,7 @@ void sys_clock_use_fastest_clock (void)
 #endif
 
 /* If clock source is external crystal or internal IRC oscillator */
-#if (CLOCK_SOURCE_INTERNAL == CLOCK_SOURCE || CLOCK_SOURCE_EXTERNAL == CLOCK_SOURCE)
+#if (CLOCK_SOURCE_INTERNAL == SYS_CFG_CLOCK_SOURCE || CLOCK_SOURCE_EXTERNAL == SYS_CFG_CLOCK_SOURCE)
 /**
  * Calculates the PLL Parameters needed to set the desired CPU Speed
  * @note The parameters are in KiloHertz to avoid overflow of unsigned int (32-bit)
@@ -296,33 +296,33 @@ void sys_clock_configure()
      */
 	sys_clock_disable_pll_use_internal_4mhz();
 
-#if (CLOCK_SOURCE_INTERNAL == CLOCK_SOURCE)
+#if (CLOCK_SOURCE_INTERNAL == SYS_CFG_CLOCK_SOURCE)
 	const unsigned int PLLInputClockKhz = INTERNAL_CLOCK / 1000;
-    unsigned int cpuClockKhz = DESIRED_CPU_CLOCK / 1000;
-#elif (CLOCK_SOURCE_EXTERNAL == CLOCK_SOURCE)
+    unsigned int cpuClockKhz = SYS_CFG_DESIRED_CPU_CLK / 1000;
+#elif (CLOCK_SOURCE_EXTERNAL == SYS_CFG_CLOCK_SOURCE)
 	const unsigned int PLLInputClockKhz = EXTERNAL_CLOCK / 1000;
-    unsigned int cpuClockKhz = DESIRED_CPU_CLOCK / 1000;
-#elif (CLOCK_SOURCE_RTC == CLOCK_SOURCE)
-    /* Nothing needed here since we pass in DESIRED_CPU_CLOCK in Hz to sys_clock_get_pll_params_for_rtc() */
+    unsigned int cpuClockKhz = SYS_CFG_DESIRED_CPU_CLK / 1000;
+#elif (CLOCK_SOURCE_RTC == SYS_CFG_CLOCK_SOURCE)
+    /* Nothing needed here since we pass in SYS_CFG_DESIRED_CPU_CLK in Hz to sys_clock_get_pll_params_for_rtc() */
 #else
 #error "Clock source must be CLOCK_SOURCE_INTERNAL, CLOCK_SOURCE_EXTERNAL or CLOCK_SOURCE_RTC"
 #endif
 
-#if (CLOCK_SOURCE_INTERNAL == CLOCK_SOURCE || CLOCK_SOURCE_EXTERNAL == CLOCK_SOURCE)
+#if (CLOCK_SOURCE_INTERNAL == SYS_CFG_CLOCK_SOURCE || CLOCK_SOURCE_EXTERNAL == SYS_CFG_CLOCK_SOURCE)
 	// If we cannot calculate desired CPU clock, then default to a safe value
 	if(!sys_clock_configure_pll(cpuClockKhz, PLLInputClockKhz, &m, &n, &d)) {
-	    cpuClockKhz = FALLBACK_CPU_CLOCK / 1000;
+	    cpuClockKhz = SYS_CFG_DEFAULT_CPU_CLK / 1000;
 	    sys_clock_configure_pll(cpuClockKhz, PLLInputClockKhz, &m, &n, &d);
 	}
 #else
-	sys_clock_get_pll_params_for_rtc(DESIRED_CPU_CLOCK, &m, &n, &d);
+	sys_clock_get_pll_params_for_rtc(SYS_CFG_DESIRED_CPU_CLK, &m, &n, &d);
 #endif
 
 	PLL0ConfigValue.msel = m;
 	PLL0ConfigValue.nsel = n;
 
 	// Enable main oscillator if needed :
-#if (CLOCK_SOURCE_EXTERNAL == CLOCK_SOURCE)
+#if (CLOCK_SOURCE_EXTERNAL == SYS_CFG_CLOCK_SOURCE)
 	// Bit4 must be set if oscillator is between 15-25Mhz
     #if (EXTERNAL_CLOCK >= 15 * 1000 * 1000)
 	    LPC_SC->SCS = (1 << 5) | (1 << 4);
@@ -336,13 +336,13 @@ void sys_clock_configure()
 
 	// Select the clock source and if the clock source is the desired clock, then
 	// do not use PLL at all and simply return!
-	LPC_SC->CLKSRCSEL = CLOCK_SOURCE;
+	LPC_SC->CLKSRCSEL = SYS_CFG_CLOCK_SOURCE;
 
 	/* We can only do this if CLOCK input is not RTC since the user should
 	 * always use PLL with RTC clock input
 	 */
-#if (CLOCK_SOURCE_INTERNAL == CLOCK_SOURCE || CLOCK_SOURCE_EXTERNAL == CLOCK_SOURCE)
-	if(DESIRED_CPU_CLOCK == PLLInputClockKhz*1000) {
+#if (CLOCK_SOURCE_INTERNAL == SYS_CFG_CLOCK_SOURCE || CLOCK_SOURCE_EXTERNAL == SYS_CFG_CLOCK_SOURCE)
+	if(SYS_CFG_DESIRED_CPU_CLK == PLLInputClockKhz*1000) {
 	    return;
 	}
 	else

@@ -424,3 +424,13 @@ uint32_t flash_get_page_write_count(uint32_t page_number)
 
     return (UINT32_MAX == write_counter) ? 0 : write_counter;
 }
+
+void flash_chip_erase(void)
+{
+    unsigned char chip_erase[] = { 0xC7, 0x94, 0x80, 0x9A };
+
+    CHIP_SELECT_OP()
+    {
+        flash_spi_multi_io(&chip_erase, sizeof(chip_erase));
+    }
+}

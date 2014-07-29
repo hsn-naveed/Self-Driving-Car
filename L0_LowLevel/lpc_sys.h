@@ -157,7 +157,7 @@ static inline void sys_reboot()
 }
 
 /**
- * Enables watchdog with reset mode according to WATCHDOG_TIMEOUT_MS macro's value
+ * Enables watchdog with reset mode according to SYS_CFG_WATCHDOG_TIMEOUT_MS macro's value
  */
 static inline void sys_watchdog_enable()
 {
@@ -166,7 +166,7 @@ static inline void sys_watchdog_enable()
      * Therefore watchdog clock = 1Mhz = 1uS
      * Each value of WDTC means 1uS
      */
-    LPC_WDT->WDTC = WATCHDOG_TIMEOUT_MS * 1000;
+    LPC_WDT->WDTC = SYS_CFG_WATCHDOG_TIMEOUT_MS * 1000;
 
     /**
      * Enable Watchdog and Watchdog reset enable

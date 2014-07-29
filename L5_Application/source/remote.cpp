@@ -51,8 +51,8 @@ bool remoteTask::init(void)
 bool remoteTask::regTlm(void)
 {
     bool success = true;
-    #if ENABLE_TELEMETRY
-        tlm_component *disk = tlm_component_get_by_name(DISK_TLM_NAME);
+    #if SYS_CFG_ENABLE_TLM
+        tlm_component *disk = tlm_component_get_by_name(SYS_CFG_DISK_TLM_NAME);
         if(success) {
             success = TLM_REG_ARR(disk, mNumCodes, tlm_uint);
         }

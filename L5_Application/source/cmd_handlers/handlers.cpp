@@ -564,7 +564,7 @@ CMD_HANDLER_FUNC(rebootHandler)
     return true;
 }
 
-#if (ENABLE_TELEMETRY)
+#if (SYS_CFG_ENABLE_TLM)
 static void stream_tlm(const char *s, void *arg)
 {
     CharDev *out = (CharDev*) arg;
@@ -585,8 +585,8 @@ CMD_HANDLER_FUNC(telemetryHandler)
         tlm_stream_all(stream_tlm, &output, true);
     }
     else if(cmdParams == "save") {
-        FILE *fd = fopen(DISK_TLM_NAME, "w");
-        tlm_stream_one_file(tlm_component_get_by_name(DISK_TLM_NAME), fd);
+        FILE *fd = fopen(SYS_CFG_DISK_TLM_NAME, "w");
+        tlm_stream_one_file(tlm_component_get_by_name(SYS_CFG_DISK_TLM_NAME), fd);
         fclose(fd);
         output.putline("Telemetry was saved to disk");
     }

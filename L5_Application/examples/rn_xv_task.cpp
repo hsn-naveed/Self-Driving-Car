@@ -307,9 +307,9 @@ bool wifiTask::init()
 
 bool wifiTask::regTlm()
 {
-#if ENABLE_TELEMETRY
+#if SYS_CFG_ENABLE_TLM
     /* User can change this during run-time by setting telemetry variable */
-    tlm_component *disk = tlm_component_get_by_name(DISK_TLM_NAME);
+    tlm_component *disk = tlm_component_get_by_name(SYS_CFG_DISK_TLM_NAME);
     TLM_REG_VAR(disk, mWifiSsid, tlm_string);
     TLM_REG_VAR(disk, mWifiKey,  tlm_string);
     TLM_REG_VAR(disk, mWifiEcho, tlm_bit_or_bool);

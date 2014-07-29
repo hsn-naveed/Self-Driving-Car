@@ -52,8 +52,10 @@ typedef enum
      * Be careful changing these because interrupt priorities set below
      * must fall in between these two priorities.
      */
-        IP_KERNEL = 31,
-        IP_SYSCALL = 5, /* Do not use FreeRTOS API for ISR priorities below this */
+        IP_highest = 1,        /* Highest priority that is not zero */
+        IP_above_freertos = 3, /* Do not use FreeRTOS API with this priority! */
+        IP_SYSCALL = 4,        /* Do not use FreeRTOS API for ISR priorities below this */
+        IP_KERNEL = 31,        /* Must be the lowest priority in the system */
     /** @} */
 
     /**
@@ -63,9 +65,6 @@ typedef enum
      *
      * If you don't want interrupts to nest, set them to the same priority as IP_DEFAULT
      */
-        /* Higher priority interrupts than FreeRTOS (cannot use FreeRTOS API!) */
-        IP_above_freertos = IP_SYSCALL - 1,
-
         /* Suggested interrupt priorities for popular peripherals */
         IP_default = 20,          /**< Default priority of most interrupts */
 

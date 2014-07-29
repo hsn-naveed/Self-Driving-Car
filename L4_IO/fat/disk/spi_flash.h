@@ -70,6 +70,12 @@ bool flash_supports_metadata(void);
 uint32_t flash_get_page_write_count(uint32_t page_number);
 /** @} */
 
+/**
+ * This will ERASE the entire chip, including the meta-data!!
+ * This can take several seconds to perform the chip erase...
+ */
+void flash_chip_erase(void);
+
 
 
 #ifdef __cplusplus

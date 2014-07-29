@@ -283,7 +283,7 @@ bool example_logger_qset::run(void *p)
  * This example shows how you can save your variables to flash memory such that
  * when the program or the board reboots, it will retrieve previous values.
  *
- * Be sure to set ENABLE_TELEMETRY to non-zero at sys_config.h
+ * Be sure to set SYS_CFG_ENABLE_TLM to non-zero at sys_config.h
  */
 example_nv_vars::example_nv_vars() :
     scheduler_task("nv_vars", 2 * 512, PRIORITY_LOW)
@@ -292,9 +292,9 @@ example_nv_vars::example_nv_vars() :
 }
 bool example_nv_vars::regTlm(void)
 {
-    #if ENABLE_TELEMETRY
+    #if SYS_CFG_ENABLE_TLM
         // Get the "disk" component list, this list is saved on disk periodically when variables change value
-        tlm_component *disk = tlm_component_get_by_name(DISK_TLM_NAME);
+        tlm_component *disk = tlm_component_get_by_name(SYS_CFG_DISK_TLM_NAME);
 
         // Register the variable as "disk variable" whose value will be saved
         TLM_REG_VAR(disk, mVarWeDontWantToLose, tlm_int);

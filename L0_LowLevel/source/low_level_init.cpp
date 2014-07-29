@@ -55,6 +55,16 @@ static void configure_flash_acceleration(unsigned int clock)
  */
 static void configure_interrupt_priorities()
 {
+    /* CPU core priorities */
+    NVIC_SetPriority(NonMaskableInt_IRQn,   IP_highest);
+    NVIC_SetPriority(MemoryManagement_IRQn, IP_highest);
+    NVIC_SetPriority(BusFault_IRQn,         IP_highest);
+    NVIC_SetPriority(UsageFault_IRQn,       IP_highest);
+    NVIC_SetPriority(SVCall_IRQn,           IP_highest);
+    NVIC_SetPriority(DebugMonitor_IRQn,     IP_highest);
+    NVIC_SetPriority(PendSV_IRQn,           IP_highest);
+    NVIC_SetPriority(SysTick_IRQn,          IP_highest);
+
     /* The following priorities are altered from default: */
     NVIC_SetPriority(UART0_IRQn,    IP_uart);
     NVIC_SetPriority(UART1_IRQn,    IP_uart);
@@ -70,7 +80,6 @@ static void configure_interrupt_priorities()
     NVIC_SetPriority(EINT2_IRQn,    IP_eint);
     NVIC_SetPriority(EINT3_IRQn,    IP_eint);
     NVIC_SetPriority(CAN_IRQn,      IP_can);
-    NVIC_SetPriority(RIT_IRQn,      IP_RIT);
 
     /* The following use default priorities (unless changed) */
     NVIC_SetPriority(WDT_IRQn,          IP_watchdog);
@@ -91,6 +100,7 @@ static void configure_interrupt_priorities()
     NVIC_SetPriority(MCPWM_IRQn,        IP_mcpwm);
     NVIC_SetPriority(QEI_IRQn,          IP_qei);
     NVIC_SetPriority(PLL1_IRQn,         IP_pll1);
+    NVIC_SetPriority(RIT_IRQn,          IP_RIT);
     NVIC_SetPriority(USBActivity_IRQn,  IP_usbact);
     NVIC_SetPriority(CANActivity_IRQn,  IP_canact);
 }
@@ -152,10 +162,13 @@ void low_level_init(void)
     sys_clock_configure();
     configure_flash_acceleration(sys_get_cpu_clock());
     configure_interrupt_priorities();
-    __enable_irq();
+
+    // __enable_irq();
+    __set_BASEPRI(0);
+    NVIC_SetPriorityGrouping(0);
 
     // Setup UART with minimum I/O functions
-    uart0_init(UART0_DEFAULT_RATE_BPS);
+    uart0_init(SYS_CFG_UART0_BPS);
     sys_set_outchar_func(uart0_putchar);
     sys_set_inchar_func(uart0_getchar);
 

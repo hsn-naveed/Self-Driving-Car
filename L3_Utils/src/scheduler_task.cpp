@@ -243,7 +243,7 @@ bool scheduler_init_all(bool register_internal_tlm)
     } while (0);
 
     /* Register telemetry for all tasks */
-    #if ENABLE_TELEMETRY
+    #if SYS_CFG_ENABLE_TLM
     dbg_print("*  Registering tasks' telemetry ...\n");
     do {
         task_list_t *e = gpTaskList;
@@ -275,7 +275,7 @@ bool scheduler_init_all(bool register_internal_tlm)
 
         dbg_print("*  Restoring disk telemetry\n");
         // Restore telemetry registered by "disk" component
-        FILE *fd = fopen(DISK_TLM_NAME, "r");
+        FILE *fd = fopen(SYS_CFG_DISK_TLM_NAME, "r");
         if (fd) {
             tlm_stream_decode_file(fd);
             fclose(fd);

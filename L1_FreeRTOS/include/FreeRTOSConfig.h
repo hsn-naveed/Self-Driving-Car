@@ -71,7 +71,7 @@
 #define configUSE_TICK_HOOK 		            0   ///< Every timer interrupt calls the tick function
 #define configUSE_MALLOC_FAILED_HOOK            1   ///< If memory runs out, the hook function is called
 
-#define configCPU_CLOCK_HZ			            (DESIRED_CPU_CLOCK)
+#define configCPU_CLOCK_HZ			            (SYS_CFG_DESIRED_CPU_CLK)
 #define configTICK_RATE_HZ			            ( 1000 )
 #define configMAX_PRIORITIES			        ( 4 )
 #define configENABLE_BACKWARD_COMPATIBILITY     0

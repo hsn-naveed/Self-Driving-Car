@@ -33,17 +33,22 @@
 /// We set this to the initial value, and decrease the frequency later if FreeRTOS starts to run
 uint32_t g_periodic_isr_time_value_us = LPC_SYS_TIME_1000US;
 
-/// Timer ISR will increment this upon the last UINT32 value
+/// Timer overflow interrupt will increment this upon the last UINT32 value
 static volatile uint16_t g_timer_rollover_count = 0;
 
-/// The timer to use for timer and background services
-static const lpc_timer_t g_sys_timer_source = lpc_timer1;
-
-/// Pointer to the timer struct
+/// Pointer to the timer struct based on g_sys_timer_source
 LPC_TIM_TypeDef *gp_timer_ptr = NULL;
 
 /**
- * This function is called periodically by timer ISR if FreeRTOS is not running
+ * The timer to use for timer and background services.
+ * We can use any timer, but timer1 is required for the IR receiver's signal decoding logic.
+ */
+static const lpc_timer_t g_sys_timer_source = SYS_CFG_SYS_TIMER;
+
+
+
+/**
+ * This function is called periodically by timer ISR
  */
 static void sys_background_service(void)
 {
@@ -53,55 +58,62 @@ static void sys_background_service(void)
      */
     wireless_service();
 
-    /**
-     * Small hack to support interrupts if FreeRTOS is not running :
-     * FreeRTOS API resets our base priority register, then all
-     * interrupts higher priority than IP_SYSCALL will not get locked out.
-     *   @see more notes at isr_priorities.h.  @see IP_SYSCALL
+    /* I used a small hack to reset base priority to zero periodically assuming that
+     * FreeRTOS API sets the base priority to non-zero, but it turned out that the
+     * problem was that the vPortEnterCritical() and vPortExitCritical() functions
+     * were using the critical nesting count variable that was not initialized to
+     * zero by the port.c file!
      */
-    __set_BASEPRI(0);
+     // __set_BASEPRI(0);
 }
 
 void lpc_sys_setup_system_timer(void)
 {
+    enum {
+        mr0_intr = (UINT32_C(1) << 0),
+        mr1_intr = (UINT32_C(1) << 3),
+        mr2_intr = (UINT32_C(1) << 6),
+    };
+
     const IRQn_Type timer_irq = lpc_timer_get_irq_num(g_sys_timer_source);
 
     // Initialize the timer structure pointer
     gp_timer_ptr = lpc_timer_get_struct(g_sys_timer_source);
 
-    // Setup timer and interrupt for rollover
+    // Setup timer to tick with a fine-grain resolution
     const uint32_t tick_value_for_one_micro_sec = 1;
     lpc_timer_enable(g_sys_timer_source, tick_value_for_one_micro_sec);
 
     /**
-     * Setup the match register to take care of the overflow.
-     * At this time, we will roll-over the timer back to zero.
+     * MR0: Setup the match register to take care of the overflow.
+     * Upon the roll-over, we increment the roll-over count and the timer restarts from zero.
      */
-    const uint32_t mr0_intr = (UINT32_C(1) << 0);
-    const uint32_t mr1_intr = (UINT32_C(1) << 3);
-
-    // Setup "overflow" match interrupt
     gp_timer_ptr->MR0 = UINT32_MAX;
 
-    // Setup periodic ISR interrupt
+    // MR1: Setup the periodic interrupt to do background processing
     gp_timer_ptr->MR1 = g_periodic_isr_time_value_us;
 
-    /* We need higher priority than FreeRTOS because FreeRTOS API masks the interrupts that
-     * are lower than the SYSCALL priority, so we need this to override it.
-     */
-    NVIC_SetPriority(timer_irq, IP_above_freertos);
+#if (1 == SYS_CFG_SYS_TIMER)
+    // MR2: IR code timeout when timer1 is used since IR receiver is tied to timer1 capture pin
+    gp_timer_ptr->MR2 = 0;
+#else
+    #warning "IR receiver will not work unless SYS_CFG_SYS_TIMER uses TIMER1, so set it to 1 if possible"
+#endif
+
+    /* Not using this anymore, see the note at sys_background_service() */
+    // NVIC_SetPriority(timer_irq, IP_above_freertos);
 
     // Enable the interrupts
     // TODO Setup capture interrupt for IR receiver
-    gp_timer_ptr->MCR = mr0_intr | mr1_intr;
+    gp_timer_ptr->MCR = (mr0_intr | mr1_intr | mr2_intr);
     NVIC_EnableIRQ(timer_irq);
 }
 
 uint64_t sys_get_uptime_us(void)
 {
-    uint64_t before    = 0;
-    uint64_t rollovers = 0;
-    uint64_t after     = 0;
+    uint32_t before    = 0;
+    uint32_t after     = 0;
+    uint32_t rollovers = 0;
 
     /**
      * Loop until we can safely read both the rollover value and the timer value.
@@ -117,13 +129,24 @@ uint64_t sys_get_uptime_us(void)
     } while (after < before);
 
     // each rollover is 2^32 or UINT32_MAX
-    return (after + (rollovers << 32));
+    return (((uint64_t)rollovers << 32) + after);
 }
 
 /**
  * Actual ISR function (see startup.cpp)
  */
+#if (0 == SYS_CFG_SYS_TIMER)
+void TIMER0_IRQHandler()
+#elif (1 == SYS_CFG_SYS_TIMER)
 void TIMER1_IRQHandler()
+#elif (2 == SYS_CFG_SYS_TIMER)
+void TIMER2_IRQHandler()
+#elif (3 == SYS_CFG_SYS_TIMER)
+void TIMER3_IRQHandler()
+#else
+#error "SYS_CFG_SYS_TIMER must be between 0-3 inclusively"
+void TIMERX_BAD_IRQHandler()
+#endif
 {
     enum {
         timer_mr0_intr   = (1 << 0),
@@ -136,13 +159,24 @@ void TIMER1_IRQHandler()
 
     const uint32_t intr_reason = gp_timer_ptr->IR;
 
+#if (1 == SYS_CFG_SYS_TIMER)
     /* TODO: Call capture ISR callback for IR receiver */
-    if(intr_reason & timer_capt0_intr)
+    if (intr_reason & timer_capt0_intr)
     {
         gp_timer_ptr->IR = timer_capt0_intr;
+
+        // Setup timeout of IR signal (unless we reset it again)
+        gp_timer_ptr->MR2 = 10000 + gp_timer_ptr->TC;
     }
-    /* MR0 is used for timer rollover count */
-    else if(intr_reason & timer_mr0_intr)
+    /* TODO MR2: End of IR capture (no IR capture after initial IR signal) */
+    else if (intr_reason & timer_mr2_intr)
+    {
+        gp_timer_ptr->IR = timer_mr2_intr;
+    }
+    /* MR0 is used for the timer rollover count */
+    else
+#endif
+    if(intr_reason & timer_mr0_intr)
     {
         gp_timer_ptr->IR = timer_mr0_intr;
         ++g_timer_rollover_count;
@@ -159,13 +193,13 @@ void TIMER1_IRQHandler()
         if ((taskSCHEDULER_RUNNING != xTaskGetSchedulerState())){
             sys_background_service();
         }
-        else {
-            // If FreeRTOS is running, then decrease the frequency of the periodic ISR because
-            // mesh service is performed by FreeRTOS task, and the only other thing we need
-            // to do periodically is the watchdog feed.
-            if (g_periodic_isr_time_value_us != LPC_SYS_TIME_1000US) {
-                g_periodic_isr_time_value_us = 1000 * LPC_SYS_TIME_1000US;
-            }
+        /**
+         * If FreeRTOS is running, then decrease the frequency of the periodic ISR because
+         * mesh service is performed by FreeRTOS task, and the only other thing we need to
+         * do periodically is the watchdog feed.
+         */
+        else if (g_periodic_isr_time_value_us != LPC_SYS_TIME_1000US) {
+             g_periodic_isr_time_value_us = 1000 * LPC_SYS_TIME_1000US;
         }
 
         /* If no one feeds watchdog interrupt, we will watchdog reset.  We are using a periodic ISR
@@ -197,7 +231,7 @@ void sys_get_mem_info_str(char buffer[280])
             "Next Heap ptr    : 0x%08X\n"
             "Last sbrk() ptr  : 0x%08X\n"
             "Last sbrk() size : %u\n"
-            "Num sbrk() calls : %u\n",
+            "Num  sbrk() calls: %u\n",
 
             (int)info.used_global, (int)info.used_heap, (int)info.avail_heap, (int)info.avail_sys,
             (unsigned int)info.next_malloc_ptr,

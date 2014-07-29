@@ -35,7 +35,7 @@ __attribute__((used)) void ____bring_in_floats____(void)
      * We can also give it an option for linker argument, but it is more
      * inconvenient to do it that way (in project properties).
      */
-    #if (0 == USE_REDUCED_PRINTF)
+    #if (0 == SYS_CFG_REDUCED_PRINTF)
     asm (".global _printf_float");
     asm (".global _scanf_float");
     #endif

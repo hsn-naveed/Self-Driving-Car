@@ -94,7 +94,7 @@ typedef struct {
  * }
  * @endcode
  *
- * If ENABLE_TELEMETRY is enabled, then the WIFI SSID and Passphrase is saved
+ * If SYS_CFG_ENABLE_TLM is enabled, then the WIFI SSID and Passphrase is saved
  * to disk, which allows you to change the settings during run-time and these
  * settings are preserved across power cycle.  To change these keys, you can
  * use terminal command :

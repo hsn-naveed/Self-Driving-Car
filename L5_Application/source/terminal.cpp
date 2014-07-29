@@ -57,7 +57,7 @@ terminalTask::terminalTask(uint8_t priority) :
 
 bool terminalTask::regTlm(void)
 {
-    #if ENABLE_TELEMETRY
+    #if SYS_CFG_ENABLE_TLM
     return (TLM_REG_VAR(tlm_component_get_by_name("debug"), mCommandCount, tlm_uint) &&
             TLM_REG_VAR(tlm_component_get_by_name("debug"), mDiskTlmSize, tlm_uint));
     #else
@@ -116,7 +116,7 @@ bool terminalTask::taskEntry()
                                              "Write buffer to file: commit <filename> <file offset> <num bytes from buffer>");
     cp.addHandler(flashProgHandler, "flash", "'flash <filename>' Will flash CPU with this new binary file");
 
-    #if (ENABLE_TELEMETRY)
+    #if (SYS_CFG_ENABLE_TLM)
     cp.addHandler(telemetryHandler, "telemetry", "Outputs registered telemetry: "
                                                  "'telemetry save' : Saves disk tel\n"
                                                  "'telemetry <comp. name> <name> <value>' to set a telemetry variable\n"
@@ -125,7 +125,7 @@ bool terminalTask::taskEntry()
 
     // Initialize Interrupt driven version of getchar & putchar
     Uart0& uart0 = Uart0::getInstance();
-    bool success = uart0.init(UART0_DEFAULT_RATE_BPS, 32, UART0_TXQ_SIZE);
+    bool success = uart0.init(SYS_CFG_UART0_BPS, 32, SYS_CFG_UART0_TXQ_SIZE);
     uart0.setReady(true);
     sys_set_inchar_func(uart0.getcharIntrDriven);
     sys_set_outchar_func(uart0.putcharIntrDriven);
@@ -141,11 +141,11 @@ bool terminalTask::taskEntry()
     } while(0);
     #endif
 
-    #if ENABLE_TELEMETRY
+    #if SYS_CFG_ENABLE_TLM
     /* Telemetry should be registered at this point, so initialize the binary
      * telemetry space that we periodically check to save data to disk
      */
-    tlm_component *disk = tlm_component_get_by_name(DISK_TLM_NAME);
+    tlm_component *disk = tlm_component_get_by_name(SYS_CFG_DISK_TLM_NAME);
     mDiskTlmSize = tlm_binary_get_size_one(disk);
     mpBinaryDiskTlm = new char[mDiskTlmSize];
     if (success) {
@@ -211,8 +211,8 @@ bool terminalTask::saveDiskTlm(void)
 {
     bool changed = false;
 
-    #if ENABLE_TELEMETRY
-    tlm_component *disk = tlm_component_get_by_name(DISK_TLM_NAME);
+    #if SYS_CFG_ENABLE_TLM
+    tlm_component *disk = tlm_component_get_by_name(SYS_CFG_DISK_TLM_NAME);
 
     /* Size of telemetry shouldn't change */
     if (0 == mDiskTlmSize || mDiskTlmSize != tlm_binary_get_size_one(disk)) {
@@ -224,7 +224,7 @@ bool terminalTask::saveDiskTlm(void)
         changed = true;
         puts("Disk variables changed...");
 
-        FILE *file = fopen(DISK_TLM_NAME, "w");
+        FILE *file = fopen(SYS_CFG_DISK_TLM_NAME, "w");
         if (file) {
             // Only update variables if we could open the file
             tlm_binary_get_one(disk, mpBinaryDiskTlm);

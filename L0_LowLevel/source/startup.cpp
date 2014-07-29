@@ -348,7 +348,7 @@ void ResetISR(void)
     main();             // Finally call main()
 
     // In case main() exits:
-    uart0_init(UART0_DEFAULT_RATE_BPS);
+    uart0_init(SYS_CFG_UART0_BPS);
     u0_dbg_put("main() should never exit on this system\n");
     while (1) {
         ;

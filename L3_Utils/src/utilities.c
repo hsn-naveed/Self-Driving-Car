@@ -75,6 +75,7 @@ char is_freertos_running()
     return (taskSCHEDULER_RUNNING == xTaskGetSchedulerState());
 }
 
+#ifdef SYS_CFG_LOG_BOOT_INFO_FILENAME
 void log_boot_info(const char *pExtraInfo)
 {
     char logMsg[256] = { 0 };
@@ -95,7 +96,7 @@ void log_boot_info(const char *pExtraInfo)
 
     FIL file;
     unsigned int bytesWritten = 0;
-    if (FR_OK == f_open(&file, LOG_BOOT_INFO_FILENAME, FA_OPEN_ALWAYS | FA_WRITE))
+    if (FR_OK == f_open(&file, SYS_CFG_LOG_BOOT_INFO_FILENAME, FA_OPEN_ALWAYS | FA_WRITE))
     {
         if(FR_OK == f_lseek(&file, f_size(&file))) {
             f_write(&file, logMsg, strlen(logMsg), &bytesWritten);
@@ -107,3 +108,4 @@ void log_boot_info(const char *pExtraInfo)
         puts("Error writing boot info");
     }
 }
+#endif

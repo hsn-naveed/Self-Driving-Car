@@ -59,7 +59,7 @@ static CMD_HANDLER_FUNC(wsStreamHandler)
          * therefore you may want to look at the possible suggestions :
          *   - Use faster UART (115200bps, but you still won't match Nordic's 2000Kbps)
          *   - Use higher UART Tx queue size (but you may still overflow eventually)
-         *     See UART0_TXQ_SIZE at sys_config.h
+         *     See SYS_CFG_UART0_TXQ_SIZE at sys_config.h
          *   - Increase the WIRELESS_RX_QUEUE_SIZE at sys_config.h and increase outBlockTime
          *     This will guarantee you can output 24 * N bytes before we overflow data.
          *   - At nrf_stream.cpp, slow down the output rate.  The best hack is to

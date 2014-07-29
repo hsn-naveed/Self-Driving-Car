@@ -78,12 +78,12 @@ void high_level_init(void)
      */
     adc0_init();
     ssp1_init();
-    ssp0_init(SPI0_CLOCK_SPEED_MHZ);
-    if (!I2C2::getInstance().init(I2C2_CLOCK_SPEED_KHZ)) {
+    ssp0_init(SYS_CFG_SPI0_CLK_MHZ);
+    if (!I2C2::getInstance().init(SYS_CFG_I2C2_CLK_KHZ)) {
         puts("ERROR: Possible short on SDA or SCL wire (I2C2)!");
     }
 
-    #if ENABLE_TELEMETRY
+    #if SYS_CFG_ENABLE_TLM
         /* Add default telemetry components */
         tlm_component_add("disk");
         tlm_component_add("debug");
@@ -102,11 +102,11 @@ void high_level_init(void)
      * close COM Port at Hyperload and Open it at Hercules.
      * Since RIT is setup to reset watchdog, we can delay without watchdog reset.
      */
-    delay_ms(STARTUP_DELAY_MS);
+    delay_ms(SYS_CFG_STARTUP_DELAY_MS);
     hl_print_line();
 
     /* Print boot info */
-#if USE_REDUCED_PRINTF
+#if SYS_CFG_REDUCED_PRINTF
     const unsigned int cpuClock = sys_get_cpu_clock();
     const unsigned int sig = cpuClock / (1000 * 1000);
     const unsigned int fraction = (cpuClock - (sig*1000*1000)) / 1000;
@@ -133,9 +133,11 @@ void high_level_init(void)
      * If Flash is not mounted, it is probably a new board and the flash is not
      * formatted so format it, alert the user, and try to re-mount it
      */
-    if(!hl_mount_storage(Storage::getFlashDrive(), " Flash "))
+    if (!hl_mount_storage(Storage::getFlashDrive(), " Flash "))
     {
-        printf("FLASH not formatted, formatting now ... ");
+        printf("Erasing and formatting SPI flash, this can take a while ...\n");
+
+        flash_chip_erase();
         printf("%s\n", FR_OK == Storage::getFlashDrive().format() ? "Done" : "Error");
 
         if (!hl_mount_storage(Storage::getFlashDrive(), " Flash "))
@@ -149,10 +151,10 @@ void high_level_init(void)
     hl_mount_storage(Storage::getSDDrive(), "SD Card");
 
 	/* After SD card is initted, set desired speed for spi1 */
-    ssp1_set_max_clock(SPI1_CLOCK_SPEED_MHZ);
+    ssp1_set_max_clock(SYS_CFG_SPI1_CLK_MHZ);
     hl_print_line();
 
-    #if LOG_BOOT_INFO_TO_FILE
+    #ifdef SYS_CFG_LOG_BOOT_INFO_FILENAME
     log_boot_info(__DATE__);
     #endif
 
