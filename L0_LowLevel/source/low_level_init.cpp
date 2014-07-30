@@ -161,8 +161,12 @@ void low_level_init(void)
 
     /* Setup default interrupt priorities that will work with FreeRTOS */
     configure_interrupt_priorities();
+
+    /* These methods shouldn't be needed but doing it anyway to be safe */
     NVIC_SetPriorityGrouping(0);
     __set_BASEPRI(0);
+    __enable_fault_irq();
+    __enable_irq();
 
     /* Setup UART with minimal I/O functions */
     uart0_init(SYS_CFG_UART0_BPS);

@@ -47,7 +47,7 @@
 
 
 /// Just prints a line to separate the output printed by high level initialization
-static void hl_print_line() { puts("------------------------------------------------------"); }
+static void hl_print_line() { puts("----------------------------------------------------------"); }
 
 /**
  * Mounts the storage drive.
@@ -99,9 +99,23 @@ void high_level_init(void)
         puts("ERROR: Possible short on SDA or SCL wire (I2C2)!");
     }
 
-    /* After the Nordic SPI is initialized, initialize the wireless system otherwise
+    /**
+     * This timer does several things:
+     *      - Makes delay_ms() and delay_us() methods functional.
+     *      - Provides run-time counter for FreeRTOS task statistics (cpu usage)
+     *      - Provides timer needed by SD card init() and mesh network: nordic driver uses delay_us()
+     *
+     * The slightly tricky part is that the mesh networking task will start to be serviced every
+     * one millisecond, so initialize this and immediately initialize the wireless (mesh/nordic)
+     * so by the time 1ms elapses, the pointers are initalized (and not NULL).
+     */
+    lpc_sys_setup_system_timer();
+
+    /* After the Nordic SPI is initialized, initialize the wireless system asap otherwise
      * the background task may access NULL pointers of the mesh networking task.
+     *
      * @warning Need SSP0 init before initializing nordic wireless.
+     * @warning Nordic uses timer delay, so we need the timer setup.
      */
     if (!wireless_init()) {
         puts("ERROR: Failed to initialize wireless");
@@ -112,13 +126,6 @@ void high_level_init(void)
         tlm_component_add(SYS_CFG_DISK_TLM_NAME);
         tlm_component_add(SYS_CFG_DEBUG_DLM_NAME);
     #endif
-
-    /**
-     * Set-up the timer so that delay_ms(us) functions will work.
-     * This timer is also used by FreeRTOS run time statistics.
-     * This is needed early since SD card init() also relies on system timer services.
-     */
-    lpc_sys_setup_system_timer();
 
     /**
      * User configured startup delay to close Hyperload COM port and re-open it at Hercules serial window.
