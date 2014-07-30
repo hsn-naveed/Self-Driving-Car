@@ -20,7 +20,7 @@
  * @file
  * @brief I2C2 Interrupt driven IO driver
  *
- * 10-10-2013 : Removed read vs. write mode variable
+ * 20131010 : Removed read vs. write mode variable
  */
 #ifndef I2C2_HPP_
 #define I2C2_HPP_

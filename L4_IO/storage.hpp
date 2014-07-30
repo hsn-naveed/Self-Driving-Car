@@ -18,7 +18,7 @@
 
 /**
  * @file
- *
+ * @ingroup BoardIO
  */
  
 #ifndef STORAGE_HPP__

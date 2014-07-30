@@ -46,11 +46,33 @@
 
 
 
+/// Just prints a line to separate the output printed by high level initialization
 static void hl_print_line() { puts("------------------------------------------------------"); }
+
+/**
+ * Mounts the storage drive.
+ * @param [in] drive     The reference to the drive to mount
+ * @param [in] pDescStr  The description of the storage to print out while mounting
+ * @returns true if the drive was successfully mounted
+ */
 static bool hl_mount_storage(FileSystemObject& drive, const char* pDescStr);
+
+/// Prints out the boot information
+static void hl_print_boot_info(void);
+
+/// Initializes the board input/output devices and returns true if successful
 static bool hl_init_board_io(void);
+
+/// Reads the node address file and sets the wireless node address from the file data
 static void hl_wireless_set_addr_from_file(void);
+
+/**
+ * Prints out board ID information and if no board ID is found, gives option
+ * to the user to program the permanent board ID
+ */
 static void hl_handle_board_id(void);
+
+/// Prints out the board programming info (how many times the board was programmed etc.)
 static void hl_show_prog_info(void);
 
 
@@ -77,8 +99,8 @@ void high_level_init(void)
         puts("ERROR: Possible short on SDA or SCL wire (I2C2)!");
     }
 
-    /* After Nordic SPI is initialized, initialize the wireless system otherwise the background
-     * task may access NULL pointers of the mesh networking task.
+    /* After the Nordic SPI is initialized, initialize the wireless system otherwise
+     * the background task may access NULL pointers of the mesh networking task.
      * @warning Need SSP0 init before initializing nordic wireless.
      */
     if (!wireless_init()) {
@@ -88,7 +110,7 @@ void high_level_init(void)
     /* Add default telemetry components if telemetry is enabled */
     #if SYS_CFG_ENABLE_TLM
         tlm_component_add(SYS_CFG_DISK_TLM_NAME);
-        tlm_component_add("debug");
+        tlm_component_add(SYS_CFG_DEBUG_DLM_NAME);
     #endif
 
     /**
@@ -105,29 +127,8 @@ void high_level_init(void)
     delay_ms(SYS_CFG_STARTUP_DELAY_MS);
     hl_print_line();
 
-    /* Print boot info regardless of the printf options (if it prints float or not) */
-    #if SYS_CFG_REDUCED_PRINTF
-        const unsigned int cpuClock = sys_get_cpu_clock();
-        const unsigned int sig = cpuClock / (1000 * 1000);
-        const unsigned int fraction = (cpuClock - (sig*1000*1000)) / 1000;
-        printf("System Boot @ %u.%u Mhz\n", sig, fraction);
-    #else
-        printf("System Boot @ %.3f Mhz\n", sys_get_cpu_clock() / (1000 * 1000.0f));
-    #endif
-
-    if(boot_watchdog_recover == sys_get_boot_type()) {
-        char taskName[sizeof(FAULT_LAST_RUNNING_TASK_NAME) * 2] = { 0 };
-        memcpy(&taskName[0], (void*) &(FAULT_LAST_RUNNING_TASK_NAME), sizeof(FAULT_LAST_RUNNING_TASK_NAME));
-
-        hl_print_line();
-        printf("System rebooted after crash.  Relevant info:\n"
-               "PC: 0x%08X.  LR: 0x%08X.  PSR: 0x%08X\n"
-               "Possible last running OS Task: '%s'\n",
-                (unsigned int)FAULT_PC, (unsigned int)FAULT_LR, (unsigned int)FAULT_PSR,
-                taskName);
-        hl_print_line();
-        delay_ms(SYS_CFG_CRASH_STARTUP_DELAY_MS);
-    }
+    /* Print out CPU speed and what caused the system boot */
+    hl_print_boot_info();
 
     /**
      * If Flash is not mounted, it is probably a new board and the flash is not
@@ -221,6 +222,33 @@ static bool hl_mount_storage(FileSystemObject& drive, const char* pDescStr)
     }
 
     return mounted;
+}
+
+static void hl_print_boot_info(void)
+{
+    /* Print boot info regardless of the printf options (if it prints float or not) */
+    #if SYS_CFG_REDUCED_PRINTF
+        const unsigned int cpuClock = sys_get_cpu_clock();
+        const unsigned int sig = cpuClock / (1000 * 1000);
+        const unsigned int fraction = (cpuClock - (sig*1000*1000)) / 1000;
+        printf("System Boot @ %u.%u Mhz\n", sig, fraction);
+    #else
+        printf("System Boot @ %.3f Mhz\n", sys_get_cpu_clock() / (1000 * 1000.0f));
+    #endif
+
+    if(boot_watchdog_recover == sys_get_boot_type()) {
+        char taskName[sizeof(FAULT_LAST_RUNNING_TASK_NAME) * 2] = { 0 };
+        memcpy(&taskName[0], (void*) &(FAULT_LAST_RUNNING_TASK_NAME), sizeof(FAULT_LAST_RUNNING_TASK_NAME));
+
+        hl_print_line();
+        printf("System rebooted after crash.  Relevant info:\n"
+               "PC: 0x%08X.  LR: 0x%08X.  PSR: 0x%08X\n"
+               "Possible last running OS Task: '%s'\n",
+                (unsigned int)FAULT_PC, (unsigned int)FAULT_LR, (unsigned int)FAULT_PSR,
+                taskName);
+        hl_print_line();
+        delay_ms(SYS_CFG_CRASH_STARTUP_DELAY_MS);
+    }
 }
 
 static bool hl_init_board_io(void)

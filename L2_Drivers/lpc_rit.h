@@ -27,6 +27,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "lpc_sys.h" // void_func_t
@@ -36,13 +37,13 @@ extern "C" {
  * @param [in] function  The void function name
  * @param [in] time_ms   The time in milliseconds
  */
-void sys_rit_setup(void_func_t function, uint32_t time_ms);
+void rit_enable(void_func_t function, uint32_t time_ms);
 
 /// Disables the RIT setup by sys_rit_setup()
-void sys_rit_disable(void);
+void rit_disable(void);
 
 /// @returns true if the RIT is running.
-bool sys_rit_running(void);
+bool rit_is_running(void);
 
 
 

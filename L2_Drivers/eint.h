@@ -41,9 +41,9 @@ typedef enum {
  * first if multiple interrupts occur at the same time.  Each call will allocate
  * 16 bytes for the interrupt service entry.
  * @note EINT3 shares interrupt with Port0 and Port2
- * @param pin_num  The pin number from 0-31.
- * @param type     The type of interrupt.
- * @param func     The callback function.
+ * @param [in] pin_num  The pin number from 0-31.
+ * @param [in] type     The type of interrupt.
+ * @param [in] func     The callback function.
  */
 void eint3_enable_port0(uint8_t pin_num, eint_intr_t type, void_func_t func);
 

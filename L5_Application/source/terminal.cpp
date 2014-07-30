@@ -58,8 +58,8 @@ terminalTask::terminalTask(uint8_t priority) :
 bool terminalTask::regTlm(void)
 {
     #if SYS_CFG_ENABLE_TLM
-    return (TLM_REG_VAR(tlm_component_get_by_name("debug"), mCommandCount, tlm_uint) &&
-            TLM_REG_VAR(tlm_component_get_by_name("debug"), mDiskTlmSize, tlm_uint));
+    return (TLM_REG_VAR(tlm_component_get_by_name(SYS_CFG_DEBUG_TLM_NAME), mCommandCount, tlm_uint) &&
+            TLM_REG_VAR(tlm_component_get_by_name(SYS_CFG_DEBUG_TLM_NAME), mDiskTlmSize, tlm_uint));
     #else
     return true;
     #endif

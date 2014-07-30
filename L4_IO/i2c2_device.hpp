@@ -36,9 +36,6 @@
  * @ingroup BoardIO
  *
  */
-
-
-
 class i2c2_device
 {
 protected:

@@ -18,6 +18,7 @@
 
 /**
  * @file
+ * @ingroup BoardIO
  */
  
 #ifndef LIGHT_SENSOR_HPP_

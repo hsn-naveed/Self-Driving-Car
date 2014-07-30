@@ -16,7 +16,7 @@
  *          p r e e t . w i k i @ g m a i l . c o m
  */
  
- #include <stdio.h>
+#include <stdio.h>
 
 #include "examples.hpp"
 #include "rtc_alarm.h"
@@ -290,6 +290,7 @@ example_nv_vars::example_nv_vars() :
 {
     mVarWeDontWantToLose = 0;
 }
+
 bool example_nv_vars::regTlm(void)
 {
     #if SYS_CFG_ENABLE_TLM
@@ -306,6 +307,7 @@ bool example_nv_vars::regTlm(void)
     // that was saved to the disk.
     return true;
 }
+
 bool example_nv_vars::run(void *p)
 {
     // Change the variable every 60 seconds :
@@ -330,6 +332,7 @@ queue_tx::queue_tx() :
 {
     /* Nothing to do */
 }
+
 bool queue_tx::init(void)
 {
     // call our run() every second :
@@ -342,6 +345,7 @@ bool queue_tx::init(void)
     QueueHandle_t my_queue = xQueueCreate(1, sizeof(int));
     return addSharedObject("my_queue", my_queue);
 }
+
 bool queue_tx::run(void *p)
 {
     // Send only 10 samples, then suspend both tasks.

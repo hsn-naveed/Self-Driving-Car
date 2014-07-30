@@ -33,7 +33,7 @@
 /// We set this to the initial value, and decrease the frequency later if FreeRTOS starts to run
 uint32_t g_periodic_isr_time_value_us = LPC_SYS_TIME_1000US;
 
-/// Timer overflow interrupt will increment this upon the last UINT32 value
+/// Timer overflow interrupt will increment this upon the last UINT32 value, 16-bit is enough for many years!
 static volatile uint16_t g_timer_rollover_count = 0;
 
 /// Pointer to the timer struct based on g_sys_timer_source
@@ -48,21 +48,19 @@ static const lpc_timer_t g_sys_timer_source = SYS_CFG_SYS_TIMER;
 
 
 /**
- * This function is called periodically by timer ISR
+ * This function is called periodically by the timer ISR
  */
-static void sys_background_service(void)
+static inline void sys_background_service(void)
 {
-    /* FreeRTOS task is used to service the wireless_service() function,
-     * otherwise if FreeRTOS is not running, timer ISR will call this
-     * function to carry out mesh networking logic.
+    /* FreeRTOS task is used to service the wireless_service() function, otherwise if FreeRTOS
+     * is not running, timer ISR will call this function to carry out mesh networking logic.
      */
     wireless_service();
 
-    /* I used a small hack to reset base priority to zero periodically assuming that
-     * FreeRTOS API sets the base priority to non-zero, but it turned out that the
-     * problem was that the vPortEnterCritical() and vPortExitCritical() functions
-     * were using the critical nesting count variable that was not initialized to
-     * zero by the port.c file!
+    /* I used a small hack to reset base priority to zero periodically incorrectly assuming that
+     * FreeRTOS API sets the base priority to non-zero, but it turned out that the problem was
+     * that the vPortEnterCritical() and vPortExitCritical() functions were using the critical
+     * nesting count variable that was not initialized to zero by the port.c file!
      */
      // __set_BASEPRI(0);
 }
@@ -75,14 +73,15 @@ void lpc_sys_setup_system_timer(void)
         mr2_intr = (UINT32_C(1) << 6),
     };
 
+    // Get the IRQ number of the timer to enable the interrupt
     const IRQn_Type timer_irq = lpc_timer_get_irq_num(g_sys_timer_source);
 
     // Initialize the timer structure pointer
     gp_timer_ptr = lpc_timer_get_struct(g_sys_timer_source);
 
-    // Setup timer to tick with a fine-grain resolution
-    const uint32_t tick_value_for_one_micro_sec = 1;
-    lpc_timer_enable(g_sys_timer_source, tick_value_for_one_micro_sec);
+    // Setup the timer to tick with a fine-grain resolution
+    const uint32_t one_micro_second = 1;
+    lpc_timer_enable(g_sys_timer_source, one_micro_second);
 
     /**
      * MR0: Setup the match register to take care of the overflow.
@@ -105,7 +104,12 @@ void lpc_sys_setup_system_timer(void)
 
     // Enable the interrupts
     // TODO Setup capture interrupt for IR receiver
+#if (1 == SYS_CFG_SYS_TIMER)
     gp_timer_ptr->MCR = (mr0_intr | mr1_intr | mr2_intr);
+#else
+    gp_timer_ptr->MCR = (mr0_intr | mr1_intr);
+#endif
+
     NVIC_EnableIRQ(timer_irq);
 }
 
@@ -117,9 +121,10 @@ uint64_t sys_get_uptime_us(void)
 
     /**
      * Loop until we can safely read both the rollover value and the timer value.
-     * When timer rolls over, the TC value will start from zero, and the "after"
+     * When the timer rolls over, the TC value will start from zero, and the "after"
      * value will be less than the before value in which case, we will loop again
-     * and pick up the new rollover count.
+     * and pick up the new rollover count.  This avoid critical section and simplifies
+     * the logic of reading higher 16-bit (roll-over) and lower 32-bit (timer value).
      */
     do
     {
@@ -133,7 +138,7 @@ uint64_t sys_get_uptime_us(void)
 }
 
 /**
- * Actual ISR function (see startup.cpp)
+ * Actual ISR function (@see startup.cpp)
  */
 #if (0 == SYS_CFG_SYS_TIMER)
 void TIMER0_IRQHandler()

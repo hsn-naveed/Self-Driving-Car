@@ -67,9 +67,9 @@ class PWM
         bool set(float percent);
 
     private:
-        PWM(); ///< Disallow default constructor
-        const pwmType mPwm;
-        static unsigned int msTcMax;
+        PWM();                          ///< Disallow default constructor
+        const pwmType mPwm;             ///< The PWM channel number set by constructor
+        static unsigned int msTcMax;    ///< PWM TC max (this controls the frequency)
 };
 
 

@@ -87,7 +87,9 @@ extern "C" void * _sbrk(size_t req_bytes)
         ret_mem = 0;
     }
 
-    /* Seems like newlib is calling us twice with req_bytes set to zero, so do not increment counters for this case */
+    /* Seems like newlib is calling us twice, one for real allocation and once more
+     * with req_bytes set to zero, so do not increment counters for this case
+     */
     if (req_bytes > 0) {
         ++g_sbrk_calls;
         g_last_sbrk_ptr = ret_mem;

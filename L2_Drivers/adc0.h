@@ -20,8 +20,8 @@
  * @file
  * @ingroup Drivers
  *
- * 12/02/2013 : Enclosed adc conversion inside critical section
- * 11/01/2013 : Fix possible divide by zero.  i was set to 0 during loop init
+ * 20131202 : Enclosed adc conversion inside critical section
+ * 20131101 : Fix possible divide by zero.  i was set to 0 during loop init
  */
 #ifndef ADC0_H_
 #define ADC0_H_

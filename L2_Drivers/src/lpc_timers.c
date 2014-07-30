@@ -47,5 +47,5 @@ uint32_t lpc_timer_get_value(const lpc_timer_t timer)
 
 void lpc_timer_set_value(const lpc_timer_t timer, uint32_t value)
 {
-    (lpc_timer_get_struct(timer)->TC) = value;
+    lpc_timer_get_struct(timer)->TC = value;
 }

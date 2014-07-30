@@ -18,6 +18,7 @@
 
 /**
  * @file
+ * @ingroup BoardIO
  */
  
 #ifndef LED_HPP__

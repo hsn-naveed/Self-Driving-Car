@@ -18,6 +18,7 @@
 
 /**
  * @file
+ * @ingroup BoardIO
  */
  
 #ifndef IR_SENSOR_HPP_

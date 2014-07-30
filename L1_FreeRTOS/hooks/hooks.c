@@ -24,15 +24,13 @@ void vApplicationStackOverflowHook( TaskHandle_t *pxTask, char *pcTaskName )
 	sys_reboot();
 }
 
-/* Tick hook is defined at high_level_init.cpp */
-#if 0
+/* FreeRTOS tick hook*/
 #if configUSE_TICK_HOOK
 void vApplicationTickHook( void )
 {
 	// This function is called at every OS Tick
 	// DO NOT PUT A LOT OF CODE HERE.  KEEP IT SHORT AND SIMPLE (if you really need it)
 }
-#endif
 #endif
 
 #if( configUSE_MALLOC_FAILED_HOOK == 1 )

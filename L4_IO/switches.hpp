@@ -18,7 +18,7 @@
 
 /**
  * @file
- *
+ * @ingroup BoardIO
  */
 #ifndef SWITCHES_HPP__
 #define SWITCHES_HPP__

@@ -20,7 +20,7 @@
  * @file
  * @ingroup Drivers
  *
- * This is a simple CAN driver that optionally utilize the FullCAN capability.
+ * This is a simple CAN driver that optionally utilizes the FullCAN capability.
  * FullCAN is hardware filtering of the CAN messages and the configured messages
  * are stored directly into the CAN RAM (separate 2K RAM) without CPU intervention.
  *
@@ -163,7 +163,17 @@ bool CAN_rx(can_t can, can_msg_t *msg, uint32_t timeout_ms);
  * The transmit queue is only used if all three buffers of the CAN hardware are busy,
  * in which case, the transmission complete interrupt will later send the queued msg.
  * @return  If CAN message was either sent, or queued, true is returned.  If all the
- *          hardware buffers are full, and the queue is full, then false is returned.
+ *          hardware buffers are full, and the queue is full, then false is returned
+ *          if timeout occurs waiting for the queue to empty.
+ *
+ * @code
+ *      can_msg_t msg;
+ *      msg.msg_id = 0x123;
+ *      msg.frame_fields.is_29bit = 1;
+ *      msg.frame_fields.data_len = 8;       // Send 8 bytes
+ *      msg.data.qword = 0x1122334455667788; // Write all 8 bytes of data at once
+ *      CAN_tx(can_1, &msg, portMAX_DELAY);
+ * @endcode
  */
 bool CAN_tx(can_t can, can_msg_t *msg, uint32_t timeout_ms);
 

@@ -66,6 +66,7 @@ extern "C" {
 #define SYS_CFG_LOGGER_TASK_PRIORITY    0           ///< The priority of the logger task
 #define SYS_CFG_ENABLE_TLM              0           ///< Enable telemetry system. C_FILE_IO forced enabled if enabled
 #define SYS_CFG_DISK_TLM_NAME           "disk"      ///< Filename to save "disk" telemetry variables
+#define SYS_CFG_DEBUG_TLM_NAME          "debug"     ///< Name of the debug telemetry component
 #define SYS_CFG_ENABLE_CFILE_IO         0           ///< Allow stdio fopen() fclose() to redirect to ff.h
 #define SYS_CFG_MAX_FILES_OPENED        3           ///< Maximum files that can be opened at once
 

@@ -19,7 +19,6 @@
 /**
  * @file
  * @brief  Provides the following system services :
- *              - RIT (repetitive interrupt)
  *              - Memory info of the system.
  *              - Configure function to use for printf/scanf
  *              - Get boot type and time
@@ -103,7 +102,9 @@ void sys_set_inchar_func(char_func_t func);
 
 
 /**
- * Sets up the system timer that drives the time needed to get uptime in ms and us.
+ * Sets up the system timer that drives the time needed to get uptime in ms and us
+ * along with some background services.
+ * @see SYS_CFG_SYS_TIMER at sys_config.h
  */
 void lpc_sys_setup_system_timer(void);
 

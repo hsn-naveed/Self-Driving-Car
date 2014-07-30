@@ -19,8 +19,8 @@
 /**
  * @file rtc.h
  * @ingroup Drivers
- * @brief   This file provides access to the System's Real-time Clock that maintains
- *          time even through power-loss granted that RTC Backup battery is installed.
+ * @brief   This file provides access to the System's Real-time Clock that maintains time
+ *          even through power-loss granted that the RTC Backup battery is installed.
  */
 #ifndef RTC_H
 #define RTC_H
@@ -37,7 +37,7 @@ extern "C" {
  * The un-named chars are just for padding according to LPC CTIME registers.
  */
 typedef struct {
-    /*    - Data-           -Padding-  */
+    /*    - Data -----     - Padding --- */
     uint32_t sec  : 6;      uint32_t : 2;
     uint32_t min  : 6;      uint32_t : 2;
     uint32_t hour : 5;      uint32_t : 3;
@@ -66,14 +66,20 @@ typedef enum {
 /// Initialize the RTC
 void rtc_init (void);
 
-/// Get the latest time in RTC structure
+/// @returns the latest time in RTC structure
 rtc_t rtc_gettime (void);
 
-/// Sets the RTC time
+/**
+ * Sets the RTC time
+ * @param [in] rtc_t  The rtc time structure pointer
+ */
 void rtc_settime (const rtc_t*);
 
-/// Get the RTC time as string in the format: "Wed Feb 13 15:46:11 2013"
-/// @returns the same pointer back as parameter.
+/**
+ * Get the RTC time as string in the format: "Wed Feb 13 15:46:11 2013"
+ * @returns the pointer to the time string (do not modify it)
+ * @warn This method is not thread safe
+ */
 const char* rtc_get_date_time_str(void);
 
 

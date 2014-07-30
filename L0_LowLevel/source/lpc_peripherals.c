@@ -31,10 +31,10 @@ void lpc_pconp(lpc_pconp_t peripheral, bool on)
 {
     vPortEnterCritical();
     if (on) {
-        LPC_SC->PCONP |= (1 << peripheral);
+        LPC_SC->PCONP |= (UINT32_C(1) << peripheral);
     }
     else {
-        LPC_SC->PCONP &= ~(1 << peripheral);
+        LPC_SC->PCONP &= ~(UINT32_C(1) << peripheral);
     }
     vPortExitCritical();
 }

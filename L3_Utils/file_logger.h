@@ -57,7 +57,7 @@ extern "C" {
 #define FILE_LOGGER_BUFFER_SIZE      (1 * 1024)     ///< Recommend multiples of 512
 #define FILE_LOGGER_NUM_BUFFERS      10             ///< Number of buffers (need to have enough while file is being written)
 #define FILE_LOGGER_LOG_MSG_MAX_LEN  150            ///< Max length of a log message
-#define FILE_LOGGER_FILENAME         "1:log.csv"    ///< Destination filename (0: for SPI flash, 1: for SD card)
+#define FILE_LOGGER_FILENAME         "0:log.csv"    ///< Destination filename (0: for SPI flash, 1: for SD card)
 #define FILE_LOGGER_STACK_SIZE       (3 * 512 / 4)  ///< Stack size in 32-bit (1 = 4 bytes for 32-bit CPU)
 #define FILE_LOGGER_FLUSH_TIMEOUT    (1 * 60)       ///< Logs are flushed after this time
 #define FILE_LOGGER_BLOCK_TIME_MS    (10)           ///< If no buffer available within this time, block time counter will increment

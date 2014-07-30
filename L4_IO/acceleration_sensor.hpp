@@ -18,7 +18,7 @@
 
 /**
  * @file
- *
+ * @ingroup BoardIO
  */
  
 #ifndef ACCELERATION_SENSOR_HPP_

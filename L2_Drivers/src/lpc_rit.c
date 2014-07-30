@@ -30,7 +30,7 @@ void RIT_IRQHandler()
     LPC_RIT->RICTRL |= isr_flag_bitmask;
 }
 
-void sys_rit_setup(void_func_t function, uint32_t time_ms)
+void rit_enable(void_func_t function, uint32_t time_ms)
 {
     if (0 == function) {
         return;
@@ -62,13 +62,13 @@ void sys_rit_setup(void_func_t function, uint32_t time_ms)
     NVIC_EnableIRQ(RIT_IRQn);
 }
 
-void sys_rit_disable(void)
+void rit_disable(void)
 {
     LPC_RIT->RICTRL = 0;
     NVIC_DisableIRQ(RIT_IRQn);
 }
 
-bool sys_rit_running(void)
+bool rit_is_running(void)
 {
     const uint32_t timer_enable_bitmask = (1 << 3);
     return !!(LPC_RIT->RICTRL & timer_enable_bitmask);

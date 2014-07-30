@@ -39,12 +39,6 @@ void rtc_init (void)
        time.min >= 60 || time.sec >= 60 || time.hour >= 24 ||
        time.doy > 365 || time.month > 12 || time.day > 31)
     {
-#if 0
-        printf("TIME RESET : %u/%u/%u,%02u:%02u:%02u",
-                        time.month, time.day, time.year,
-                        time.hour, time.min, time.sec);
-#endif
-
         time.day = 1;
         time.month = 1;
         time.year = years[0];
