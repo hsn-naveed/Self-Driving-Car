@@ -20,7 +20,6 @@
 
 #include "i2c_base.hpp"
 #include "lpc_sys.h"
-#include "isr_priorities.h"
 
 
 

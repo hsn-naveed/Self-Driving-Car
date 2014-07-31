@@ -18,18 +18,28 @@
 
 /**
  * @file
- * @brief Interrupt Priorities used in the project
+ * @brief Interrupt Service Routine (ISR) functions
  */
-#ifndef INTR_PRIORITIES_H__
-#define INTR_PRIORITIES_H__
+#ifndef _SYS_ISRS_H__
+#define _SYS_ISRS_H__
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "LPC17xx.h"
 
 
 
 /**
- * Interrupt Priorities
+ * Register a callback function for an interrupt.
+ * @param [in] num            The IRQ number; @see IRQn_Type.  Only IRQ 0-N can be registered.
+ * @param [in] isr_func_ptr   void function name.
+ *
+ * @note This function is implemented at startup.cpp since that contains the interrupt vector.
+ */
+void isr_register(IRQn_Type num, void (*isr_func_ptr) (void));
+
+/**
+ * Interrupt Priorities (pre-configured by low_level_init.cpp)
  *  0 - Highest
  * 31 - Lowest
  *
@@ -53,8 +63,8 @@ typedef enum
      * must fall in between these two priorities.
      */
         IP_highest = 1,        /* Highest priority that is not zero */
-        IP_above_freertos = 3, /* Do not use FreeRTOS API with this priority! */
-        IP_SYSCALL = 4,        /* Do not use FreeRTOS API for ISR priorities below this */
+        IP_above_freertos = 2, /* Do not use FreeRTOS API with this priority! */
+        IP_SYSCALL = 3,        /* Do not use FreeRTOS API for ISR priorities below this */
         IP_KERNEL = 31,        /* Must be the lowest priority in the system */
     /** @} */
 

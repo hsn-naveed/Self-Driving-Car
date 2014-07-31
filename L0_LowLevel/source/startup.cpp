@@ -16,7 +16,10 @@
  *          p r e e t . w i k i @ g m a i l . c o m
  */
 
-#include <stdio.h>           // printf()
+#include <stdio.h>          // printf()
+
+#include "FreeRTOS.h"
+#include "task.h"           // vRunTimeStatIsrEntry() and vRunTimeStatIsrExit()
 
 #include "LPC17xx.h"
 #include "sys_config.h"
@@ -328,7 +331,7 @@ static isr_func_t g_isr_array[] = {
  * This function allows the user to register a function for the interrupt service routine.
  * Registration of an IRQ is not necessary if the weak ISR has been over-riden.
  */
-void isr_register(IRQn_Type num, void (*isr_func_ptr) (void))
+extern "C" void isr_register(IRQn_Type num, void (*isr_func_ptr) (void))
 {
     if (num >= 0) {
         g_isr_array[num] = isr_func_ptr;
@@ -338,12 +341,20 @@ void isr_register(IRQn_Type num, void (*isr_func_ptr) (void))
 /**
  * This is the common IRQ handler for the chip (or peripheral) interrupts.  We have this
  * common IRQ here to allow more flexibility for the user to register their interrupt.
- * User can either override the aliased IRQ handler, or use our API to register it.
+ * User can either override the aliased IRQ handler, or use the isr_register() API to
+ * register it any of their own functions during runtime.
  */
 static void isr_forwarder_routine(void)
 {
-    /* Get the IRQ number we are in.  We can read ICSR register too, but let's just read 8-bits directly */
-    unsigned char isr_num = * ((unsigned char*) (0xE000ED04)); // (SCB->ICSR & 0xFF);
+    /* Inform FreeRTOS run-time counter API that we are inside an ISR such that it
+     * won't think that the task is using the CPU.
+     */
+    vRunTimeStatIsrEntry();
+
+    /* Get the IRQ number we are in.  Note that ICSR's real ISR bits are offset by 16.
+     * We can read ICSR register too, but let's just read 8-bits directly.
+     */
+    unsigned char isr_num = (*((unsigned char*) (0xE000ED04))) - 16; // (SCB->ICSR & 0xFF) - 16;
 
     /* Lookup the function pointer we want to call and make the call */
     isr_func_t isr_to_service = g_isr_array[isr_num];
@@ -359,6 +370,9 @@ static void isr_forwarder_routine(void)
     {
         isr_to_service();
     }
+
+    /* Inform FreeRTOS that we have exited the ISR */
+    vRunTimeStatIsrExit();
 }
 
 

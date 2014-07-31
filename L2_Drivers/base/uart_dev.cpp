@@ -23,7 +23,6 @@
 
 #include "uart_dev.hpp"
 #include "LPC17xx.h"
-#include "isr_priorities.h" // Uart priority
 #include "utilities.h"      // system_get_timer_ms();
 #include "lpc_sys.h"
 

@@ -416,6 +416,8 @@ void xPortSysTickHandler( void )
 	save and then restore the interrupt mask value as its value is already
 	known. */
 	( void ) portSET_INTERRUPT_MASK_FROM_ISR();
+	vRunTimeStatIsrEntry();
+
 	{
 		/* Increment the RTOS tick. */
 		if( xTaskIncrementTick() != pdFALSE )
@@ -425,6 +427,8 @@ void xPortSysTickHandler( void )
 			portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;
 		}
 	}
+
+	vRunTimeStatIsrExit();
 	portCLEAR_INTERRUPT_MASK_FROM_ISR( 0 );
 }
 /*-----------------------------------------------------------*/

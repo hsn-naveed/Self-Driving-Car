@@ -1557,6 +1557,10 @@ eSleepModeStatus eTaskConfirmSleepModeStatus( void ) PRIVILEGED_FUNCTION;
 /* Modified functions to extend FreeRTOS task API */
 void vTaskResetRunTimeStats(void);
 BaseType_t  uxTaskGetCpuUsage(TaskHandle_t xTask);
+void vRunTimeStatIsrEntry();
+void vRunTimeStatIsrExit();
+
+
 
 #ifdef __cplusplus
 }

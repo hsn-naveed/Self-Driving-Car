@@ -182,7 +182,7 @@
 	#define configPRIO_BITS       5        /* 32 priority levels */
 #endif
 
-#include "isr_priorities.h"
+#include "lpc_isr.h"
 /* The lowest priority. */
 #define configKERNEL_INTERRUPT_PRIORITY 	    ( IP_KERNEL <<   (8 - configPRIO_BITS) )
 /* Priority 5, or 160 as only the top three bits are implemented. */

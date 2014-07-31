@@ -21,7 +21,7 @@
 #include "sys_config.h"         // CPU Clock Configuration
 #include "LPC17xx.h"            // LPC MemoryMap
 #include "uart0_min.h"          // Uart0 init
-#include "isr_priorities.h"
+#include "lpc_isr.h"
 #include "lpc_sys.h"
 #include "core_cm3.h"
 #include "fault_registers.h"

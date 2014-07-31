@@ -89,4 +89,36 @@ void vTaskResetRunTimeStats(void)
     }
     xTaskResumeAll();
 }
+
+    void vRunTimeStatIsrEntry()
+    {
+        unsigned long ulTempCounter = portGET_RUN_TIME_COUNTER_VALUE();
+        
+        // Add the time spent in the previously running task's counter.
+        if (NULL != pxCurrentTCB) {
+            pxCurrentTCB->ulRunTimeCounter += ( ulTempCounter - ulTaskSwitchedInTime );
+        }
+        
+        // Save the current time to log how long the ISR is going to take.
+        ulTaskSwitchedInTime = ulTempCounter;
+    }
+    void vRunTimeStatIsrExit()
+    {
+        unsigned long ulTempCounter = portGET_RUN_TIME_COUNTER_VALUE();
+        
+        // ISR spent current time - entry of ISR, which was saved in ulTaskSwitchedInTime
+        // We don't need this because whatever is the "leftover" for the counters, that is 
+        // is the overhead itself!
+        // ulISROverhead += ( ulTempCounter - ulTaskSwitchedInTime );
+        
+        // Save the current time so next time when task is switched out, it will use this time-stamp.
+        ulTaskSwitchedInTime = ulTempCounter;
+    }
+#else /* configGENERATE_RUN_TIME_STATS */
+    void vRunTimeStatIsrEntry()
+    {
+    }
+    void vRunTimeStatIsrExit()
+    {
+    }
 #endif
