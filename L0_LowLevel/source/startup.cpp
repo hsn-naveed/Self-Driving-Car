@@ -24,12 +24,12 @@
 #include "printf_lib.h"      // u0_dbg_put()
 
 #include "lpc_sys.h"
-#include "fault_registers.h"
 #include "utilities.h"
+#include "fault_registers.h"
 
 
 
-#define WEAK __attribute__ ((weak))
+#define WEAK     __attribute__ ((weak))
 #define ALIAS(f) __attribute__ ((weak, alias (#f)))
 
 #if defined (__cplusplus)
@@ -39,217 +39,151 @@ extern "C"
 extern void __libc_init_array(void);
 #endif
 
-//*****************************************************************************
-//
-// Forward declaration of the default handlers. These are aliased.
-// When the application defines a handler (with the same name), this will
-// automatically take precedence over these weak definitions
-//
-//*****************************************************************************
-void ResetISR(void);
-WEAK void NMI_Handler(void);
-WEAK void HardFault_Handler(void);
-WEAK void MemManage_Handler(void);
-WEAK void BusFault_Handler(void);
-WEAK void UsageFault_Handler(void);
-WEAK void SVC_Handler(void);
-WEAK void DebugMon_Handler(void);
-WEAK void PendSV_Handler(void);
-WEAK void SysTick_Handler(void);
-WEAK void IntDefaultHandler(void);
+/** @{ Weak ISR handlers; these are over-riden when user defines them elsewhere */
+static void isr_reset(void);
+WEAK void isr_nmi(void);
+WEAK void isr_hard_fault(void);
+WEAK void isr_mem_fault(void);
+WEAK void isr_bus_fault(void);
+WEAK void isr_usage_fault(void);
+WEAK void isr_svc(void);
+WEAK void isr_debug_mon(void);
+WEAK void isr_pend_sv(void);
+WEAK void isr_sys_tick(void);
+/** @} */
 
-/**
- * Unwind works but not inside an ISR :(
- */
-#define USE_EXPERIMENTAL_UNWIND 0
-#if (1 == USE_EXPERIMENTAL_UNWIND)
-#include <unwind.h> // GCC's internal unwinder, part of libgcc
-_Unwind_Reason_Code trace_fcn(_Unwind_Context *ctx, void *d)
-{
-    int *depth = (int*)d;
-    printf("%x,", _Unwind_GetIP(ctx));
-    (*depth)++;
-    return _URC_NO_REASON;
-}
-#endif
+/// The common ISR handler for the chip level interrupts
+static void isr_forwarder_routine(void);
 
-/**
- * HardFaultHandler_C:
- * This is called from the HardFault_HandlerAsm with a pointer the Fault stack
- * as the parameter. We can then read the values from the stack and place them
- * into local variables for ease of reading.
- * We then read the various Fault Status and Address Registers to help decode
- * cause of the fault.
- * The function ends with a BKPT instruction to force control back into the debugger
- */
-void HardFault_HandlerC(unsigned long *hardfault_args){
-        volatile unsigned int stacked_r0 ;
-        volatile unsigned int stacked_r1 ;
-        volatile unsigned int stacked_r2 ;
-        volatile unsigned int stacked_r3 ;
-        volatile unsigned int stacked_r12 ;
-        volatile unsigned int stacked_lr ;
-        volatile unsigned int stacked_pc ;
-        volatile unsigned int stacked_psr ;
+/// isr_common() will call this function unless user interrupt is registered
+void isr_default_handler(void);
 
-        stacked_r0 = ((unsigned long)hardfault_args[0]) ;
-        stacked_r1 = ((unsigned long)hardfault_args[1]) ;
-        stacked_r2 = ((unsigned long)hardfault_args[2]) ;
-        stacked_r3 = ((unsigned long)hardfault_args[3]) ;
-        stacked_r12 = ((unsigned long)hardfault_args[4]) ;
-        stacked_lr = ((unsigned long)hardfault_args[5]) ;
-        stacked_pc = ((unsigned long)hardfault_args[6]) ;
-        stacked_psr = ((unsigned long)hardfault_args[7]) ;
+/// The hard fault handler
+void isr_hard_fault_handler_c(unsigned long *hardfault_args);
 
-        FAULT_EXISTS = FAULT_PRESENT_VAL;
-        FAULT_PC = stacked_pc;
-        FAULT_LR = stacked_lr - 1;
-        FAULT_PSR = stacked_psr;
+/** @{ Weak ISR handlers; these are over-riden when user defines them elsewhere */
+void WDT_IRQHandler(void)    ALIAS(isr_default_handler);
+void TIMER0_IRQHandler(void) ALIAS(isr_default_handler);
+void TIMER1_IRQHandler(void) ALIAS(isr_default_handler);
+void TIMER2_IRQHandler(void) ALIAS(isr_default_handler);
+void TIMER3_IRQHandler(void) ALIAS(isr_default_handler);
+void UART0_IRQHandler(void)  ALIAS(isr_default_handler);
+void UART1_IRQHandler(void)  ALIAS(isr_default_handler);
+void UART2_IRQHandler(void)  ALIAS(isr_default_handler);
+void UART3_IRQHandler(void)  ALIAS(isr_default_handler);
+void PWM1_IRQHandler(void)   ALIAS(isr_default_handler);
+void I2C0_IRQHandler(void)   ALIAS(isr_default_handler);
+void I2C1_IRQHandler(void)   ALIAS(isr_default_handler);
+void I2C2_IRQHandler(void)   ALIAS(isr_default_handler);
+void SPI_IRQHandler(void)    ALIAS(isr_default_handler);
+void SSP0_IRQHandler(void)   ALIAS(isr_default_handler);
+void SSP1_IRQHandler(void)   ALIAS(isr_default_handler);
+void PLL0_IRQHandler(void)   ALIAS(isr_default_handler);
+void RTC_IRQHandler(void)    ALIAS(isr_default_handler);
+void EINT0_IRQHandler(void)  ALIAS(isr_default_handler);
+void EINT1_IRQHandler(void)  ALIAS(isr_default_handler);
+void EINT2_IRQHandler(void)  ALIAS(isr_default_handler);
+void EINT3_IRQHandler(void)  ALIAS(isr_default_handler);
+void ADC_IRQHandler(void)    ALIAS(isr_default_handler);
+void BOD_IRQHandler(void)    ALIAS(isr_default_handler);
+void USB_IRQHandler(void)    ALIAS(isr_default_handler);
+void CAN_IRQHandler(void)    ALIAS(isr_default_handler);
+void DMA_IRQHandler(void)    ALIAS(isr_default_handler);
+void I2S_IRQHandler(void)    ALIAS(isr_default_handler);
+void ENET_IRQHandler(void)   ALIAS(isr_default_handler);
+void RIT_IRQHandler(void)    ALIAS(isr_default_handler);
+void MCPWM_IRQHandler(void)  ALIAS(isr_default_handler);
+void QEI_IRQHandler(void)    ALIAS(isr_default_handler);
+void PLL1_IRQHandler(void)   ALIAS(isr_default_handler);
+void USBAct_IRQHandler(void) ALIAS(isr_default_handler);
+void CANAct_IRQHandler(void) ALIAS(isr_default_handler);
+/** @} */
 
-        sys_set_outchar_func(uart0_putchar);
-        puts("\nSystem Crash!");
-        printf("Registers: 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X\n",
-                stacked_r0, stacked_r1, stacked_r2, stacked_r3, stacked_r12);
-        printf("LR: 0x%08X, PC: 0x%08X, PSR: 0x%08X\n", stacked_lr, stacked_pc, stacked_psr);
-
-        delay_us(3 * 1000 * 1000);
-        sys_reboot();
-
-        #if (1 == USE_EXPERIMENTAL_UNWIND)
-            int depth=0;
-            printf("Instructions: ");
-            _Unwind_Backtrace(&trace_fcn, &depth);
-        #endif
-
-        while(1);
-}
-
-//*****************************************************************************
-//
-// Forward declaration of the specific IRQ handlers. These are aliased
-// to the IntDefaultHandler, which is a 'forever' loop. When the application
-// defines a handler (with the same name), that will automatically take
-// precedence over these weak definitions
-//
-//*****************************************************************************
-void WDT_IRQHandler(void) ALIAS(IntDefaultHandler);
-void TIMER0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void TIMER1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void TIMER2_IRQHandler(void) ALIAS(IntDefaultHandler);
-void TIMER3_IRQHandler(void) ALIAS(IntDefaultHandler);
-void UART0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void UART1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void UART2_IRQHandler(void) ALIAS(IntDefaultHandler);
-void UART3_IRQHandler(void) ALIAS(IntDefaultHandler);
-void PWM1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void I2C0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void I2C1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void I2C2_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SPI_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SSP0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SSP1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void PLL0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void RTC_IRQHandler(void) ALIAS(IntDefaultHandler);
-void EINT0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void EINT1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void EINT2_IRQHandler(void) ALIAS(IntDefaultHandler);
-void EINT3_IRQHandler(void) ALIAS(IntDefaultHandler);
-void ADC_IRQHandler(void) ALIAS(IntDefaultHandler);
-void BOD_IRQHandler(void) ALIAS(IntDefaultHandler);
-void USB_IRQHandler(void) ALIAS(IntDefaultHandler);
-void CAN_IRQHandler(void) ALIAS(IntDefaultHandler);
-void DMA_IRQHandler(void) ALIAS(IntDefaultHandler);
-void I2S_IRQHandler(void) ALIAS(IntDefaultHandler);
-void ENET_IRQHandler(void) ALIAS(IntDefaultHandler);
-void RIT_IRQHandler(void) ALIAS(IntDefaultHandler);
-void MCPWM_IRQHandler(void) ALIAS(IntDefaultHandler);
-void QEI_IRQHandler(void) ALIAS(IntDefaultHandler);
-void PLL1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void USBActivity_IRQHandler(void) ALIAS(IntDefaultHandler);
-void CANActivity_IRQHandler(void) ALIAS(IntDefaultHandler);
-
-/**
- * FreeRTOS Interrupt Handlers
- */
+/** @{ FreeRTOS Interrupt Handlers  */
 extern void xPortSysTickHandler(void);
 extern void xPortPendSVHandler(void);
 extern void vPortSVCHandler(void);
+/** @} */
 
-/**
- * Stack top is defined by the Linker Script (loader.ld) which is set at
- * g_pfnVectors[] when CPU starts
- */
+/// Linker script (loader.ld) defines the initial stack pointer that we set at the interrupt vector
 extern void _vStackTop(void);
 
 #if defined (__cplusplus)
 } // extern "C"
 #endif
 
-//*****************************************************************************
-//
-// The vector table.
-// This relies on the linker script to place at correct location in memory.
-//
-//*****************************************************************************
+/** @{ External functions that we will call */
+extern void low_level_init(void);
+extern void high_level_init(void);
+extern int main();
+/** @} */
+
+/**
+ * CPU interrupt vector table that is loaded at the beginning of the CPU start
+ * location by using the linker script that will place it at the isr_vector location.
+ * CPU loads the stack pointer and begins execution from Reset vector.
+ */
 extern void (* const g_pfnVectors[])(void);
 __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) =
 {
-    // Core Level - CM3
+        // Core Level - CM3
         &_vStackTop,        // The initial stack pointer
-        ResetISR,           // The reset handler
-        NMI_Handler,        // The NMI handler
-        HardFault_Handler,  // The hard fault handler
-        MemManage_Handler,  // The MPU fault handler
-        BusFault_Handler,   // The bus fault handler
-        UsageFault_Handler, // The usage fault handler
+        isr_reset,          // The reset handler
+        isr_nmi,            // The NMI handler
+        isr_hard_fault,     // The hard fault handler
+        isr_mem_fault,      // The MPU fault handler
+        isr_bus_fault,      // The bus fault handler
+        isr_usage_fault,    // The usage fault handler
         0,                  // Reserved
         0,                  // Reserved
         0,                  // Reserved
         0,                  // Reserved
         vPortSVCHandler,    // SVCall handler
-        DebugMon_Handler,   // Debug monitor handler
+        isr_debug_mon,      // Debug monitor handler
         0,                  // Reserved
         xPortPendSVHandler, // The PendSV handler
         xPortSysTickHandler,// The SysTick handler
 
-        // Chip Level - LPC17
-        WDT_IRQHandler,         // 16, 0x40 - WDT
-        TIMER0_IRQHandler,      // 17, 0x44 - TIMER0
-        TIMER1_IRQHandler,      // 18, 0x48 - TIMER1
-        TIMER2_IRQHandler,      // 19, 0x4c - TIMER2
-        TIMER3_IRQHandler,      // 20, 0x50 - TIMER3
-        UART0_IRQHandler,       // 21, 0x54 - UART0
-        UART1_IRQHandler,       // 22, 0x58 - UART1
-        UART2_IRQHandler,       // 23, 0x5c - UART2
-        UART3_IRQHandler,       // 24, 0x60 - UART3
-        PWM1_IRQHandler,        // 25, 0x64 - PWM1
-        I2C0_IRQHandler,        // 26, 0x68 - I2C0
-        I2C1_IRQHandler,        // 27, 0x6c - I2C1
-        I2C2_IRQHandler,        // 28, 0x70 - I2C2
-        SPI_IRQHandler,         // 29, 0x74 - SPI
-        SSP0_IRQHandler,        // 30, 0x78 - SSP0
-        SSP1_IRQHandler,        // 31, 0x7c - SSP1
-        PLL0_IRQHandler,        // 32, 0x80 - PLL0 (Main PLL)
-        RTC_IRQHandler,         // 33, 0x84 - RTC
-        EINT0_IRQHandler,       // 34, 0x88 - EINT0
-        EINT1_IRQHandler,       // 35, 0x8c - EINT1
-        EINT2_IRQHandler,       // 36, 0x90 - EINT2
-        EINT3_IRQHandler,       // 37, 0x94 - EINT3
-        ADC_IRQHandler,         // 38, 0x98 - ADC
-        BOD_IRQHandler,         // 39, 0x9c - BOD
-        USB_IRQHandler,         // 40, 0xA0 - USB
-        CAN_IRQHandler,         // 41, 0xa4 - CAN
-        DMA_IRQHandler,         // 42, 0xa8 - GP DMA
-        I2S_IRQHandler,         // 43, 0xac - I2S
-        ENET_IRQHandler,        // 44, 0xb0 - Ethernet
-        RIT_IRQHandler,         // 45, 0xb4 - RITINT
-        MCPWM_IRQHandler,       // 46, 0xb8 - Motor Control PWM
-        QEI_IRQHandler,         // 47, 0xbc - Quadrature Encoder
-        PLL1_IRQHandler,        // 48, 0xc0 - PLL1 (USB PLL)
-        USBActivity_IRQHandler, // 49, 0xc4 - USB Activity interrupt to wakeup
-        CANActivity_IRQHandler, // 50, 0xc8 - CAN Activity interrupt to wakeup
+        // Chip Level - LPC17xx - common ISR that will call the real ISR
+        isr_forwarder_routine,      // 16, 0x40 - WDT
+        isr_forwarder_routine,      // 17, 0x44 - TIMER0
+        isr_forwarder_routine,      // 18, 0x48 - TIMER1
+        isr_forwarder_routine,      // 19, 0x4c - TIMER2
+        isr_forwarder_routine,      // 20, 0x50 - TIMER3
+        isr_forwarder_routine,      // 21, 0x54 - UART0
+        isr_forwarder_routine,      // 22, 0x58 - UART1
+        isr_forwarder_routine,      // 23, 0x5c - UART2
+        isr_forwarder_routine,      // 24, 0x60 - UART3
+        isr_forwarder_routine,      // 25, 0x64 - PWM1
+        isr_forwarder_routine,      // 26, 0x68 - I2C0
+        isr_forwarder_routine,      // 27, 0x6c - I2C1
+        isr_forwarder_routine,      // 28, 0x70 - I2C2
+        isr_forwarder_routine,      // 29, 0x74 - SPI
+        isr_forwarder_routine,      // 30, 0x78 - SSP0
+        isr_forwarder_routine,      // 31, 0x7c - SSP1
+        isr_forwarder_routine,      // 32, 0x80 - PLL0 (Main PLL)
+        isr_forwarder_routine,      // 33, 0x84 - RTC
+        isr_forwarder_routine,      // 34, 0x88 - EINT0
+        isr_forwarder_routine,      // 35, 0x8c - EINT1
+        isr_forwarder_routine,      // 36, 0x90 - EINT2
+        isr_forwarder_routine,      // 37, 0x94 - EINT3
+        isr_forwarder_routine,      // 38, 0x98 - ADC
+        isr_forwarder_routine,      // 39, 0x9c - BOD
+        isr_forwarder_routine,      // 40, 0xA0 - USB
+        isr_forwarder_routine,      // 41, 0xa4 - CAN
+        isr_forwarder_routine,      // 42, 0xa8 - GP DMA
+        isr_forwarder_routine,      // 43, 0xac - I2S
+        isr_forwarder_routine,      // 44, 0xb0 - Ethernet
+        isr_forwarder_routine,      // 45, 0xb4 - RITINT
+        isr_forwarder_routine,      // 46, 0xb8 - Motor Control PWM
+        isr_forwarder_routine,      // 47, 0xbc - Quadrature Encoder
+        isr_forwarder_routine,      // 48, 0xc0 - PLL1 (USB PLL)
+        isr_forwarder_routine,      // 49, 0xc4 - USB Activity interrupt to wakeup
+        isr_forwarder_routine,      // 50, 0xc8 - CAN Activity interrupt to wakeup
     };
+
+
 
 //*****************************************************************************
 // Functions to carry out the initialization of RW and BSS data sections. These
@@ -291,9 +225,9 @@ extern unsigned int __bss_section_table_end;
 // and initializes C/C++ environment
 //*****************************************************************************
 __attribute__ ((section(".after_vectors")))
-void ResetISR(void)
+static void isr_reset(void)
 {
-    // remove warning
+    // remove compiler warning
     (void)g_pfnVectors;
 
     /**
@@ -308,40 +242,35 @@ void ResetISR(void)
     } while(0);
 
     do {
-    // Copy data from FLASH to RAM
-    unsigned int LoadAddr, ExeAddr, SectionLen;
-    unsigned int *SectionTableAddr;
+        // Copy data from FLASH to RAM
+        unsigned int LoadAddr, ExeAddr, SectionLen;
+        unsigned int *SectionTableAddr;
 
-    // Load base address of Global Section Table
-    SectionTableAddr = &__data_section_table;
+        // Load base address of Global Section Table
+        SectionTableAddr = &__data_section_table;
 
-    // Copy the data sections from flash to SRAM.
-    while (SectionTableAddr < &__data_section_table_end)
-    {
-        LoadAddr = *SectionTableAddr++;
-        ExeAddr = *SectionTableAddr++;
-        SectionLen = *SectionTableAddr++;
-        data_init(LoadAddr, ExeAddr, SectionLen);
-    }
-    // At this point, SectionTableAddr = &__bss_section_table;
-    // Zero fill the bss segment
-    while (SectionTableAddr < &__bss_section_table_end)
-    {
-        ExeAddr = *SectionTableAddr++;
-        SectionLen = *SectionTableAddr++;
-        bss_init(ExeAddr, SectionLen);
-    }
+        // Copy the data sections from flash to SRAM.
+        while (SectionTableAddr < &__data_section_table_end)
+        {
+            LoadAddr = *SectionTableAddr++;
+            ExeAddr = *SectionTableAddr++;
+            SectionLen = *SectionTableAddr++;
+            data_init(LoadAddr, ExeAddr, SectionLen);
+        }
+
+        // At this point, SectionTableAddr = &__bss_section_table;
+        // Zero fill the bss segment
+        while (SectionTableAddr < &__bss_section_table_end)
+        {
+            ExeAddr = *SectionTableAddr++;
+            SectionLen = *SectionTableAddr++;
+            bss_init(ExeAddr, SectionLen);
+        }
     } while (0) ;
 
-#if defined (__cplusplus)
-    // Call C++ library initialization
-    __libc_init_array();
-#endif
-
-    // Functions defined externally to this file:
-    extern void low_level_init(void);
-    extern void high_level_init(void);
-    extern int main();
+    #if defined (__cplusplus)
+        __libc_init_array();    // Call C++ library initialization
+    #endif
 
     low_level_init();   // Initialize minimal system, such as Clock & UART
     high_level_init();  // Initialize any user desired items
@@ -355,100 +284,149 @@ void ResetISR(void)
     }
 }
 
-//*****************************************************************************
-// Default exception handlers. Override the ones here by defining your own
-// handler routines in your application code.
-//*****************************************************************************
-__attribute__ ((section(".after_vectors")))
-void NMI_Handler(void)
+/// Array of IRQs that the user can register
+typedef void (*isr_func_t) (void);
+static isr_func_t g_isr_array[] = {
+        WDT_IRQHandler,         // 16, 0x40 - WDT
+        TIMER0_IRQHandler,      // 17, 0x44 - TIMER0
+        TIMER1_IRQHandler,      // 18, 0x48 - TIMER1
+        TIMER2_IRQHandler,      // 19, 0x4c - TIMER2
+        TIMER3_IRQHandler,      // 20, 0x50 - TIMER3
+        UART0_IRQHandler,       // 21, 0x54 - UART0
+        UART1_IRQHandler,       // 22, 0x58 - UART1
+        UART2_IRQHandler,       // 23, 0x5c - UART2
+        UART3_IRQHandler,       // 24, 0x60 - UART3
+        PWM1_IRQHandler,        // 25, 0x64 - PWM1
+        I2C0_IRQHandler,        // 26, 0x68 - I2C0
+        I2C1_IRQHandler,        // 27, 0x6c - I2C1
+        I2C2_IRQHandler,        // 28, 0x70 - I2C2
+        SPI_IRQHandler,         // 29, 0x74 - SPI
+        SSP0_IRQHandler,        // 30, 0x78 - SSP0
+        SSP1_IRQHandler,        // 31, 0x7c - SSP1
+        PLL0_IRQHandler,        // 32, 0x80 - PLL0 (Main PLL)
+        RTC_IRQHandler,         // 33, 0x84 - RTC
+        EINT0_IRQHandler,       // 34, 0x88 - EINT0
+        EINT1_IRQHandler,       // 35, 0x8c - EINT1
+        EINT2_IRQHandler,       // 36, 0x90 - EINT2
+        EINT3_IRQHandler,       // 37, 0x94 - EINT3
+        ADC_IRQHandler,         // 38, 0x98 - ADC
+        BOD_IRQHandler,         // 39, 0x9c - BOD
+        USB_IRQHandler,         // 40, 0xA0 - USB
+        CAN_IRQHandler,         // 41, 0xa4 - CAN
+        DMA_IRQHandler,         // 42, 0xa8 - GP DMA
+        I2S_IRQHandler,         // 43, 0xac - I2S
+        ENET_IRQHandler,        // 44, 0xb0 - Ethernet
+        RIT_IRQHandler,         // 45, 0xb4 - RITINT
+        MCPWM_IRQHandler,       // 46, 0xb8 - Motor Control PWM
+        QEI_IRQHandler,         // 47, 0xbc - Quadrature Encoder
+        PLL1_IRQHandler,        // 48, 0xc0 - PLL1 (USB PLL)
+        USBAct_IRQHandler,      // 49, 0xc4 - USB Activity interrupt to wakeup
+        CANAct_IRQHandler,      // 50, 0xc8 - CAN Activity interrupt to wakeup
+};
+
+/**
+ * This function allows the user to register a function for the interrupt service routine.
+ * Registration of an IRQ is not necessary if the weak ISR has been over-riden.
+ */
+void isr_register(IRQn_Type num, void (*isr_func_ptr) (void))
 {
-    u0_dbg_put("NMI Fault\n");
-    while (1)
-    {
+    if (num >= 0) {
+        g_isr_array[num] = isr_func_ptr;
     }
 }
+
+/**
+ * This is the common IRQ handler for the chip (or peripheral) interrupts.  We have this
+ * common IRQ here to allow more flexibility for the user to register their interrupt.
+ * User can either override the aliased IRQ handler, or use our API to register it.
+ */
+static void isr_forwarder_routine(void)
+{
+    /* Get the IRQ number we are in.  We can read ICSR register too, but let's just read 8-bits directly */
+    unsigned char isr_num = * ((unsigned char*) (0xE000ED04)); // (SCB->ICSR & 0xFF);
+
+    /* Lookup the function pointer we want to call and make the call */
+    isr_func_t isr_to_service = g_isr_array[isr_num];
+
+    /* If the user has not over-riden the "weak" isr name, or not registerd the new one using
+     * isr_register(), then it will point to the isr_default_handler.
+     */
+    if (isr_default_handler == isr_to_service)
+    {
+        u0_dbg_printf("%u IRQ was triggered, but no IRQ service was defined!\n", isr_num);
+    }
+    else
+    {
+        isr_to_service();
+    }
+}
+
+
 __attribute__ ((section(".after_vectors")))
-void HardFault_Handler(void)
+void isr_hard_fault(void)
 {
     __asm("MOVS   R0, #4  \n"
             "MOV    R1, LR  \n"
             "TST    R0, R1  \n"
             "BEQ    _MSP    \n"
             "MRS    R0, PSP \n"
-            "B      HardFault_HandlerC      \n"
+            "B      isr_hard_fault_handler_c  \n"
             "_MSP:  \n"
             "MRS    R0, MSP \n"
-            "B      HardFault_HandlerC      \n"
+            "B      isr_hard_fault_handler_c  \n"
     ) ;
 }
-__attribute__ ((section(".after_vectors")))
-void MemManage_Handler(void)
-{
-    u0_dbg_put("Mem Fault\n");
-    while (1)
-    {
-    }
-}
-__attribute__ ((section(".after_vectors")))
-void BusFault_Handler(void)
-{
-    u0_dbg_put("BUS Fault\n");
-    while (1)
-    {
-    }
-}
-__attribute__ ((section(".after_vectors")))
-void UsageFault_Handler(void)
-{
-    u0_dbg_put("Usage Fault\n");
-    while (1)
-    {
-    }
-}
-__attribute__ ((section(".after_vectors")))
-void SVC_Handler(void)
-{
-    u0_dbg_put("SVC Fault\n");
-    while (1)
-    {
-    }
-}
-__attribute__ ((section(".after_vectors")))
-void DebugMon_Handler(void)
-{
-    u0_dbg_put("DebugMon Fault\n");
-    while (1)
-    {
-    }
-}
-__attribute__ ((section(".after_vectors")))
-void PendSV_Handler(void)
-{
-    u0_dbg_put("Pend SV Fault\n");
-    while (1)
-    {
-    }
-}
-__attribute__ ((section(".after_vectors")))
-void SysTick_Handler(void)
-{
-    u0_dbg_put("Sys Tick Fault\n");
-    while (1)
-    {
-    }
-}
 
-//*****************************************************************************
-//
-// Processor ends up here if an unexpected interrupt occurs or a specific
-// handler is not present in the application code.
-//
-//*****************************************************************************
-__attribute__ ((section(".after_vectors")))
-void IntDefaultHandler(void)
+/// If an IRQ is not registered, we end up at this stub function
+__attribute__ ((section(".after_vectors"))) void isr_default_handler(void) { u0_dbg_put("IRQ not registered!"); while(1); }
+
+__attribute__ ((section(".after_vectors"))) void isr_nmi(void)        { u0_dbg_put("NMI Fault\n"); while(1); }
+__attribute__ ((section(".after_vectors"))) void isr_mem_fault(void)  { u0_dbg_put("Mem Fault\n"); while(1); }
+__attribute__ ((section(".after_vectors"))) void isr_bus_fault(void)  { u0_dbg_put("BUS Fault\n"); while(1); }
+__attribute__ ((section(".after_vectors"))) void isr_usage_fault(void){ u0_dbg_put("Usage Fault\n"); while(1); }
+__attribute__ ((section(".after_vectors"))) void isr_svc(void)        { u0_dbg_put("SVC Fault\n"); while(1); }
+__attribute__ ((section(".after_vectors"))) void isr_debug_mon(void)  { u0_dbg_put("DBGMON Fault\n"); while(1); }
+__attribute__ ((section(".after_vectors"))) void isr_pend_sv(void)    { u0_dbg_put("PENDSV Fault\n"); while(1); }
+__attribute__ ((section(".after_vectors"))) void isr_sys_tick(void)   { u0_dbg_put("SYSTICK Fault\n"); while(1); }
+
+
+/**
+ * This is called from the HardFault_HandlerAsm with a pointer the Fault stack as the parameter.
+ * We can then read the values from the stack and place them into local variables for ease of reading.
+ * We then read the various Fault Status and Address Registers to help decode cause of the fault.
+ * The function ends with a BKPT instruction to force control back into the debugger
+ */
+void isr_hard_fault_handler_c(unsigned long *hardfault_args)
 {
-    u0_dbg_put("Unexpected ISR Fault\n");
-    while (1)
-    {
-    }
+    volatile unsigned int stacked_r0 ;
+    volatile unsigned int stacked_r1 ;
+    volatile unsigned int stacked_r2 ;
+    volatile unsigned int stacked_r3 ;
+    volatile unsigned int stacked_r12 ;
+    volatile unsigned int stacked_lr ;
+    volatile unsigned int stacked_pc ;
+    volatile unsigned int stacked_psr ;
+
+    stacked_r0 = ((unsigned long)hardfault_args[0]) ;
+    stacked_r1 = ((unsigned long)hardfault_args[1]) ;
+    stacked_r2 = ((unsigned long)hardfault_args[2]) ;
+    stacked_r3 = ((unsigned long)hardfault_args[3]) ;
+    stacked_r12 = ((unsigned long)hardfault_args[4]) ;
+    stacked_lr = ((unsigned long)hardfault_args[5]) ;
+    stacked_pc = ((unsigned long)hardfault_args[6]) ;
+    stacked_psr = ((unsigned long)hardfault_args[7]) ;
+
+    FAULT_EXISTS = FAULT_PRESENT_VAL;
+    FAULT_PC = stacked_pc;
+    FAULT_LR = stacked_lr - 1;
+    FAULT_PSR = stacked_psr;
+
+    sys_reboot();
+
+    /* Prevent compiler warnings */
+    (void) stacked_r0 ;
+    (void) stacked_r1 ;
+    (void) stacked_r2 ;
+    (void) stacked_r3 ;
+    (void) stacked_r12 ;
 }
