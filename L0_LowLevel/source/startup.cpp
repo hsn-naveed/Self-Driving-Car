@@ -21,19 +21,14 @@
 #include "FreeRTOS.h"
 #include "task.h"           // vRunTimeStatIsrEntry() and vRunTimeStatIsrExit()
 
-#include "LPC17xx.h"
-#include "sys_config.h"
-#include "uart0_min.h"
-#include "printf_lib.h"      // u0_dbg_put()
+#include "LPC17xx.h"        // IRQn_Type
+#include "uart0_min.h"      // Uart0 initialization
+#include "printf_lib.h"     // u0_dbg_printf()
 
-#include "lpc_sys.h"
-#include "utilities.h"
-#include "fault_registers.h"
+#include "lpc_sys.h"        // sys_reboot()
+#include "fault_registers.h"// FAULT registers to store upon crash
 
 
-
-#define WEAK     __attribute__ ((weak))
-#define ALIAS(f) __attribute__ ((weak, alias (#f)))
 
 #if defined (__cplusplus)
 extern "C"
@@ -42,29 +37,32 @@ extern "C"
 extern void __libc_init_array(void);
 #endif
 
-/** @{ Weak ISR handlers; these are over-riden when user defines them elsewhere */
+/// CPU execution begins from this function
 static void isr_reset(void);
+
+/// The common ISR handler for the chip level interrupts that forwards to the user interrupts
+static void isr_forwarder_routine(void);
+
+/// isr_forwarder_routine() will call this function unless user interrupt is registered
+void isr_default_handler(void);
+
+/// The hard fault handler
+void isr_hard_fault_handler(unsigned long *hardfault_args);
+
+/** @{ Weak ISR handlers; these are over-riden when user defines them elsewhere */
+#define WEAK     __attribute__ ((weak))
+#define ALIAS(f) __attribute__ ((weak, alias (#f)))
+
 WEAK void isr_nmi(void);
 WEAK void isr_hard_fault(void);
 WEAK void isr_mem_fault(void);
 WEAK void isr_bus_fault(void);
 WEAK void isr_usage_fault(void);
-WEAK void isr_svc(void);
 WEAK void isr_debug_mon(void);
-WEAK void isr_pend_sv(void);
 WEAK void isr_sys_tick(void);
 /** @} */
 
-/// The common ISR handler for the chip level interrupts
-static void isr_forwarder_routine(void);
-
-/// isr_common() will call this function unless user interrupt is registered
-void isr_default_handler(void);
-
-/// The hard fault handler
-void isr_hard_fault_handler_c(unsigned long *hardfault_args);
-
-/** @{ Weak ISR handlers; these are over-riden when user defines them elsewhere */
+/** @{ Weak ISR handlers; these are over-riden when the user defines them elsewhere */
 void WDT_IRQHandler(void)    ALIAS(isr_default_handler);
 void TIMER0_IRQHandler(void) ALIAS(isr_default_handler);
 void TIMER1_IRQHandler(void) ALIAS(isr_default_handler);
@@ -103,9 +101,9 @@ void CANAct_IRQHandler(void) ALIAS(isr_default_handler);
 /** @} */
 
 /** @{ FreeRTOS Interrupt Handlers  */
-extern void xPortSysTickHandler(void);
-extern void xPortPendSVHandler(void);
-extern void vPortSVCHandler(void);
+extern void xPortSysTickHandler(void);  ///< OS timer or tick interrupt (for time slicing tasks)
+extern void xPortPendSVHandler(void);   ///< Context switch is performed using this interrupt
+extern void vPortSVCHandler(void);      ///< OS "supervisor" call to start first FreeRTOS task
 /** @} */
 
 /// Linker script (loader.ld) defines the initial stack pointer that we set at the interrupt vector
@@ -142,11 +140,11 @@ void (* const g_pfnVectors[])(void) =
         0,                  // Reserved
         0,                  // Reserved
         0,                  // Reserved
-        vPortSVCHandler,    // SVCall handler
+        vPortSVCHandler,    // FreeRTOS SVC-call handler (naked function so needs direct call - not a wrapper)
         isr_debug_mon,      // Debug monitor handler
         0,                  // Reserved
-        xPortPendSVHandler, // The PendSV handler
-        xPortSysTickHandler,// The SysTick handler
+        xPortPendSVHandler, // FreeRTOS PendSV handler (naked function so needs direct call - not a wrapper)
+        isr_sys_tick,       // FreeRTOS SysTick handler (we enclose inside a wrapper to track OS overhead)
 
         // Chip Level - LPC17xx - common ISR that will call the real ISR
         isr_forwarder_routine,      // 16, 0x40 - WDT
@@ -276,7 +274,7 @@ static void isr_reset(void)
     #endif
 
     low_level_init();   // Initialize minimal system, such as Clock & UART
-    high_level_init();  // Initialize any user desired items
+    high_level_init();  // Initialize high level board specific features
     main();             // Finally call main()
 
     // In case main() exits:
@@ -287,7 +285,11 @@ static void isr_reset(void)
     }
 }
 
-/// Array of IRQs that the user can register
+/**
+ * Array of IRQs that the user can register, which we default to the weak ISR handler.
+ * The user can either define the real one to override the weak handler, or the user
+ * can call the isr_register() API to change the function pointer at this array.
+ */
 typedef void (*isr_func_t) (void);
 static isr_func_t g_isr_array[] = {
         WDT_IRQHandler,         // 16, 0x40 - WDT
@@ -354,7 +356,7 @@ static void isr_forwarder_routine(void)
     /* Get the IRQ number we are in.  Note that ICSR's real ISR bits are offset by 16.
      * We can read ICSR register too, but let's just read 8-bits directly.
      */
-    unsigned char isr_num = (*((unsigned char*) (0xE000ED04))) - 16; // (SCB->ICSR & 0xFF) - 16;
+    const unsigned char isr_num = (*((unsigned char*) 0xE000ED04)) >> 4; // (SCB->ICSR & 0xFF) - 16;
 
     /* Lookup the function pointer we want to call and make the call */
     isr_func_t isr_to_service = g_isr_array[isr_num];
@@ -365,6 +367,7 @@ static void isr_forwarder_routine(void)
     if (isr_default_handler == isr_to_service)
     {
         u0_dbg_printf("%u IRQ was triggered, but no IRQ service was defined!\n", isr_num);
+        while(1);
     }
     else
     {
@@ -384,25 +387,29 @@ void isr_hard_fault(void)
             "TST    R0, R1  \n"
             "BEQ    _MSP    \n"
             "MRS    R0, PSP \n"
-            "B      isr_hard_fault_handler_c  \n"
+            "B      isr_hard_fault_handler  \n"
             "_MSP:  \n"
             "MRS    R0, MSP \n"
-            "B      isr_hard_fault_handler_c  \n"
+            "B      isr_hard_fault_handler  \n"
     ) ;
 }
-
-/// If an IRQ is not registered, we end up at this stub function
-__attribute__ ((section(".after_vectors"))) void isr_default_handler(void) { u0_dbg_put("IRQ not registered!"); while(1); }
 
 __attribute__ ((section(".after_vectors"))) void isr_nmi(void)        { u0_dbg_put("NMI Fault\n"); while(1); }
 __attribute__ ((section(".after_vectors"))) void isr_mem_fault(void)  { u0_dbg_put("Mem Fault\n"); while(1); }
 __attribute__ ((section(".after_vectors"))) void isr_bus_fault(void)  { u0_dbg_put("BUS Fault\n"); while(1); }
 __attribute__ ((section(".after_vectors"))) void isr_usage_fault(void){ u0_dbg_put("Usage Fault\n"); while(1); }
-__attribute__ ((section(".after_vectors"))) void isr_svc(void)        { u0_dbg_put("SVC Fault\n"); while(1); }
 __attribute__ ((section(".after_vectors"))) void isr_debug_mon(void)  { u0_dbg_put("DBGMON Fault\n"); while(1); }
-__attribute__ ((section(".after_vectors"))) void isr_pend_sv(void)    { u0_dbg_put("PENDSV Fault\n"); while(1); }
-__attribute__ ((section(".after_vectors"))) void isr_sys_tick(void)   { u0_dbg_put("SYSTICK Fault\n"); while(1); }
 
+/// If an IRQ is not registered, we end up at this stub function
+__attribute__ ((section(".after_vectors"))) void isr_default_handler(void) { u0_dbg_put("IRQ not registered!"); while(1); }
+
+/// Wrap the FreeRTOS tick function such that we get a true measure of how much CPU tasks are using
+__attribute__ ((section(".after_vectors"))) void isr_sys_tick(void)
+{
+    vRunTimeStatIsrEntry();
+    xPortSysTickHandler();
+    vRunTimeStatIsrExit();
+}
 
 /**
  * This is called from the HardFault_HandlerAsm with a pointer the Fault stack as the parameter.
@@ -410,7 +417,7 @@ __attribute__ ((section(".after_vectors"))) void isr_sys_tick(void)   { u0_dbg_p
  * We then read the various Fault Status and Address Registers to help decode cause of the fault.
  * The function ends with a BKPT instruction to force control back into the debugger
  */
-void isr_hard_fault_handler_c(unsigned long *hardfault_args)
+void isr_hard_fault_handler(unsigned long *hardfault_args)
 {
     volatile unsigned int stacked_r0 ;
     volatile unsigned int stacked_r1 ;

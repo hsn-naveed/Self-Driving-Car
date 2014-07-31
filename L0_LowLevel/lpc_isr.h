@@ -31,6 +31,13 @@ extern "C" {
 
 /**
  * Register a callback function for an interrupt.
+ *
+ * There are two ways to register an interrupt, one is to define the exact "IRQHandler" as
+ * the one defined at startup.cpp, so something like this:
+ *    C++ (*.cpp) file: extern "C" void UART0_IRQHandler() {}
+ *    C   (*.c)   file: void UART0_IRQHandler() { }
+ *
+ * The second method is just to call this function and register your function as an ISR:
  * @param [in] num            The IRQ number; @see IRQn_Type.  Only IRQ 0-N can be registered.
  * @param [in] isr_func_ptr   void function name.
  *

@@ -55,8 +55,8 @@ static void configure_flash_acceleration(unsigned int clock)
  */
 static void configure_interrupt_priorities()
 {
-    /* CPU core priorities */
-    NVIC_SetPriority(NonMaskableInt_IRQn,   IP_highest);
+    /* Set CPU core priorities, cannot set priority on the NMI interrupt though. */
+    // NVIC_SetPriority(NonMaskableInt_IRQn,   IP_highest);
     NVIC_SetPriority(MemoryManagement_IRQn, IP_highest);
     NVIC_SetPriority(BusFault_IRQn,         IP_highest);
     NVIC_SetPriority(UsageFault_IRQn,       IP_highest);
