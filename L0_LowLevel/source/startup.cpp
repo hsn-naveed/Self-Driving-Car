@@ -356,7 +356,7 @@ static void isr_forwarder_routine(void)
     /* Get the IRQ number we are in.  Note that ICSR's real ISR bits are offset by 16.
      * We can read ICSR register too, but let's just read 8-bits directly.
      */
-    const unsigned char isr_num = (*((unsigned char*) 0xE000ED04)) >> 4; // (SCB->ICSR & 0xFF) - 16;
+    const unsigned char isr_num = (*((unsigned char*) 0xE000ED04)) - 16; // (SCB->ICSR & 0xFF) - 16;
 
     /* Lookup the function pointer we want to call and make the call */
     isr_func_t isr_to_service = g_isr_array[isr_num];
