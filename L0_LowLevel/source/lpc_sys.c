@@ -110,7 +110,12 @@ void lpc_sys_setup_system_timer(void)
     gp_timer_ptr->MCR = (mr0_intr | mr1_intr);
 #endif
 
+    /* Enable the interrupt and use higher priority than other peripherals because
+     * we want to drive the periodic ISR above other interrupts since we reset the
+     * watchdog timer.
+     */
     NVIC_EnableIRQ(timer_irq);
+    NVIC_SetPriority(timer_irq, IP_high);
 }
 
 uint64_t sys_get_uptime_us(void)
@@ -191,11 +196,25 @@ void TIMERX_BAD_IRQHandler()
     {
         gp_timer_ptr->IR = timer_mr1_intr;
 
-        // Setup next interrupt's match value (rollover is okay)
+        /* Setup the next periodic interrupt */
         gp_timer_ptr->MR1 += g_periodic_isr_time_value_us;
 
+        /* In case someone else (you) spent too long inside another isr, we may not be able
+         * to set the MR1 correctly since the TC may have already past our next MR1, so in
+         * this case, make an adjustment.
+         */
+        if (gp_timer_ptr->MR1 < gp_timer_ptr->TC) {
+            gp_timer_ptr->MR1 += (g_periodic_isr_time_value_us + gp_timer_ptr->TC);
+        }
+
+        /* If no one feeds watchdog interrupt, we will watchdog reset.  We are using a periodic ISR
+         * to feed watchdog because if a critical exception hits, it will enter while(1) loop inside
+         * the interrupt, and since watchdog won't reset, it will trigger system reset.
+         */
+        sys_watchdog_feed();
+
         // Service the background task if FreeRTOS is not running
-        if ((taskSCHEDULER_RUNNING != xTaskGetSchedulerState())){
+        if ((taskSCHEDULER_RUNNING != xTaskGetSchedulerState())) {
             sys_background_service();
         }
         /**
@@ -206,12 +225,6 @@ void TIMERX_BAD_IRQHandler()
         else if (g_periodic_isr_time_value_us != LPC_SYS_TIME_1000US) {
              g_periodic_isr_time_value_us = 1000 * LPC_SYS_TIME_1000US;
         }
-
-        /* If no one feeds watchdog interrupt, we will watchdog reset.  We are using a periodic ISR
-         * to feed watchdog because if a critical exception hits, it will enter while(1) loop inside
-         * the interrupt, and since watchdog won't reset, it will trigger system reset.
-         */
-        sys_watchdog_feed();
     }
     else
     {

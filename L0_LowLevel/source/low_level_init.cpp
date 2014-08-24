@@ -57,13 +57,13 @@ static void configure_interrupt_priorities()
 {
     /* Set CPU core priorities, cannot set priority on the NMI interrupt though. */
     // NVIC_SetPriority(NonMaskableInt_IRQn,   IP_highest);
-    NVIC_SetPriority(MemoryManagement_IRQn, IP_highest);
-    NVIC_SetPriority(BusFault_IRQn,         IP_highest);
-    NVIC_SetPriority(UsageFault_IRQn,       IP_highest);
-    NVIC_SetPriority(SVCall_IRQn,           IP_highest);
-    NVIC_SetPriority(DebugMonitor_IRQn,     IP_highest);
-    NVIC_SetPriority(PendSV_IRQn,           IP_highest);
-    NVIC_SetPriority(SysTick_IRQn,          IP_highest);
+    NVIC_SetPriority(MemoryManagement_IRQn, IP_above_freertos);
+    NVIC_SetPriority(BusFault_IRQn,         IP_above_freertos);
+    NVIC_SetPriority(UsageFault_IRQn,       IP_above_freertos);
+    NVIC_SetPriority(SVCall_IRQn,           IP_above_freertos);
+    NVIC_SetPriority(DebugMonitor_IRQn,     IP_above_freertos);
+    NVIC_SetPriority(PendSV_IRQn,           IP_above_freertos);
+    NVIC_SetPriority(SysTick_IRQn,          IP_above_freertos);
 
     /* The following priorities are altered from default: */
     NVIC_SetPriority(UART0_IRQn,    IP_uart);
