@@ -213,7 +213,7 @@ void nordic_power_down();
 
 /// Sets the Channel Number in Mhz
 /// @warning	Be careful with FCC restricted range!
-/// @param	Mhz	Must be between 2400 - 2525
+/// @param MHz  Must be between 2400 - 2525
 void nordic_set_channel(unsigned short MHz);
 
 /// Enables or disables continuous carrier transmission
@@ -247,7 +247,6 @@ void nordic_set_auto_transmit_options(unsigned short txDelayUs, unsigned char re
 char nordic_get_lost_packet_cnt(bool clear);
 
 /// Gets the total number of retransmissions.
-/// @param clear	If true, clears the count
 /// @note			The count is cleared when new transmission starts.
 char nordic_get_retransmit_count();
 
@@ -270,17 +269,17 @@ void nordic_set_addr_width(unsigned short width);
 
 /// Sets the address of the transmitter.
 /// @param address	The char array of address.
-/// @length			The length of address, must be same as what was set at nordic_setAddressWidth()
+/// @param length	The length of address, must be same as what was set at nordic_setAddressWidth()
 void nordic_set_tx_address(char* address, unsigned short length);
 
 /// Sets the reciver's Pipe 0 Address.
 /// @param address	The char array of address.
-/// @length			The length of address, must be same as what was set at nordic_setAddressWidth()
+/// @param length	The length of address, must be same as what was set at nordic_setAddressWidth()
 void nordic_set_rx_pipe0_addr(char* address, unsigned short length);
 
 /// Sets the reciver's Pipe 1 Address.
 /// @param address	The char array of address.
-/// @length			The length of address, must be same as what was set at nordic_setAddressWidth()
+/// @param length	The length of address, must be same as what was set at nordic_setAddressWidth()
 void nordic_set_rx_pipe1_addr(char* address, unsigned short length);
 
 /// Sets the last byte of the address of Pipe2-Pipe5

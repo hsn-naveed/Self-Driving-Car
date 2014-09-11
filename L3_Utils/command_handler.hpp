@@ -112,7 +112,6 @@ class CommandProcessor
          * @param pPersistantCmdStr     The persistent data pointer of a command's text
          * @param pPersistentCmdHelpStr The persistent data pointer of this command's help text
          * @param pDataParam            Optional Param: The data parameter pointer to pass to your handler when it gets called
-         * @param dataParamLen          Optional Param: The length of the data associated with pDataParam
          * @warning pPersistentCmdStr and pPersistentCmdHelp must always exist in memory without going out of scope because
          *          these strings are not copied internally but their pointer is referenced during comparison
          * @note command is matched while ignoring case.

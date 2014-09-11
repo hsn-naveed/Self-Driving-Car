@@ -68,7 +68,7 @@ class CharDev
 
         /**
          * @{ Output a null-terminated string
-         * puts() will also output newline chars \r\n at the end of the string
+         * puts() will also output newline chars "\r\n" at the end of the string
          */
         bool put  (const char* pString, unsigned int timeout=0xffffffff);
         void putline(const char* pBuff, unsigned int timeout=0xffffffff);

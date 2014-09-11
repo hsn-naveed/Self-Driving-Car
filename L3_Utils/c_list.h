@@ -87,7 +87,8 @@ c_list_ptr c_list_create(void);
 
 /**
  * Deletes the linked list and calls your del() function for each element.
- * @param delete_callback.  This can be NULL if you just want to free up the
+ * @param list  The linked list pointer.
+ * @param delete_callback  This can be NULL if you just want to free up the
  *        list and its nodes and you don't want to use the delete callback.
  *        If you provide this callback, then you will receive a callback with
  *        the elm_ptr and you decide what to do with the pointers you added to
@@ -136,8 +137,8 @@ void* c_list_get_elm_at(c_list_ptr list, uint32_t index, void **hint);
  * When your callback returns false, this function will return that element back.
  * If your callback returns true and list iteration finishes, NULL pointer is returned.
  *
- * @param list    The list to iterate
- * @param func    The callback function.
+ * @param list     The list to iterate
+ * @param callback The callback function.
  * @param arg1 arg2 arg3 The arguments to pass to your call-back function.
  */
 void* c_list_find_elm(c_list_ptr list, c_list_callback_t callback,
@@ -145,8 +146,8 @@ void* c_list_find_elm(c_list_ptr list, c_list_callback_t callback,
 
 /**
  * Deletes an element by the pointer
- * @param list  The list to delete the node from
- * @param elm   Pointer to the element that should be deleted.  Note that this
+ * @param list    The list to delete the node from
+ * @param elm_ptr Pointer to the element that should be deleted.  Note that this
  *                will delete the first element it finds and will not remove all
  *                instances if duplicate elements were added.
  * @returns true if element was found and was deleted.

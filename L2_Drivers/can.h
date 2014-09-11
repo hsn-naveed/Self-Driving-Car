@@ -297,16 +297,16 @@ uint8_t CAN_fullcan_get_num_entries(void);
 
 /**
  * Enable CAN filter for BOTH CANs; hardware doesn't allow to enable for just ONE CAN controller.
- * @param can_std_id_t       List of 11-bit IDs to generate an ACK for (can be NULL)
+ * @param std_id_list        List of 11-bit IDs to generate an ACK for (can be NULL)
  * @param sid_cnt            The size of the can_std_id_t array
  *
- * @param can_std_grp_id_t   List of 11-bit ID groups to generate an ACK for (can be NULL)
+ * @param std_group_id_list  List of 11-bit ID groups to generate an ACK for (can be NULL)
  * @param sgp_cnt            The size of the can_std_grp_id_t array
  *
- * @param can_ext_id_t       List of 29-bit IDs to generate an ACK for (can be NULL)
+ * @param ext_id_list        List of 29-bit IDs to generate an ACK for (can be NULL)
  * @param eid_cnt            The size of the can_ext_id_t array
  *
- * @param can_ext_grp_id_t   List of 29-bit ID groups to generate an ACK for (can be NULL)
+ * @param ext_group_id_list List of 29-bit ID groups to generate an ACK for (can be NULL)
  * @param egp_cnt            The size of the can_ext_grp_id_t array
  *
  * @warning The list must be in ASCENDING order (lowest first, then highest).

@@ -71,14 +71,14 @@ rtc_t rtc_gettime (void);
 
 /**
  * Sets the RTC time
- * @param [in] rtc_t  The rtc time structure pointer
+ * @param [in] rtcstruct  The rtc time structure pointer
  */
-void rtc_settime (const rtc_t*);
+void rtc_settime (const rtc_t* rtcstruct);
 
 /**
  * Get the RTC time as string in the format: "Wed Feb 13 15:46:11 2013"
  * @returns the pointer to the time string (do not modify it)
- * @warn This method is not thread safe
+ * @warning This method is not thread safe
  */
 const char* rtc_get_date_time_str(void);
 

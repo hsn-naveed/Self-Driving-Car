@@ -32,13 +32,13 @@ extern "C" {
 
 /**
  * Delays in microseconds
- * @param delayMicroSec The delay in microseconds
+ * @param micro_sec The delay in microseconds
  */
 void delay_us(unsigned int micro_sec);
 
 /**
  * Delays in milliseconds
- * @param delayMilliSec The delay in milliseconds.
+ * @param milli_sec The delay in milliseconds.
  */
 void delay_ms(unsigned int milli_sec);
 

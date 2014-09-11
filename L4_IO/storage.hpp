@@ -81,20 +81,20 @@ class Storage
 
         /**
          * Writes an existing file.
-         * @param pFilename   The filename to write
-         * @param pData       The buffer to write the file data from
-         * @param bytesToRead Number of bytes to write
-         * @param offset      Optional Parameter: file offset to write data to file
+         * @param pFilename    The filename to write
+         * @param pData        The buffer to write the file data from
+         * @param bytesToWrite Number of bytes to write
+         * @param offset       Optional Parameter: file offset to write data to file
          */
         static FRESULT write(const char* pFilename, void* pData, unsigned int bytesToWrite, unsigned int offset=0);
 
         /**
          * Appends an existing file (creates a new file if it doesn't exist)
-         * @param pFilename   The filename to append data to
-         * @param pData       The buffer to write the file data from
-         * @param bytesToRead Number of bytes to append
-         * @param offset      If offset is non-zero, data is written to this offset.
-         *                    If offset is not specified or zero, data is appended at the end of the file.
+         * @param pFilename     The filename to append data to
+         * @param pData         The buffer to write the file data from
+         * @param bytesToAppend Number of bytes to append
+         * @param offset        If offset is non-zero, data is written to this offset.
+         *                      If offset is not specified or zero, data is appended at the end of the file.
          */
         static FRESULT append(const char* pFilename,void* pData, unsigned int bytesToAppend, unsigned int offset=0);
 
