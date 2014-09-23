@@ -212,7 +212,12 @@ CMD_HANDLER_FUNC(logHandler)
         logger_log_raw(cmdParams());
     }
     else {
-        LOG_INFO(cmdParams());
+        // This loop was the test code used while testing the logger such that the user
+        // can type "log 1000 foobar" to log a message 1000 times.
+        // for (int i = 0; i < ((int) cmdParams) + 1; i++)
+        {
+            LOG_INFO(cmdParams());
+        }
         output.printf("Logged: |%s|\n", cmdParams());
     }
     return true;

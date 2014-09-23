@@ -73,23 +73,25 @@
 
 #define configCPU_CLOCK_HZ			            (SYS_CFG_DESIRED_CPU_CLK)
 #define configTICK_RATE_HZ			            ( 1000 )
-#define configMAX_PRIORITIES			        ( 4 )
 #define configENABLE_BACKWARD_COMPATIBILITY     0
 
+/* Avoid using IDLE priority since I have found that the logger task runs into strange
+ * issues when IDLE task priority is used by it ... some kind of stack corruption.
+ */
+#define configMAX_PRIORITIES                    ( 1 + 4 )
 
-
-#if   (configMAX_PRIORITIES == 2)
-    #define PRIORITY_LOW        0
-    #define PRIORITY_HIGH       1
-#elif (configMAX_PRIORITIES == 3)
-    #define PRIORITY_LOW		0
-    #define PRIORITY_MEDIUM		1
-    #define PRIORITY_HIGH		2
-#elif (configMAX_PRIORITIES == 4)
-    #define PRIORITY_LOW        0
-    #define PRIORITY_MEDIUM     1
+#if   (configMAX_PRIORITIES == 3)
+    #define PRIORITY_LOW        1
     #define PRIORITY_HIGH       2
-    #define PRIORITY_CRITICAL 	3
+#elif (configMAX_PRIORITIES == 4)
+    #define PRIORITY_LOW		1
+    #define PRIORITY_MEDIUM		2
+    #define PRIORITY_HIGH		3
+#elif (configMAX_PRIORITIES == 5)
+    #define PRIORITY_LOW        1
+    #define PRIORITY_MEDIUM     2
+    #define PRIORITY_HIGH       3
+    #define PRIORITY_CRITICAL 	4
 #else
     #error "You should really not need more than 4 priorities.  Consider using 4 or less, or override this error message"
 #endif

@@ -136,5 +136,5 @@ SECTIONS
 	} > RamAHB32
 	
 	PROVIDE(_pvHeapStart = .);
-	PROVIDE(_vStackTop = __top_RamAHB32 - 0);
+	PROVIDE(_vStackTop = __top_RamAHB32 - 32); /* Debugger and ISP may use 32-bytes of space? */
 }

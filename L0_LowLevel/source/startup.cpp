@@ -225,7 +225,7 @@ extern unsigned int __bss_section_table_end;
 // This sets up the system and copies global memory contensts from FLASH to RAM
 // and initializes C/C++ environment
 //*****************************************************************************
-__attribute__ ((section(".after_vectors")))
+__attribute__ ((section(".after_vectors"), naked))
 static void isr_reset(void)
 {
     // remove compiler warning
@@ -273,9 +273,11 @@ static void isr_reset(void)
         __libc_init_array();    // Call C++ library initialization
     #endif
 
-    low_level_init();   // Initialize minimal system, such as Clock & UART
-    high_level_init();  // Initialize high level board specific features
-    main();             // Finally call main()
+    do {
+        low_level_init();   // Initialize minimal system, such as Clock & UART
+        high_level_init();  // Initialize high level board specific features
+        main();             // Finally call main()
+    } while(0);
 
     // In case main() exits:
     uart0_init(SYS_CFG_UART0_BPS);

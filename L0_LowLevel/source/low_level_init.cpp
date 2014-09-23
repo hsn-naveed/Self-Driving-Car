@@ -60,10 +60,18 @@ static void configure_interrupt_priorities()
     NVIC_SetPriority(MemoryManagement_IRQn, IP_above_freertos);
     NVIC_SetPriority(BusFault_IRQn,         IP_above_freertos);
     NVIC_SetPriority(UsageFault_IRQn,       IP_above_freertos);
-    NVIC_SetPriority(SVCall_IRQn,           IP_above_freertos);
     NVIC_SetPriority(DebugMonitor_IRQn,     IP_above_freertos);
-    NVIC_SetPriority(PendSV_IRQn,           IP_above_freertos);
-    NVIC_SetPriority(SysTick_IRQn,          IP_above_freertos);
+
+    /* XXX What priority should the SVCall be set to?
+     * Logger task running at IDLE priority runs into issues and it is likely related to this.
+     */
+    // NVIC_SetPriority(SVCall_IRQn,           IP_above_freertos);
+
+    /* FreeRTOS Cortex-M3 should use lowest priority for PendSV and SysTick
+     * http://www.freertos.org/RTOS-Cortex-M3-M4.html
+     */
+    NVIC_SetPriority(SysTick_IRQn,          IP_KERNEL);
+    NVIC_SetPriority(PendSV_IRQn,           IP_KERNEL);
 
     /* The following priorities are altered from default: */
     NVIC_SetPriority(UART0_IRQn,    IP_uart);

@@ -100,7 +100,11 @@ static bool logger_write_to_file(const void * buffer, const uint32_t bytes_to_wr
     /* We don't want to silently fail, so print a message in case an error occurs */
     if (!success) {
         printf("Error %u writing logfile. %u/%u written. Fptr: %u\n",
+#if (FILE_LOGGER_KEEP_FILE_OPEN)
+                (unsigned)err, (unsigned)bytes_written, (unsigned)bytes_to_write, (unsigned) gp_file_ptr->fptr);
+#else
                 (unsigned)err, (unsigned)bytes_written, (unsigned)bytes_to_write, (unsigned) fatfs_file.fptr);
+#endif
     }
 
     return success;
@@ -180,7 +184,7 @@ static void logger_task(void *p)
          * Timeout or NULL pointer received is the signal to flush the data.
          */
         log_msg = NULL;
-        if (!xQueueReceive(g_write_buffer_queue, &log_msg, OS_MS(1000 * FILE_LOGGER_FLUSH_TIMEOUT)) ||
+        if (!xQueueReceive(g_write_buffer_queue, &log_msg, OS_MS(1000 * FILE_LOGGER_FLUSH_TIME_SEC)) ||
             NULL == log_msg)
         {
             logger_write_to_file(start_ptr, (write_ptr - start_ptr));
@@ -295,7 +299,7 @@ static bool logger_internal_init(int logger_priority)
     gp_file_ptr = malloc (sizeof(*gp_file_ptr));
     if(FR_OK != f_open(gp_file_ptr, FILE_LOGGER_FILENAME, FA_OPEN_ALWAYS | FA_WRITE))
     {
-        return failure;
+        goto failure;
     }
 #endif
 
