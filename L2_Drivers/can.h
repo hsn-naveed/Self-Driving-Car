@@ -32,10 +32,10 @@
  *        of individual CANs, you can enable non FullCAN filters because the implementation
  *        provides queues of separate CAN channels.
  *
- * When the CAN bus is initialized, we initially configure it to not acknowledge any messages
+ * When the CAN bus is initialized, we initially configure it to not accept any messages
  * until filtering or bypass option is used.  For the filtering, in addition to the FullCAN,
  * you can configure explicit 11-bit and 29-bit IDs (including groups) and only these
- * messages will be acknowledged.
+ * messages will be accepted.
  *
  * Note that if you send a message, and no other node acknowledges the message sent,
  * then the CAN BUS may enter "Bus off" state due to error(s).  You must correct
@@ -120,7 +120,7 @@ typedef void (*can_void_func_t)(uint32_t);
  *          - Optionally, configure the FullCAN.  @see CAN_fullcan_add_entry()
  *          - Optionally, configure CAN filters.  @see CAN_setup_filter()
  *          - If filters are not configured, and you wish to accept all messages,
- *             call CAN_bypass_filter_ack_all_msgs()
+ *             call CAN_bypass_filter_accept_all_msgs()
  *          - Call CAN_reset_bus() to enable the CAN BUS
  *
  * @param can  The can bus type.  @see can_t
@@ -148,6 +148,7 @@ bool CAN_init(can_t can, uint32_t baudrate_kbps, uint16_t rxq_size, uint16_t txq
  * @param msg  The CAN message
  * @param timeout_ms  If FreeRTOS is running, the task will block until a message arrives.
  *                    Otherwise we will poll and wait this timeout to receive a message.
+ * @returns true if message was captured within the given timeout.
  */
 bool CAN_rx(can_t can, can_msg_t *msg, uint32_t timeout_ms);
 
@@ -186,13 +187,13 @@ void CAN_reset_bus(can_t can);
 /** @} */
 
 /**
- * Enables CAN bypass mode to accept and acknowledge all messages.
- * Either CAN filters need to be setup or this method should be called
- * to accept and acknowledge messages otherwise no messages will be received.
+ * Enables CAN bypass mode to accept all messages on the bus.
+ * Either CAN filters need to be setup or this method should be called to accept
+ * CAN messages otherwise no messages will be capture at the CAN HW registers.
  *
  * @note  The filter is for BOTH CANs
  */
-void CAN_bypass_filter_ack_all_msgs(void);
+void CAN_bypass_filter_accept_all_msgs(void);
 
 /* ---------------------------------------------------------------------------------------
  * Rest of the API is for filtering specific messages.

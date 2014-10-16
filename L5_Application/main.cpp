@@ -56,10 +56,12 @@ int main(void)
      * control codes can be learned by typing "learn" command.
      */
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
-    scheduler_add_task(new remoteTask  (PRIORITY_LOW));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+
+    /* TODO: Need to pass captured timer data from lpc_sys.c otherwise remote task won't work */
+    // scheduler_add_task(new remoteTask  (PRIORITY_LOW));
 
     /* Your tasks should probably used PRIORITY_MEDIUM or PRIORITY_LOW because you
      * want the terminal task to always be responsive so you can poke around in

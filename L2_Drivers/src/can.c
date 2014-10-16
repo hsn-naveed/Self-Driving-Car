@@ -458,7 +458,7 @@ void CAN_reset_bus(can_t can)
     }
 }
 
-void CAN_bypass_filter_ack_all_msgs(void)
+void CAN_bypass_filter_accept_all_msgs(void)
 {
     LPC_CANAF->AFMR = afmr_bypass;
 }
@@ -718,7 +718,7 @@ bool CAN_test(void)
     CAN_ASSERT(!CAN_init(can_max, 100, 0, 0, NULL, NULL));
     CAN_ASSERT(CAN_init(can1, 100, 5, 5, CAN_test_bufoff_cb, CAN_test_bufovr_cb));
     CAN_ASSERT(LPC_CAN1->MOD == can_mod_reset);
-    CAN_bypass_filter_ack_all_msgs();
+    CAN_bypass_filter_accept_all_msgs();
 
     CAN_ASSERT(g_can_rx_qs[0] != NULL);
     CAN_ASSERT(g_can_tx_qs[0] != NULL);

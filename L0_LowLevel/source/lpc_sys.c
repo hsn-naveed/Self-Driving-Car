@@ -56,13 +56,6 @@ static inline void sys_background_service(void)
      * is not running, timer ISR will call this function to carry out mesh networking logic.
      */
     wireless_service();
-
-    /* I used a small hack to reset base priority to zero periodically incorrectly assuming that
-     * FreeRTOS API sets the base priority to non-zero, but it turned out that the problem was
-     * that the vPortEnterCritical() and vPortExitCritical() functions were using the critical
-     * nesting count variable that was not initialized to zero by the port.c file!
-     */
-     // __set_BASEPRI(0);
 }
 
 void lpc_sys_setup_system_timer(void)
@@ -139,7 +132,7 @@ uint64_t sys_get_uptime_us(void)
     } while (after < before);
 
     // each rollover is 2^32 or UINT32_MAX
-    return (((uint64_t)rollovers << 32) + after);
+    return (((uint64_t)rollovers << 32) | after);
 }
 
 /**
