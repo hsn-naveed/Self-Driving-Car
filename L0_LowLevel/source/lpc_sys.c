@@ -27,54 +27,42 @@
 
 
 
-/// Periodic interrupt at this value occurs until FreeRTOS starts, and then the frequency is decreased
-#define LPC_SYS_TIME_1000US     (1 * 1000)
+/// These bitmasks should match up with the timer MCR register to trigger interrupt upon match
+enum {
+    mr0_mcr_for_overflow          = (UINT32_C(1) << 0),
+    mr1_mcr_for_mesh_bckgnd_task  = (UINT32_C(1) << 3),
+    mr2_mcr_for_ir_sensor_timeout = (UINT32_C(1) << 6),
+    mr3_mcr_for_watchdog_reset    = (UINT32_C(1) << 9),
+};
 
-/// We set this to the initial value, and decrease the frequency later if FreeRTOS starts to run
-uint32_t g_periodic_isr_time_value_us = LPC_SYS_TIME_1000US;
+/// Periodic interrupt for mesh networking.  This timer match interrupt is disabled if FreeRTOS starts to run.
+#define LPC_SYS_TIME_FOR_BCKGND_TASK_US     (1 * 1000)
+
+/// Time in microseconds that will feed the watchdog, which should be roughly half of the actual watchdog reset
+#define LPC_SYS_WATCHDOG_RESET_TIME_US      ((SYS_CFG_WATCHDOG_TIMEOUT_MS / 2) * 1000)
 
 /// Timer overflow interrupt will increment this upon the last UINT32 value, 16-bit is enough for many years!
 static volatile uint16_t g_timer_rollover_count = 0;
 
-/// Pointer to the timer struct based on g_sys_timer_source
+/// Pointer to the timer struct based on SYS_CFG_SYS_TIMER
 LPC_TIM_TypeDef *gp_timer_ptr = NULL;
 
-/**
- * The timer to use for timer and background services.
- * We can use any timer, but timer1 is required for the IR receiver's signal decoding logic.
- */
-static const lpc_timer_t g_sys_timer_source = SYS_CFG_SYS_TIMER;
 
-
-
-/**
- * This function is called periodically by the timer ISR
- */
-static inline void sys_background_service(void)
-{
-    /* FreeRTOS task is used to service the wireless_service() function, otherwise if FreeRTOS
-     * is not running, timer ISR will call this function to carry out mesh networking logic.
-     */
-    wireless_service();
-}
 
 void lpc_sys_setup_system_timer(void)
 {
-    enum {
-        mr0_intr = (UINT32_C(1) << 0),
-        mr1_intr = (UINT32_C(1) << 3),
-        mr2_intr = (UINT32_C(1) << 6),
-    };
+    // Note: Timer1 is required for IR sensor's decoding logic since its pin is tied to Timer1 Capture Pin
+    const lpc_timer_t sys_timer_source = SYS_CFG_SYS_TIMER;
 
     // Get the IRQ number of the timer to enable the interrupt
-    const IRQn_Type timer_irq = lpc_timer_get_irq_num(g_sys_timer_source);
+    const IRQn_Type timer_irq = lpc_timer_get_irq_num(sys_timer_source);
 
     // Initialize the timer structure pointer
-    gp_timer_ptr = lpc_timer_get_struct(g_sys_timer_source);
+    gp_timer_ptr = lpc_timer_get_struct(sys_timer_source);
 
     // Setup the timer to tick with a fine-grain resolution
     const uint32_t one_micro_second = 1;
-    lpc_timer_enable(g_sys_timer_source, one_micro_second);
+    lpc_timer_enable(sys_timer_source, one_micro_second);
 
     /**
      * MR0: Setup the match register to take care of the overflow.
@@ -83,7 +71,7 @@ void lpc_sys_setup_system_timer(void)
     gp_timer_ptr->MR0 = UINT32_MAX;
 
     // MR1: Setup the periodic interrupt to do background processing
-    gp_timer_ptr->MR1 = g_periodic_isr_time_value_us;
+    gp_timer_ptr->MR1 = LPC_SYS_TIME_FOR_BCKGND_TASK_US;
 
 #if (1 == SYS_CFG_SYS_TIMER)
     // MR2: IR code timeout when timer1 is used since IR receiver is tied to timer1 capture pin
@@ -92,20 +80,18 @@ void lpc_sys_setup_system_timer(void)
     #warning "IR receiver will not work unless SYS_CFG_SYS_TIMER uses TIMER1, so set it to 1 if possible"
 #endif
 
-    /* Not using this anymore, see the note at sys_background_service() */
-    // NVIC_SetPriority(timer_irq, IP_above_freertos);
+    // Enable the timer match interrupts
+    gp_timer_ptr->MCR = (mr0_mcr_for_overflow | mr1_mcr_for_mesh_bckgnd_task | mr3_mcr_for_watchdog_reset);
 
-    // Enable the interrupts
-    // TODO Setup capture interrupt for IR receiver
+    // Only if we have got TIMER1, we can use IR sensor timeout match interrupt
 #if (1 == SYS_CFG_SYS_TIMER)
-    gp_timer_ptr->MCR = (mr0_intr | mr1_intr | mr2_intr);
-#else
-    gp_timer_ptr->MCR = (mr0_intr | mr1_intr);
+    gp_timer_ptr->MCR |= (mr2_mcr_for_ir_sensor_timeout);
 #endif
 
-    /* Enable the interrupt and use higher priority than other peripherals because
-     * we want to drive the periodic ISR above other interrupts since we reset the
-     * watchdog timer.
+    // TODO Setup capture interrupt for IR receiver
+
+    /* Enable the interrupt and use higher priority than other peripherals because we want
+     * to drive the periodic ISR above other interrupts since we reset the watchdog timer.
      */
     NVIC_EnableIRQ(timer_irq);
     NVIC_SetPriority(timer_irq, IP_high);
@@ -152,11 +138,12 @@ void TIMERX_BAD_IRQHandler()
 #endif
 {
     enum {
-        timer_mr0_intr   = (1 << 0),
-        timer_mr1_intr   = (1 << 1),
-        timer_mr2_intr   = (1 << 2),
-        timer_mr3_intr   = (1 << 3),
-        timer_capt0_intr = (1 << 4),
+        timer_mr0_intr_timer_rollover     = (1 << 0),
+        timer_mr1_intr_mesh_servicing     = (1 << 1),
+        timer_mr2_intr_ir_sensor_timeout  = (1 << 2),
+        timer_mr3_intr_for_watchdog_rst   = (1 << 3),
+
+        timer_capt0_intr_ir_sensor_edge_time_captured = (1 << 4),
         timer_capt1_intr = (1 << 5),
     };
 
@@ -164,60 +151,53 @@ void TIMERX_BAD_IRQHandler()
 
 #if (1 == SYS_CFG_SYS_TIMER)
     /* TODO: Call capture ISR callback for IR receiver */
-    if (intr_reason & timer_capt0_intr)
+    if (intr_reason & timer_capt0_intr_ir_sensor_edge_time_captured)
     {
-        gp_timer_ptr->IR = timer_capt0_intr;
+        gp_timer_ptr->IR = timer_capt0_intr_ir_sensor_edge_time_captured;
 
         // Setup timeout of IR signal (unless we reset it again)
         gp_timer_ptr->MR2 = 10000 + gp_timer_ptr->TC;
     }
     /* TODO MR2: End of IR capture (no IR capture after initial IR signal) */
-    else if (intr_reason & timer_mr2_intr)
+    else if (intr_reason & timer_mr2_intr_ir_sensor_timeout)
     {
-        gp_timer_ptr->IR = timer_mr2_intr;
+        gp_timer_ptr->IR = timer_mr2_intr_ir_sensor_timeout;
     }
     /* MR0 is used for the timer rollover count */
     else
 #endif
-    if(intr_reason & timer_mr0_intr)
+    if(intr_reason & timer_mr0_intr_timer_rollover)
     {
-        gp_timer_ptr->IR = timer_mr0_intr;
+        gp_timer_ptr->IR = timer_mr0_intr_timer_rollover;
         ++g_timer_rollover_count;
     }
-    /* MR1 is used as a periodic interrupt to service background tasks and reset watchdog */
-    else if(intr_reason & timer_mr1_intr)
+    else if(intr_reason & timer_mr1_intr_mesh_servicing)
     {
-        gp_timer_ptr->IR = timer_mr1_intr;
+        gp_timer_ptr->IR = timer_mr1_intr_mesh_servicing;
 
         /* Setup the next periodic interrupt */
-        gp_timer_ptr->MR1 += g_periodic_isr_time_value_us;
+        gp_timer_ptr->MR1 += gp_timer_ptr->TC + LPC_SYS_TIME_FOR_BCKGND_TASK_US;
 
-        /* In case someone else (you) spent too long inside another isr, we may not be able
-         * to set the MR1 correctly since the TC may have already past our next MR1, so in
-         * this case, make an adjustment.
+        /* FreeRTOS task is used to service the wireless_service() function, otherwise if FreeRTOS
+         * is not running, timer ISR will call this function to carry out mesh networking logic.
          */
-        if (gp_timer_ptr->MR1 < gp_timer_ptr->TC) {
-            gp_timer_ptr->MR1 += (g_periodic_isr_time_value_us + gp_timer_ptr->TC);
+        if (taskSCHEDULER_RUNNING != xTaskGetSchedulerState()) {
+            wireless_service();
         }
-
-        /* If no one feeds watchdog interrupt, we will watchdog reset.  We are using a periodic ISR
+        else {
+            /* Disable this timer interrupt if FreeRTOS starts to run */
+            gp_timer_ptr->MCR &= ~(mr1_mcr_for_mesh_bckgnd_task);
+        }
+    }
+    else if (intr_reason & timer_mr3_intr_for_watchdog_rst) {
+        /* If no one feeds the watchdog, we will watchdog reset.  We are using a periodic ISR
          * to feed watchdog because if a critical exception hits, it will enter while(1) loop inside
          * the interrupt, and since watchdog won't reset, it will trigger system reset.
          */
         sys_watchdog_feed();
 
-        // Service the background task if FreeRTOS is not running
-        if ((taskSCHEDULER_RUNNING != xTaskGetSchedulerState())) {
-            sys_background_service();
-        }
-        /**
-         * If FreeRTOS is running, then decrease the frequency of the periodic ISR because
-         * mesh service is performed by FreeRTOS task, and the only other thing we need to
-         * do periodically is the watchdog feed.
-         */
-        else if (g_periodic_isr_time_value_us != LPC_SYS_TIME_1000US) {
-             g_periodic_isr_time_value_us = 1000 * LPC_SYS_TIME_1000US;
-        }
+        /* Setup the next watchdog reset timer */
+        gp_timer_ptr->MR3 = gp_timer_ptr->TC + LPC_SYS_WATCHDOG_RESET_TIME_US;
     }
     else
     {
