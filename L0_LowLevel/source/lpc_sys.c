@@ -190,6 +190,8 @@ void TIMERX_BAD_IRQHandler()
         gp_timer_ptr->MR1 += gp_timer_ptr->TC + LPC_SYS_TIME_FOR_BCKGND_TASK_US;
     }
     else if (intr_reason & timer_mr3_intr_for_watchdog_rst) {
+        gp_timer_ptr->IR = timer_mr3_intr_for_watchdog_rst;
+
         /* If no one feeds the watchdog, we will watchdog reset.  We are using a periodic ISR
          * to feed watchdog because if a critical exception hits, it will enter while(1) loop inside
          * the interrupt, and since watchdog won't reset, it will trigger system reset.
