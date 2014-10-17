@@ -175,9 +175,6 @@ void TIMERX_BAD_IRQHandler()
     {
         gp_timer_ptr->IR = timer_mr1_intr_mesh_servicing;
 
-        /* Setup the next periodic interrupt */
-        gp_timer_ptr->MR1 += gp_timer_ptr->TC + LPC_SYS_TIME_FOR_BCKGND_TASK_US;
-
         /* FreeRTOS task is used to service the wireless_service() function, otherwise if FreeRTOS
          * is not running, timer ISR will call this function to carry out mesh networking logic.
          */
@@ -188,6 +185,9 @@ void TIMERX_BAD_IRQHandler()
             /* Disable this timer interrupt if FreeRTOS starts to run */
             gp_timer_ptr->MCR &= ~(mr1_mcr_for_mesh_bckgnd_task);
         }
+
+        /* Setup the next periodic interrupt */
+        gp_timer_ptr->MR1 += gp_timer_ptr->TC + LPC_SYS_TIME_FOR_BCKGND_TASK_US;
     }
     else if (intr_reason & timer_mr3_intr_for_watchdog_rst) {
         /* If no one feeds the watchdog, we will watchdog reset.  We are using a periodic ISR
