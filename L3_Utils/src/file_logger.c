@@ -40,12 +40,12 @@ static FIL *gp_file_ptr = NULL;                     ///< The pointer to the file
 
 static uint16_t g_blocked_calls = 0;                ///< Number of logging calls that blocked
 static uint16_t g_buffer_watermark = 0;             ///< The watermark of the number of buffers consumed
-static int g_highest_file_write_time = 0;           ///< Highest time spend while trying to write file buffer
+static uint16_t g_highest_file_write_time = 0;      ///< Highest time spend while trying to write file buffer
 static char * gp_file_buffer = NULL;                ///< Pointer to local buffer space before it is written to file
 static QueueHandle_t g_write_buffer_queue = NULL;   ///< Log message pointers are written to this queue
 static QueueHandle_t g_empty_buffer_queue = NULL;   ///< Log message pointers are available from this queue
-
-
+static uint32_t g_logger_calls[log_last] = { 0 };   ///< Number of logged messages of each severity
+static uint8_t g_logger_printf_mask = 0;            ///< Chooses severity levels that are printed on stdio and logged
 
 /**
  * Writes the buffer to the file.
@@ -340,22 +340,27 @@ void logger_send_flush_request(void)
     }
 }
 
-int logger_get_blocked_call_count(void)
+uint32_t logger_get_logged_call_count(logger_msg_t severity)
+{
+    return (severity < log_last) ? g_logger_calls[severity] : 0;
+}
+
+uint16_t logger_get_blocked_call_count(void)
 {
     return g_blocked_calls;
 }
 
-int logger_get_highest_file_write_time_ms(void)
+uint16_t logger_get_highest_file_write_time_ms(void)
 {
     return g_highest_file_write_time;
 }
 
-int logger_get_num_buffers_watermark(void)
+uint16_t logger_get_num_buffers_watermark(void)
 {
     return g_buffer_watermark;
 }
 
-void logger_init(int logger_priority)
+void logger_init(uint8_t logger_priority)
 {
     /* Prevent double init */
     if (!logger_initialized())
@@ -363,6 +368,17 @@ void logger_init(int logger_priority)
         if (!logger_internal_init(logger_priority)) {
             printf("ERROR: logger initialization failure\n");
         }
+    }
+}
+
+void logger_set_printf(logger_msg_t type, bool enable)
+{
+    const uint8_t mask = (1 << type);
+    if (enable) {
+        g_logger_printf_mask |= mask;
+    }
+    else {
+        g_logger_printf_mask &= ~mask;
     }
 }
 
@@ -436,7 +452,13 @@ void logger_log(logger_msg_t type, const char * filename, const char * func_name
         va_end(args);
     } while (0);
 
+    ++g_logger_calls[type];
     logger_write_log_message(buffer, os_running);
+
+    /* Print the message out if the printf mask was set */
+    if (g_logger_printf_mask & (1 << type)) {
+        puts(buffer);
+    }
 }
 
 void logger_log_raw(const char * msg, ...)
