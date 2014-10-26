@@ -21,6 +21,7 @@
 #include "lpc_sys.h"
 #include "wireless.h"
 #include "lpc_timers.h"
+#include "io.hpp"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -49,10 +50,10 @@ LPC_TIM_TypeDef *gp_timer_ptr = NULL;
 
 
 
-void lpc_sys_setup_system_timer(void)
+extern "C" void lpc_sys_setup_system_timer(void)
 {
     // Note: Timer1 is required for IR sensor's decoding logic since its pin is tied to Timer1 Capture Pin
-    const lpc_timer_t sys_timer_source = SYS_CFG_SYS_TIMER;
+    const lpc_timer_t sys_timer_source = (lpc_timer_t) SYS_CFG_SYS_TIMER;
 
     // Get the IRQ number of the timer to enable the interrupt
     const IRQn_Type timer_irq = lpc_timer_get_irq_num(sys_timer_source);
@@ -80,6 +81,9 @@ void lpc_sys_setup_system_timer(void)
     #warning "IR receiver will not work unless SYS_CFG_SYS_TIMER uses TIMER1, so set it to 1 if possible"
 #endif
 
+    /* Setup the first match interrupt to reset the watchdog */
+    gp_timer_ptr->MR3 = LPC_SYS_WATCHDOG_RESET_TIME_US;
+
     // Enable the timer match interrupts
     gp_timer_ptr->MCR = (mr0_mcr_for_overflow | mr1_mcr_for_mesh_bckgnd_task | mr3_mcr_for_watchdog_reset);
 
@@ -97,7 +101,7 @@ void lpc_sys_setup_system_timer(void)
     NVIC_SetPriority(timer_irq, IP_high);
 }
 
-uint64_t sys_get_uptime_us(void)
+extern "C" uint64_t sys_get_uptime_us(void)
 {
     uint32_t before    = 0;
     uint32_t after     = 0;
@@ -125,13 +129,13 @@ uint64_t sys_get_uptime_us(void)
  * Actual ISR function (@see startup.cpp)
  */
 #if (0 == SYS_CFG_SYS_TIMER)
-void TIMER0_IRQHandler()
+extern "C" void TIMER0_IRQHandler()
 #elif (1 == SYS_CFG_SYS_TIMER)
-void TIMER1_IRQHandler()
+extern "C" void TIMER1_IRQHandler()
 #elif (2 == SYS_CFG_SYS_TIMER)
-void TIMER2_IRQHandler()
+extern "C" void TIMER2_IRQHandler()
 #elif (3 == SYS_CFG_SYS_TIMER)
-void TIMER3_IRQHandler()
+extern "C" void TIMER3_IRQHandler()
 #else
 #error "SYS_CFG_SYS_TIMER must be between 0-3 inclusively"
 void TIMERX_BAD_IRQHandler()
@@ -150,18 +154,20 @@ void TIMERX_BAD_IRQHandler()
     const uint32_t intr_reason = gp_timer_ptr->IR;
 
 #if (1 == SYS_CFG_SYS_TIMER)
-    /* TODO: Call capture ISR callback for IR receiver */
+    /* ISR for captured time of the capture input pin */
     if (intr_reason & timer_capt0_intr_ir_sensor_edge_time_captured)
     {
         gp_timer_ptr->IR = timer_capt0_intr_ir_sensor_edge_time_captured;
 
-        // Setup timeout of IR signal (unless we reset it again)
+        // Store the IR capture time and setup timeout of the IR signal (unless we reset it again)
+        IS.storeIrCode(gp_timer_ptr->CR0);
         gp_timer_ptr->MR2 = 10000 + gp_timer_ptr->TC;
     }
-    /* TODO MR2: End of IR capture (no IR capture after initial IR signal) */
+    /* MR2: End of IR capture (no IR capture after initial IR signal) */
     else if (intr_reason & timer_mr2_intr_ir_sensor_timeout)
     {
         gp_timer_ptr->IR = timer_mr2_intr_ir_sensor_timeout;
+        IS.decodeIrCode();
     }
     /* MR0 is used for the timer rollover count */
     else
@@ -211,7 +217,7 @@ void TIMERX_BAD_IRQHandler()
     }
 }
 
-void sys_get_mem_info_str(char buffer[280])
+extern "C" void sys_get_mem_info_str(char buffer[280])
 {
     sys_mem_t info = sys_get_mem_info();
     sprintf(buffer,

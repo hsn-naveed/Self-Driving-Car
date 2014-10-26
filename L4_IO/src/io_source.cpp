@@ -16,6 +16,8 @@
  *          p r e e t . w i k i @ g m a i l . c o m
  */
 
+#include <stdint.h>
+
 #include "io.hpp" // All IO Class definitions
 #include "bio.h"
 #include "adc0.h"
@@ -148,78 +150,45 @@ int16_t Acceleration_Sensor::getZ()
  *  the decoded signal will be unique per button pressed on an IR remote.
  */
 
-/**
- * TODO : Move this functionality that lpc_sys.c's timer1 ISR can call.
- */
-#if 0
-extern "C"
+
+#define MAX_FALLING_EDGES_PER_IR_FRAME      32
+static uint32_t g_ir_timings[MAX_FALLING_EDGES_PER_IR_FRAME] = { 0 };   ///< IR signal falling edges
+static uint16_t g_signal_count = 0;         ///< The number of falling edges
+static uint32_t g_last_decoded_signal = 0;  ///< Value of the last decoded signals
+
+void IR_Sensor::storeIrCode(uint32_t value)
 {
-    void TIMER1_IRQHandler()
-    {
-        const unsigned int captureMask = (1 << 4);
-        const unsigned int MR0Mask     = (1 << 0);
-        const unsigned int ticksFor20Ms = (20 * 1000) / TIMER1_US_PER_TICK;
-
-        const  unsigned short maxFallingEdgesPerIRFrame = 32;
-        static unsigned short signalCount = 0;
-        static unsigned int signalArray[maxFallingEdgesPerIRFrame] = {0};
-
-        // Capture interrupt occurred:
-        if(LPC_TIM1->IR & captureMask)
-        {
-            /**
-             * Reload Match Register Interrupt to interrupt 20ms after this point of time
-             * If another capture interrupt arrives later, this timer is reset again.
-             */
-            LPC_TIM1->MR0 = (LPC_TIM1->TC + ticksFor20Ms);
-
-            // Just store the timestamp of this signal
-            if(signalCount < maxFallingEdgesPerIRFrame) {
-                signalArray[signalCount++] = LPC_TIM1->CR0;
-            }
-
-            // Clear the Timer Capture interrupt
-            LPC_TIM1->IR = captureMask;
-        }
-        // Timeout Interrupt to decode the signal
-        else if(LPC_TIM1->IR & MR0Mask)
-        {
-            if(signalCount > 1)
-            {
-                /**
-                 * Time to decode the signals at this timeout
-                 * Calculate differences of falling edges
-                 */
-                for(int i = 0; i < signalCount-1; i++) {
-                    signalArray[i] = signalArray[i+1] - signalArray[i];
-                }
-
-                /**
-                 * First falling edge value should indicate binary 0.
-                 * So anything higher than 50% of this value is considered binary 1.
-                 */
-                const unsigned int binary1Threshold = signalArray[1] + (signalArray[1]/2);
-                unsigned int decodedSignal = 0;
-                for(unsigned short i=0; i < signalCount-1; i++) {
-                    if(signalArray[i] > binary1Threshold) {
-                        //printf("%i, ", signalArray[i]);
-                        decodedSignal |= (1 << i);
-                    }
-                }
-                LAST_DECODED_IR_SIGNAL = decodedSignal;
-            }
-
-            // Clear the Match Interrupt and signal count
-            signalCount = 0;
-            LPC_TIM1->IR = MR0Mask;
-        }
-        else
-        {
-            // Log error of unexpected interrupt
-        }
+    // Just store the timestamp of this signal
+    if(g_signal_count < MAX_FALLING_EDGES_PER_IR_FRAME) {
+        g_ir_timings[g_signal_count++] = value;
     }
 }
-#endif
+
+void IR_Sensor::decodeIrCode(void)
+{
+    if(g_signal_count > 1)
+    {
+        /* Calculate differences of falling edges */
+        for(int i = 0; i < g_signal_count-1; i++) {
+            g_ir_timings[i] = g_ir_timings[i+1] - g_ir_timings[i];
+        }
+
+        /**
+         * First falling edge value should indicate binary 0.
+         * So anything higher than 50% of this value is considered binary 1.
+         */
+        const uint32_t binary1Threshold = g_ir_timings[1] + (g_ir_timings[1]/2);
+        uint32_t decodedSignal = 0;
+        for(uint16_t i=0; i < g_signal_count-1; i++) {
+            if(g_ir_timings[i] > binary1Threshold) {
+                decodedSignal |= (1 << i);
+            }
+        }
+        g_last_decoded_signal = decodedSignal;
+    }
+
+    g_signal_count = 0;
+}
 
 /**
  * IR Sensor is attached to P1.18 - CAP1.0, so it needs TIMER1 to capture the times on P1.18
@@ -243,12 +212,12 @@ bool IR_Sensor::init()
 
 bool IR_Sensor::isIRCodeReceived()
 {
-    return false; // todo
+    return (0 != g_last_decoded_signal);
 }
-unsigned int IR_Sensor::getLastIRCode()
+uint32_t IR_Sensor::getLastIRCode()
 {
-    unsigned int signal = 0;
-    // todo
+    const uint32_t signal = g_last_decoded_signal;
+    g_last_decoded_signal = 0;
     return signal;
 }
 

@@ -23,6 +23,8 @@
  
 #ifndef IR_SENSOR_HPP_
 #define IR_SENSOR_HPP_
+#include <stdint.h>
+
 
 
 /**
@@ -49,7 +51,12 @@ class IR_Sensor : public SingletonTemplate<IR_Sensor>
         bool isIRCodeReceived();
 
         /// @returns The last IR signal that was decoded or 0 if nothing was decoded
-        unsigned int getLastIRCode();
+        uint32_t getLastIRCode();
+
+        /** @{ Don't use these functions */
+        void storeIrCode(uint32_t);
+        void decodeIrCode(void);
+        /** @} */
 
     private:
         /// Private constructor of this Singleton class

@@ -102,7 +102,11 @@ bool terminalTask::taskEntry()
 
     cp.addHandler(storageHandler,  "storage",  "Parameters: 'format sd', 'format flash', 'mount sd', 'mount flash'");
     cp.addHandler(rebootHandler,   "reboot",   "Reboots the system");
-    cp.addHandler(logHandler,      "log",      "'log <hello>' to log info.  'log flush' to flush logs");
+    cp.addHandler(logHandler,      "log",      "'log <hello>' to log info\n"
+                                               "'log flush' to flush logs\n"
+                                               "'log enableprint info/warning/error' : Enables logger calls to printf\n"
+                                               "'log disableprint info/warning/error': Disables logger calls to printf\n"
+                                               );
     cp.addHandler(learnIrHandler,  "learn",    "Begin to learn IR codes for numbers 0-9");
     cp.addHandler(wirelessHandler, "wireless", "Use 'wireless' to see the nested commands");
 

@@ -203,6 +203,8 @@ CMD_HANDLER_FUNC(timeHandler)
 
 CMD_HANDLER_FUNC(logHandler)
 {
+    bool enablePrintf = false;
+
     if (cmdParams == "flush") {
         LOG_FLUSH();
         output.putline("Log(s) have been flushed");
@@ -210,6 +212,23 @@ CMD_HANDLER_FUNC(logHandler)
     else if (cmdParams.beginsWith("raw")) {
         cmdParams.eraseFirstWords(1);
         logger_log_raw(cmdParams());
+    }
+    else if ( (enablePrintf = cmdParams.beginsWith("enable")) || cmdParams.beginsWith("disable")) {
+        // 'enableprint info/warning/error'
+
+        logger_msg_t type = log_info;
+        cmdParams.eraseFirstWords(1);
+        if (cmdParams.beginsWithIgnoreCase("warn")) {
+            type = log_warn;
+        }
+        else if (cmdParams.beginsWithIgnoreCase("error")) {
+            type = log_error;
+        }
+
+        logger_set_printf(type, enablePrintf);
+        output.printf("%s logger printf for %s\n",
+                      enablePrintf ? "Enabled" : "Disabled",
+                      type == log_info ? "info" : type == log_warn ? "warn" : "error");
     }
     else {
         // This loop was the test code used while testing the logger such that the user
