@@ -60,7 +60,7 @@ int main(void)
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
-    /* TODO: Need to pass captured timer data from lpc_sys.c otherwise remote task won't work */
+    /* The task for the IR receiver */
     // scheduler_add_task(new remoteTask  (PRIORITY_LOW));
 
     /* Your tasks should probably used PRIORITY_MEDIUM or PRIORITY_LOW because you

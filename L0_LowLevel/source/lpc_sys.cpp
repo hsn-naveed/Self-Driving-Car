@@ -92,8 +92,6 @@ extern "C" void lpc_sys_setup_system_timer(void)
     gp_timer_ptr->MCR |= (mr2_mcr_for_ir_sensor_timeout);
 #endif
 
-    // TODO Setup capture interrupt for IR receiver
-
     /* Enable the interrupt and use higher priority than other peripherals because we want
      * to drive the periodic ISR above other interrupts since we reset the watchdog timer.
      */
