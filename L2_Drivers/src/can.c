@@ -112,15 +112,19 @@ enum {
     can2_pconp_mask = (1 << 14),    ///< CAN2 power on bitmask
 };
 
-/// CAN interrupt call-backs for the user
+/// Typedef of CAN queues and data
 typedef struct {
+    QueueHandle_t rxQ;              ///< TX queue
+    QueueHandle_t txQ;              ///< RX queue
+    uint16_t droppedRxMsgs;         ///< Number of messages dropped if no space found during the CAN interrupt that queues the RX messages
+    uint16_t rxQWatermark;          ///< Watermark of the FreeRTOS Rx Queue
+    uint16_t txQWatermark;          ///< Watermark of the FreeRTOS Tx Queue
     can_void_func_t bus_error;      ///< When serious BUS error occurs
     can_void_func_t data_overrun;   ///< When we read the CAN buffer too late for incoming message
-} can_callbacks_t;
+} canStruct_t ;
 
-static QueueHandle_t g_can_rx_qs[can_max] = { NULL, NULL };   ///< RX queue handles for CAN BUSes
-static QueueHandle_t g_can_tx_qs[can_max] = { NULL, NULL };   ///< TX queue handles for CAN BUSes
-static can_callbacks_t g_can_callbacks[can_max]  = { {NULL, NULL}, {NULL, NULL} }; ///< Callback functions
+/// Structure of both CANs
+canStruct_t g_can_structs[can_max];
 
 /**
  * This type of CAN interrupt should lead to "bus error", but note that intr_berr is not the right
@@ -187,19 +191,29 @@ static void CAN_handle_isr(const uint32_t ibits, const can_t can, LPC_CAN_TypeDe
 {
     const uint8_t cidx = CAN_INDEX(can);
     const uint32_t rbs = (1 << 0);
+    UBaseType_t count;
     can_msg_t msg;
 
     /* Handle the received message */
     if ((ibits & intr_rx) | (CANx->GSR & rbs)) {
         can_msg_t *pMsg = (can_msg_t*) &(CANx->RFS);
-        xQueueSendFromISR(g_can_rx_qs[cidx], pMsg, NULL);
+        if (!xQueueSendFromISR(g_can_structs[cidx].rxQ, pMsg, NULL)) {
+            g_can_structs[cidx].droppedRxMsgs++;
+        }
         CANx->CMR = 0x04; // Release the receive buffer, no need to bitmask
+
+        if( (count = uxQueueMessagesWaitingFromISR(g_can_structs[cidx].rxQ)) > g_can_structs[cidx].rxQWatermark) {
+            g_can_structs[cidx].rxQWatermark = count;
+        }
     }
 
     /* A transmit finished, send any queued message(s) */
     if (ibits & intr_all_tx) {
-        if (xQueueReceiveFromISR(g_can_tx_qs[cidx], &msg, NULL)) {
+        if (xQueueReceiveFromISR(g_can_structs[cidx].txQ, &msg, NULL)) {
             CAN_tx_now(CANx, &msg);
+        }
+        if( (count = uxQueueMessagesWaitingFromISR(g_can_structs[cidx].txQ)) > g_can_structs[cidx].txQWatermark) {
+            g_can_structs[cidx].txQWatermark = count;
         }
     }
 
@@ -207,10 +221,10 @@ static void CAN_handle_isr(const uint32_t ibits, const can_t can, LPC_CAN_TypeDe
      * to check for the callback function being NULL
      */
     if (ibits & g_can_bus_err_intr) {
-        g_can_callbacks[cidx].bus_error(ibits);
+        g_can_structs[cidx].bus_error(ibits);
     }
     if (ibits & intr_ovrn) {
-        g_can_callbacks[cidx].data_overrun(ibits);
+        g_can_structs[cidx].data_overrun(ibits);
     }
 }
 /** @} */
@@ -269,11 +283,11 @@ bool CAN_init(can_t can, uint32_t baudrate_kbps, uint16_t rxq_size, uint16_t txq
     }
 
     /* Create the queues with minimum size of 1 to avoid NULL pointer reference */
-    if (!g_can_rx_qs[cidx]) {
-        g_can_rx_qs[cidx] = xQueueCreate(rxq_size ? rxq_size : 1, sizeof(can_msg_t));
+    if (!g_can_structs[cidx].rxQ) {
+        g_can_structs[cidx].rxQ = xQueueCreate(rxq_size ? rxq_size : 1, sizeof(can_msg_t));
     }
-    if (!g_can_tx_qs[cidx]) {
-        g_can_tx_qs[cidx] = xQueueCreate(txq_size ? txq_size : 1, sizeof(can_msg_t));
+    if (!g_can_structs[cidx].txQ) {
+        g_can_structs[cidx].txQ = xQueueCreate(txq_size ? txq_size : 1, sizeof(can_msg_t));
     }
 
     /* The CAN dividers must all be the same for both CANs
@@ -351,12 +365,12 @@ bool CAN_init(can_t can, uint32_t baudrate_kbps, uint16_t rxq_size, uint16_t txq
 
         /* Enable BUS-off interrupt and callback if given */
         if (bus_off_cb) {
-            g_can_callbacks[cidx].bus_error = bus_off_cb;
+            g_can_structs[cidx].bus_error = bus_off_cb;
             CANx->IER |= g_can_bus_err_intr;
         }
         /* Enable data-overrun interrupt and callback if given */
         if (data_ovr_cb) {
-            g_can_callbacks[cidx].data_overrun = data_ovr_cb;
+            g_can_structs[cidx].data_overrun = data_ovr_cb;
             CANx->IER |= intr_ovrn;
         }
 
@@ -389,10 +403,10 @@ bool CAN_tx (can_t can, can_msg_t *pCanMsg, uint32_t timeout_ms)
     /* If all three buffers are busy, just queue the message */
     if (!ok) {
         if (taskSCHEDULER_RUNNING == xTaskGetSchedulerState()) {
-            ok = xQueueSend(g_can_tx_qs[cidx], pCanMsg, OS_MS(timeout_ms));
+            ok = xQueueSend(g_can_structs[cidx].txQ, pCanMsg, OS_MS(timeout_ms));
         }
         else {
-            ok = xQueueSend(g_can_tx_qs[cidx], pCanMsg, 0);
+            ok = xQueueSend(g_can_structs[cidx].txQ, pCanMsg, 0);
         }
 
         /* There is possibility that before we queued the message, we got interrupted
@@ -404,7 +418,7 @@ bool CAN_tx (can_t can, can_msg_t *pCanMsg, uint32_t timeout_ms)
         do {
             can_msg_t msg;
             if (tx_all_avail == (CANx->SR & tx_all_avail) &&
-                xQueueReceive(g_can_tx_qs[cidx], &msg, 0)
+                xQueueReceive(g_can_structs[cidx].txQ, &msg, 0)
             ) {
                 ok = CAN_tx_now(CANx, &msg);
             }
@@ -422,11 +436,11 @@ bool CAN_rx (can_t can, can_msg_t *pCanMsg, uint32_t timeout_ms)
     if (CAN_VALID(can) && pCanMsg)
     {
         if (taskSCHEDULER_RUNNING == xTaskGetSchedulerState()) {
-            ok = xQueueReceive(g_can_rx_qs[CAN_INDEX(can)], pCanMsg, OS_MS(timeout_ms));
+            ok = xQueueReceive(g_can_structs[CAN_INDEX(can)].rxQ, pCanMsg, OS_MS(timeout_ms));
         }
         else {
             uint64_t msg_timeout = sys_get_uptime_ms() + timeout_ms;
-            while (! (ok = xQueueReceive(g_can_rx_qs[CAN_INDEX(can)], pCanMsg, 0))) {
+            while (! (ok = xQueueReceive(g_can_structs[CAN_INDEX(can)].rxQ, pCanMsg, 0))) {
                 if (sys_get_uptime_ms() > msg_timeout) {
                     break;
                 }
@@ -456,6 +470,21 @@ void CAN_reset_bus(can_t can)
             pCanX->MOD = can_mod_normal;
         #endif
     }
+}
+
+uint16_t CAN_get_rx_watermark(can_t can)
+{
+    return CAN_VALID(can) ? g_can_structs[CAN_INDEX(can)].rxQWatermark : 0;
+}
+
+uint16_t CAN_get_tx_watermark(can_t can)
+{
+    return CAN_VALID(can) ? g_can_structs[CAN_INDEX(can)].txQWatermark : 0;
+}
+
+uint16_t CAN_get_rx_dropped_count(can_t can)
+{
+    return CAN_VALID(can) ? g_can_structs[CAN_INDEX(can)].droppedRxMsgs : 0;
 }
 
 void CAN_bypass_filter_accept_all_msgs(void)

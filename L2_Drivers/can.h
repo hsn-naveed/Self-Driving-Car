@@ -186,6 +186,18 @@ bool CAN_is_bus_off(can_t can);
 void CAN_reset_bus(can_t can);
 /** @} */
 
+/** @{ Watermarks API */
+uint16_t CAN_get_rx_watermark(can_t can); ///< RX FreeRTOS Queue watermark
+uint16_t CAN_get_tx_watermark(can_t can); ///< TX FreeRTOS Queue watermark
+/** @} */
+
+/**
+ * @returns The number of CAN messages dropped
+ * Messages can be dropped out either if the receive queue is too small, or if there is no consumer or task
+ * that dequeues the received messages quickly enough from the CAN_rx() API
+ */
+uint16_t CAN_get_rx_dropped_count(can_t can);
+
 /**
  * Enables CAN bypass mode to accept all messages on the bus.
  * Either CAN filters need to be setup or this method should be called to accept
