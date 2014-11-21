@@ -186,9 +186,11 @@ bool CAN_is_bus_off(can_t can);
 void CAN_reset_bus(can_t can);
 /** @} */
 
-/** @{ Watermarks API */
+/** @{ Watermark and counter API */
 uint16_t CAN_get_rx_watermark(can_t can); ///< RX FreeRTOS Queue watermark
 uint16_t CAN_get_tx_watermark(can_t can); ///< TX FreeRTOS Queue watermark
+uint16_t CAN_get_tx_count(can_t can); ///< Number of messages written to the CAN HW
+uint16_t CAN_get_rx_count(can_t can); ///< Number of messages successfully queued from CAN interrupt (not including dropped)
 /** @} */
 
 /**
