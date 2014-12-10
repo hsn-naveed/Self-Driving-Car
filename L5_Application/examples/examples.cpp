@@ -42,14 +42,11 @@ example_task::example_task() :
 
 bool example_task::run(void *p)
 {
-    // Instead of printf, we use uart printf which uses less stack
-    Uart0& out = Uart0::getInstance();
-
-    out.printf("\n---------------------------------\n"
+    printf("\n---------------------------------\n"
                "Status Report: \n");
-    out.printf("Temperature: %i F\n", (int)TS.getFarenheit());
-    out.printf("CPU Usage : %i %%\n", getTaskCpuPercent());    /* get OUR tasks' cpu usage */
-    out.printf("Free stack: %i bytes\n", (int)getFreeStack()); /* get number of bytes of free stack of our task */
+    printf("Temperature: %i F\n", (int)TS.getFarenheit());
+    printf("CPU Usage : %i %%\n", getTaskCpuPercent());    /* get OUR tasks' cpu usage */
+    printf("Free stack: %i bytes\n", (int)getFreeStack()); /* get number of bytes of free stack of our task */
 
     for(volatile int i=0; i<0xfffff; i++) {
         ; // Do dummy work
@@ -74,9 +71,6 @@ bool example_io_demo::run(void *p)
     const uint8_t switches = SW.getSwitchValues();
     mesh_packet_t pkt;
 
-    // Instead of printf, we use uart printf which uses less stack
-    Uart0& out = Uart0::getInstance();
-
     enum {
         sw1 = (1 << 0),
         sw2 = (1 << 1),
@@ -87,27 +81,27 @@ bool example_io_demo::run(void *p)
     switch(switches)
     {
         case sw1 :
-            out.printf("Acceleration: %4i %4i %4i\n", AS.getX(), AS.getY(), AS.getZ());
+            printf("Acceleration: %4i %4i %4i\n", AS.getX(), AS.getY(), AS.getZ());
             break;
 
         case sw2 :
-            out.printf("Light : %4d\n", LS.getRawValue());
+            printf("Light : %4d\n", LS.getRawValue());
             break;
 
         case sw3 :
-            out.printf("Temperature: %i\n", (int) TS.getFarenheit());
+            printf("Temperature: %i\n", (int) TS.getFarenheit());
             break;
 
         case sw4 :
             /* Send broadcast message, and increment led number if we get a packet back */
             if (!wireless_send(MESH_BROADCAST_ADDR, mesh_pkt_nack, (char*)&pkt_counter, 1, 0)) {
-                out.putline("Failed to send packet");
+                puts("Failed to send packet");
             }
             else if (wireless_get_rx_pkt(&pkt, 500)) {
                 LD.setNumber(pkt_counter++);
             }
             else {
-                out.putline("Broadcast message not received!");
+                puts("Broadcast message not received!");
             }
             break;
 
@@ -166,23 +160,20 @@ bool example_alarm::taskEntry(void)
 
 bool example_alarm::run(void *p)
 {
-    // Instead of printf, we use uart printf which uses less stack
-    Uart0& out = Uart0::getInstance();
-
     static int print_first_sixty_secs = 0;
     ++print_first_sixty_secs;
 
     /**
      * Note that we use MAX delay while checking for mAlarmSec because if a second
-     * hasn't elapsed, then by definition, minute and night won't elapse.
+     * hasn't elapsed, then by definition, minute won't elapse.
      */
     if (xSemaphoreTake(mAlarmSec, portMAX_DELAY)) {
         if (print_first_sixty_secs <= 60) {
-            out.printf("tick %i -- ", (int)rtc_gettime().sec);
+            printf("tick %i -- ", (int)rtc_gettime().sec);
         }
     }
     if (xSemaphoreTake(mAlarmMin, 0)) {
-        out.putline("A minute has elapsed!");
+        puts("A minute has elapsed!");
     }
 
     return true;
@@ -195,8 +186,7 @@ bool example_alarm::run(void *p)
 
 /**
  * Queueset example shows how to use FreeRTOS to block on MULTIPLE semaphores or queues.
- * The idea is that we want to call our run() when EITHER of mSec, or mMin semaphore
- * is ready.
+ * The idea is that we want to call our run() when EITHER of mSec, or mMin semaphore is ready.
  * This example also shows how to log information to "log" file on flash memory.
  */
 example_logger_qset::example_logger_qset() :
@@ -219,6 +209,7 @@ bool example_logger_qset::init(void)
     xSemaphoreTake(mMin, 0);
     initQueueSet(2, 2, mSec, mMin);
 
+    /* Hook up semaphores to be given every second and every minute */
     rtc_alarm_create_recurring(everySecond, &mSec);
     rtc_alarm_create_recurring(everyMinute, &mMin);
 
@@ -235,11 +226,7 @@ bool example_logger_qset::run(void *p)
 {
     static int count = 0;
 
-    /**
-     * Let this task run, then see the data logged at the log file :
-     * Use this terminal command: "cat log"
-     */
-
+    /* Did the run() get called due to the mSec semaphore? */
     if (getQueueSetSelection() == mSec) {
         // This must work but just in case, return "false" to stop this task.
         if(!xSemaphoreTake(mSec, 0)) {
@@ -248,15 +235,13 @@ bool example_logger_qset::run(void *p)
 
         LOG_INFO("Example log info");
     }
-    else if(getQueueSetSelection() == mMin) {
+
+    /* Did the run() get called due to the mMin semaphore? */
+    if(getQueueSetSelection() == mMin) {
         if(!xSemaphoreTake(mMin, 0)) {
             return false;
         }
         LOG_WARN("Example log warning");
-    }
-    else {
-        LOG_ERROR("I should not get here!");
-        return false;
     }
 
     /**
@@ -359,17 +344,13 @@ bool queue_tx::run(void *p)
         return false;
     }
 
+    // Suspend the other task and ourselves after 10 samples
     if (++sample > 10) {
-        // Suspend the other task and ourselves after 10 samples
-        // It's worth checking for qrx_task being NULL though ;)
         qrx_task->suspend();
         suspend();
     }
 
-    /**
-     * Send to "my_queue" our integer
-     * One small error is that we don't check for NULL pointer from getSharedObject()
-     */
+    // Send to "my_queue" our integer
     return xQueueSend(queue_handle, &sample, 2000);
 }
 
@@ -393,14 +374,15 @@ bool queue_rx::run(void *p)
     }
 
     if (xQueueReceive(queue_handle, &sample, portMAX_DELAY)) {
-        // printf uses too much stack space, so we printf() to string and then print it out
-        char buffer[64] = { 0 };
-        sprintf(buffer, "Got %i from queue", sample);
-        puts(buffer);
+        printf("Got %i from queue", sample);
     }
 
     return true;
 }
+
+
+
+
 
 
 producer::producer() :
@@ -434,13 +416,12 @@ consumer::consumer() :
 bool consumer::run(void *p)
 {
     int data = 0;
-    QueueHandle_t qh = getSharedObject(shared_SensorQueue);
 
     /* We should never block here by using portMAX_DELAY because the producer should
      * produce all the time.  In fact, it is waiting for us to pull an item from the
      * queue and it is already "sleeping" until the queue space is available.
      */
-    xQueueReceive(qh, &data, portMAX_DELAY);
+    xQueueReceive(getSharedObject(shared_SensorQueue), &data, portMAX_DELAY);
     printf("Acceleration sensor X-Axis: %i\n", data);
 
     return true;
