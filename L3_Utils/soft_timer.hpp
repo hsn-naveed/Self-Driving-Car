@@ -135,39 +135,6 @@ class SoftTimer
 
 
 
-/**
- * Stopwatch to measure an elapsed time.
- */
-class MicroSecondStopWatch
-{
-    public:
-        /// Default constructor that starts the stopwatch
-        MicroSecondStopWatch() : mStartValue(0), mStopValue(0) { start(); }
-
-        /// Starts the stopwatch operation (can be used to restart the stopwatch too)
-        inline void start(void)    { mStartValue = mStopValue = getTimerValue(); }
-
-        /// Stops the stopwatch operation enabling the captured value to be obtained
-        inline void stop(void)     { mStopValue = getTimerValue(); }
-
-        /**
-         * Get the captured value between start() and stop()
-         * If the stopwatch was never stopped, zero value will be returned.
-         */
-        inline uint64_t getCapturedTime(void) const { return (mStopValue - mStartValue); }
-
-        /// Get the elapsed time since the stopwatch was started
-        inline uint64_t getElapsedTime (void) const { return (getTimerValue() - mStartValue); }
-
-    private:
-        /// Single method to obtain the system time in us
-        inline uint64_t getTimerValue(void) const { return sys_get_uptime_us(); }
-
-        uint64_t mStartValue;   ///< Start time of the stopwatch
-        uint64_t mStopValue;    ///< Stop time of the stopwatch
-};
-
-
 
 #ifdef TESTING
 static inline void test_soft_timer_file(void)
@@ -188,15 +155,6 @@ static inline void test_soft_timer_file(void)
 
     t.reset(5); assert(5 == t.getTimeToExpirationMs());
     delay_ms(10); assert(5 == t.getTimeSinceExpirationMs());
-
-    MicroSecondStopWatch w;
-    assert(0 == w.getCapturedTime());
-    assert(0 == w.getElapsedTime());
-    w.start();
-    delay_ms(5);
-    assert(0 == w.getCapturedTime());
-    w.stop();
-    assert(w.getCapturedTime() >= 5000 && w.getCapturedTime() <= 6000);
 }
 #endif /* #ifdef TESTING */
 
