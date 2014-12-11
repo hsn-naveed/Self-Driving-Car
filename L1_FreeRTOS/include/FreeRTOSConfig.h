@@ -75,8 +75,8 @@
 #define configTICK_RATE_HZ			            ( 1000 )
 #define configENABLE_BACKWARD_COMPATIBILITY     0
 
-/* Avoid using IDLE priority since I have found that the logger task runs into strange
- * issues when IDLE task priority is used by it ... some kind of stack corruption.
+/* Avoid using IDLE priority since I have found that the logger task corrupts the file system at IDLE priority.
+ * This probably has to do with SPI(with DMA) bus not functioning correctly when IDLE task puts the CPU to sleep.
  */
 #define configMAX_PRIORITIES                    ( 1 + 4 )
 
