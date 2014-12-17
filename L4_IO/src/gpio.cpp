@@ -40,6 +40,7 @@ bool GPIO::read(void) const   {   return !!(mpOurGpio->FIOPIN & (1 << mPinNum));
 void GPIO::setHigh(void)      {   mpOurGpio->FIOSET = (1 << mPinNum);            }
 void GPIO::setLow(void)       {   mpOurGpio->FIOCLR = (1 << mPinNum);            }
 void GPIO::set(bool on)       {   (on) ? setHigh() : setLow();                   }
+void GPIO::toggle(void)       {   this->read() ? setLow() : setHigh();           }
 /** @} */
 
 void GPIO::enablePullUp()

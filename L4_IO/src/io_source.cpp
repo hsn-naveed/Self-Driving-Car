@@ -274,29 +274,50 @@ bool LED::init()
 }
 void LED::on(int ledNum)
 {
-    mLedValue |= (1 << (ledNum-1));
+    portENTER_CRITICAL();
+    mLedValue or_eq (1 << (ledNum-1));
     setAll(mLedValue);
+    portEXIT_CRITICAL();
 }
 void LED::off(int ledNum)
 {
-    mLedValue &= ~(1 << (ledNum-1));
+    portENTER_CRITICAL();
+    mLedValue and_eq ~(1 << (ledNum-1));
     setAll(mLedValue);
+    portEXIT_CRITICAL();
 }
 void LED::set(int ledNum, bool o)
 {
     if (o) on(ledNum);
     else   off(ledNum);
 }
+void LED::toggle(int ledNum)
+{
+    portENTER_CRITICAL();
+    mLedValue xor_eq (1 << (ledNum-1));
+    setAll(mLedValue);
+    portEXIT_CRITICAL();
+}
 void LED::setAll(char value)
 {
     mLedValue = value & 0x0F;
     LPC_GPIO1->FIOSET = BIO_LED_PORT1_MASK;
 
-    /* LEDs are active low */
-    if(mLedValue & (1 << 0)) LPC_GPIO1->FIOCLR = (1 << 0);
-    if(mLedValue & (1 << 1)) LPC_GPIO1->FIOCLR = (1 << 1);
-    if(mLedValue & (1 << 2)) LPC_GPIO1->FIOCLR = (1 << 4);
-    if(mLedValue & (1 << 3)) LPC_GPIO1->FIOCLR = (1 << 8);
+    portENTER_CRITICAL();
+    {
+        /* LEDs are active low */
+        #define led_set(num, realbit)               \
+            if (mLedValue & (1 << num))             \
+                LPC_GPIO1->FIOCLR = (1 << realbit); \
+            else                                    \
+                LPC_GPIO1->FIOSET = (1 << realbit)
+
+        led_set(0, 0);
+        led_set(1, 1);
+        led_set(2, 4);
+        led_set(3, 8);
+    }
+    portEXIT_CRITICAL();
 }
 uint8_t LED::getValues(void) const
 {

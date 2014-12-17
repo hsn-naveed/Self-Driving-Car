@@ -103,6 +103,7 @@ class GPIO
         void setHigh(void);      ///< Sets the pin to logical HIGH (3.3v)
         void setLow(void);       ///< Sets the pin to logical LOW (0.0v)
         void set(bool on);       ///< Set high/low based on boolean value
+        void toggle(void);       ///< Toggles the state of the GPIO
 
         void enablePullUp();            ///< Enables pull-up resistor
         void enablePullDown();          ///< Enables pull-down resistor
