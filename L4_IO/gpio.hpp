@@ -112,6 +112,13 @@ class GPIO
     protected:
     private:
         GPIO(); ///< Do not use this constructor
+
+        /**
+         * This is an intentional private destructor because if you are getting a compiler error
+         * that means your GPIO object is destructing and this is not what you want.
+         */
+        ~GPIO();
+
         const uint8_t mPortNum;                 ///< This GPIOs port number
         const uint8_t mPinNum;                  ///< This GPIOs pin number
         volatile LPC_GPIO_TypeDef *mpOurGpio;   ///< This GPIO's pointer
