@@ -286,11 +286,6 @@ void LED::off(int ledNum)
     setAll(mLedValue);
     portEXIT_CRITICAL();
 }
-void LED::set(int ledNum, bool o)
-{
-    if (o) on(ledNum);
-    else   off(ledNum);
-}
 void LED::toggle(int ledNum)
 {
     portENTER_CRITICAL();
@@ -298,11 +293,13 @@ void LED::toggle(int ledNum)
     setAll(mLedValue);
     portEXIT_CRITICAL();
 }
+void LED::set(int ledNum, bool o)
+{
+    if (o) on(ledNum);
+    else   off(ledNum);
+}
 void LED::setAll(char value)
 {
-    mLedValue = value & 0x0F;
-    LPC_GPIO1->FIOSET = BIO_LED_PORT1_MASK;
-
     portENTER_CRITICAL();
     {
         /* LEDs are active low */
@@ -312,6 +309,7 @@ void LED::setAll(char value)
             else                                    \
                 LPC_GPIO1->FIOSET = (1 << realbit)
 
+        mLedValue = value & 0x0F;
         led_set(0, 0);
         led_set(1, 1);
         led_set(2, 4);
