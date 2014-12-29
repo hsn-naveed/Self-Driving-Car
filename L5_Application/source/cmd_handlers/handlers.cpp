@@ -437,7 +437,7 @@ CMD_HANDLER_FUNC(i2cIoHandler)
 
         bool ok = I2C2::getInstance().readRegisters(addr, reg, &buffer[0], count);
         output.printf("Read status from device %#2X: %s: \n", addr, ok ? "OK" : "ERROR");
-        for (int i = 0; i < count; i++) {
+        for (unsigned int i = 0; i < count; i++) {
             output.printf("    %#2X: %#2X\n", (reg + i), (buffer[i] & 0xFF));
         }
     }
