@@ -427,7 +427,7 @@ CMD_HANDLER_FUNC(i2cIoHandler)
             return false;
         }
 
-        char buffer[256] = { 0 };
+        uint8_t buffer[256] = { 0 };
         if (count <= 0) {
             count = 1;
         }

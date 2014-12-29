@@ -40,12 +40,12 @@ class i2c2_device
 {
 protected:
     /// Constructor of this base class that takes addr as a parameter
-    i2c2_device(unsigned char addr) : mI2C(I2C2::getInstance()), mOurAddr(addr)
+    i2c2_device(uint8_t addr) : mI2C(I2C2::getInstance()), mOurAddr(addr)
     {
     }
 
     /// @returns the register content of this device
-    inline unsigned char readReg(unsigned char reg)
+    inline uint8_t readReg(unsigned char reg)
     {
         return mI2C.readReg(mOurAddr, reg);
     }
@@ -67,7 +67,7 @@ protected:
      */
     uint16_t get16BitRegister(unsigned char reg)
     {
-        char buff[2] = {0};
+        uint8_t buff[2] = {0};
         mI2C.readRegisters(mOurAddr, reg, &buff[0], sizeof(buff));
 
         const uint16_t MSB = buff[0];
@@ -77,7 +77,7 @@ protected:
 
 private:
     I2C_Base& mI2C; /// Instance of I2C Bus used for communication
-    const unsigned char mOurAddr; ///< I2C Address of this device
+    const uint8_t mOurAddr; ///< I2C Address of this device
 
     // Do not use this constructor
     i2c2_device();

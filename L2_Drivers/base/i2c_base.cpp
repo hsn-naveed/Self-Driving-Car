@@ -45,31 +45,31 @@ void I2C_Base::handleInterrupt()
     }
 }
 
-char I2C_Base::readReg(char deviceAddress, char registerAddress)
+uint8_t I2C_Base::readReg(uint8_t deviceAddress, uint8_t registerAddress)
 {
-    char byte = 0;
+    uint8_t byte = 0;
     readRegisters(deviceAddress, registerAddress, &byte, 1);
     return byte;
 }
 
-bool I2C_Base::readRegisters(char deviceAddress, char firstReg, char* pData, unsigned int bytesToRead)
+bool I2C_Base::readRegisters(uint8_t deviceAddress, uint8_t firstReg, uint8_t* pData, uint32_t bytesToRead)
 {
     I2C_SET_READ_MODE(deviceAddress);
     return transfer(deviceAddress, firstReg, pData, bytesToRead);
 }
 
-bool I2C_Base::writeReg(char deviceAddress, char registerAddress, char value)
+bool I2C_Base::writeReg(uint8_t deviceAddress, uint8_t registerAddress, uint8_t value)
 {
     return writeRegisters(deviceAddress, registerAddress, &value, 1);
 }
 
-bool I2C_Base::writeRegisters(char deviceAddress, char firstReg, char* pData, unsigned int bytesToWrite)
+bool I2C_Base::writeRegisters(uint8_t deviceAddress, uint8_t firstReg, uint8_t* pData, uint32_t bytesToWrite)
 {
     I2C_SET_WRITE_MODE(deviceAddress);
     return transfer(deviceAddress, firstReg, pData, bytesToWrite);
 }
 
-bool I2C_Base::transfer(char deviceAddress, char firstReg, char* pData, unsigned int transferSize)
+bool I2C_Base::transfer(uint8_t deviceAddress, uint8_t firstReg, uint8_t* pData, uint32_t transferSize)
 {
     bool status = false;
     if(mDisableOperation || !pData) {
@@ -108,13 +108,13 @@ bool I2C_Base::transfer(char deviceAddress, char firstReg, char* pData, unsigned
     return status;
 }
 
-bool I2C_Base::checkDeviceResponse(char deviceAddress)
+bool I2C_Base::checkDeviceResponse(uint8_t deviceAddress)
 {
-    char dummyReg = 0;
-    char notUsed = 0;
+    uint8_t dummyReg = 0;
+    uint8_t notUsed = 0;
 
     // The I2C State machine will not continue after 1st state when length is set to 0
-    unsigned int lenZeroToTestDeviceReady = 0;
+    uint32_t lenZeroToTestDeviceReady = 0;
 
     return readRegisters(deviceAddress, dummyReg, &notUsed, lenZeroToTestDeviceReady);
 }
@@ -146,7 +146,7 @@ I2C_Base::I2C_Base(LPC_I2C_TypeDef* pI2CBaseAddr) :
     }
 }
 
-bool I2C_Base::init(unsigned int pclk, unsigned int busRateInKhz)
+bool I2C_Base::init(uint32_t pclk, uint32_t busRateInKhz)
 {
     // Power on I2C
     switch(mIRQ) {
@@ -191,7 +191,7 @@ bool I2C_Base::init(unsigned int pclk, unsigned int busRateInKhz)
 
 /// Private ///
 
-void I2C_Base::i2cKickOffTransfer(char devAddr, char regStart, char* pBytes, int len)
+void I2C_Base::i2cKickOffTransfer(uint8_t devAddr, uint8_t regStart, uint8_t* pBytes, uint32_t len)
 {
     mTransaction.error     = 0;
     mTransaction.slaveAddr = devAddr;

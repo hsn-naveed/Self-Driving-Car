@@ -29,6 +29,8 @@
 #ifndef I2C_BASE_HPP_
 #define I2C_BASE_HPP_
 
+#include <stdint.h>
+
 #include "FreeRTOS.h"
 #include "task.h"       // xTaskGetSchedulerState()
 #include "semphr.h"     // Semaphores used in I2C
@@ -78,7 +80,7 @@ class I2C_Base
          * @param registerAddress   The register address to read
          * @return The byte read from slave device (might be 0 if error)
          */
-        char readReg(char deviceAddress, char registerAddress);
+        uint8_t readReg(uint8_t deviceAddress, uint8_t registerAddress);
 
         /**
          * Writes a single byte to an I2C Slave
@@ -87,13 +89,13 @@ class I2C_Base
          * @param value             The value to write to registerAddress
          * @return true if successful
          */
-        bool writeReg(char deviceAddress, char registerAddress, char value);
+        bool writeReg(uint8_t deviceAddress, uint8_t registerAddress, uint8_t value);
 
         /// @copydoc transfer()
-        bool readRegisters(char deviceAddress, char firstReg, char* pData, unsigned int transferSize);
+        bool readRegisters(uint8_t deviceAddress, uint8_t firstReg, uint8_t* pData, uint32_t transferSize);
 
         /// @copydoc transfer()
-        bool writeRegisters(char deviceAddress, char firstReg, char* pData, unsigned int transferSize);
+        bool writeRegisters(uint8_t deviceAddress, uint8_t firstReg, uint8_t* pData, uint32_t transferSize);
 
         /**
          * This function can be used to check if an I2C device responds to its address,
@@ -104,7 +106,7 @@ class I2C_Base
          * @param deviceAddress     The device address to check for I2C response
          * @returns true if I2C device with given address is ready
          */
-        bool checkDeviceResponse(char deviceAddress);
+        bool checkDeviceResponse(uint8_t deviceAddress);
 
 
 
@@ -120,7 +122,7 @@ class I2C_Base
          * @param pclk  The peripheral clock to the I2C Bus
          * @param busRateInKhz  The speed to set for this I2C Bus
          */
-        bool init(unsigned int pclk, unsigned int busRateInKhz);
+        bool init(uint32_t pclk, uint32_t busRateInKhz);
 
         /**
          * Disables I2C operation
@@ -155,7 +157,7 @@ class I2C_Base
             uint8_t slaveAddr;  ///< Slave Device Address
             uint8_t firstReg;   ///< 1st Register to Read or Write
             uint8_t error;      ///< Error if any occurred within I2C
-            char *pMasterData;  ///< Buffer of the I2C Read or Write
+            uint8_t *pMasterData;  ///< Buffer of the I2C Read or Write
         } mI2CTransaction_t;
 
         /// The I2C Input Output frame that contains I2C transaction information
@@ -180,7 +182,7 @@ class I2C_Base
          * @param transferSize      The number of bytes to read/write
          * @returns true if the transfer was successful
          */
-        bool transfer(char deviceAddress, char firstReg, char* pData, unsigned int transferSize);
+        bool transfer(uint8_t deviceAddress, uint8_t firstReg, uint8_t* pData, uint32_t transferSize);
 
         /**
          * This is the entry point for an I2C transaction
@@ -189,7 +191,7 @@ class I2C_Base
          * @param pBytes    The pointer to one or more data bytes to read or write
          * @param len       The length of the I2C transaction
          */
-        void i2cKickOffTransfer(char devAddr, char regStart, char* pBytes, int len);
+        void i2cKickOffTransfer(uint8_t devAddr, uint8_t regStart, uint8_t* pBytes, uint32_t len);
 };
 
 
