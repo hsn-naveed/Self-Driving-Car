@@ -293,9 +293,9 @@ void LED::toggle(uint8_t ledNum)
     setAll(mLedValue);
     portEXIT_CRITICAL();
 }
-void LED::set(uint8_t ledNum, bool on)
+void LED::set(uint8_t ledNum, bool ON)
 {
-    on ? this->on(ledNum) : this->off(ledNum);
+    ON ? on(ledNum) : off(ledNum);
 }
 void LED::setAll(uint8_t value)
 {

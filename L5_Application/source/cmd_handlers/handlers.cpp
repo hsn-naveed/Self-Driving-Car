@@ -331,17 +331,7 @@ CMD_HANDLER_FUNC(lsHandler)
         char Lfname[_MAX_LFN];
     #endif
 
-    char *dirPath = NULL;
-    char *lsOffsetStr = NULL;
-    int lsOffset = 0;
-    if (2 == cmdParams.tokenize(" ", 2, &dirPath, &lsOffsetStr)) {
-        lsOffset = atoi(lsOffsetStr);
-    }
-
-    if (NULL == dirPath) {
-        dirPath = (char*)"0:";
-    }
-
+    const char *dirPath = cmdParams == "" ? "0:" : cmdParams();
     if (FR_OK != (returnCode = f_opendir(&Dir, dirPath))) {
         output.printf("Invalid directory: |%s| (Error %i)\n", dirPath, returnCode);
         return true;
@@ -429,10 +419,10 @@ CMD_HANDLER_FUNC(i2cIoHandler)
     int addr = 0;
     int reg = 0;
     int data = 0;
-    int count = 0;
+    unsigned int count = 0;
 
     if (read) {
-        if (cmdParams.scanf("%*s %0x %0x %i", &addr, &reg, &count) < 2) {
+        if (cmdParams.scanf("%*s %0x %0x %u", &addr, &reg, &count) < 2) {
             output.putline("Need device and register address");
             return false;
         }
