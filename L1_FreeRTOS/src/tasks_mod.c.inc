@@ -32,7 +32,7 @@ BaseType_t  uxTaskGetCpuUsage(TaskHandle_t xTask)
 #endif
     vPortExitCritical();
 
-    return (totalRunTime * 100) / totalRunTime;
+    return (taskRunTime * 100) / totalRunTime;
 }
 
 static void prvResetRunTimeStatsInList(List_t *pxList)
