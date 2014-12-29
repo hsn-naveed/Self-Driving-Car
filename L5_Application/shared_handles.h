@@ -31,6 +31,7 @@
 
 /**
  * Enumeration of shared handles
+ * You can add additional IDs here to use addSharedHandle() and getSharedHandle() API
  */
 enum {
     shared_SensorQueue,    ///< Shared handle used by examples (producer and consumer tasks)

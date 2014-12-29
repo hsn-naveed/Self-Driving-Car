@@ -78,12 +78,12 @@ CMD_HANDLER_FUNC(taskListHandler)
                 tasksRunTime += e->ulRunTimeCounter;
 
                 const uint32_t cpuPercent = (0 == totalRunTime) ? 0 : e->ulRunTimeCounter / (totalRunTime/100);
-                const uint32_t timeMs = e->ulRunTimeCounter;
+                const uint32_t timeUs = e->ulRunTimeCounter;
                 const uint32_t stackInBytes = (4 * e->usStackHighWaterMark);
 
                 output.printf("%10s %s %2u %5u %4u %10u us\n",
                               e->pcTaskName, taskStatusTbl[e->eCurrentState], e->uxBasePriority,
-                              stackInBytes, cpuPercent, timeMs);
+                              stackInBytes, cpuPercent, timeUs);
             }
         }
     }
@@ -135,43 +135,46 @@ CMD_HANDLER_FUNC(healthHandler)
     int floatDec1 = ((floatTemp - floatSig1) * 10);
     rtc_t bt = sys_get_boot_time();
 
-    unsigned int highest_write_count = 0;
-    unsigned int highest_write_count_page = 0;
+    unsigned int highestWrCnt = 0;
+    unsigned int highestPageWrCnt = 0;
     if (flash_supports_metadata())
     {
         spi1_lock();
         /* Determine the page that has been written the most */
-        unsigned int pages = flash_get_page_count();
+        const unsigned int pages = flash_get_page_count();
 
         for (unsigned int i = 0; i < pages; i++) {
-            const unsigned int write_count = flash_get_page_write_count(i);
-            if (write_count > highest_write_count) {
-                highest_write_count = write_count;
-                highest_write_count_page = i;
+            const unsigned int wrCount = flash_get_page_write_count(i);
+            if (wrCount > highestWrCnt) {
+                highestWrCnt = wrCount;
+                highestPageWrCnt = i;
             }
         }
         spi1_unlock();
 
         const int max_writes = 100 * 1000;
-        int life = 100 - (100 * highest_write_count / max_writes);
+        int life = 100 - (100 * highestWrCnt / max_writes);
         output.printf("Flash: %u/%u Life: %i%% (page %u written %u times)\n",
-                        available, total, life, highest_write_count_page, highest_write_count);
+                        available, total, life, highestPageWrCnt, highestWrCnt);
     }
     else {
         output.printf("Flash: %u/%u\n", available, total);
     }
 
     output.printf( "Temp : %u.%u\n"
-                    "Light: %u\n"
-                    "Time     : %s"
-                    "Boot Time: %02u/%02u/%4u,%02u:%02u:%02u\n"
-                    "Uart0 Watermarks: %u/%u (rx/tx)\n",
+                   "Light: %u\n"
+                   "Time : %s"
+                   "Boot Time: %02u/%02u/%4u,%02u:%02u:%02u\n"
+                   "Uart0 Watermarks: %u/%u (rx/tx)\n",
                     floatSig1, floatDec1,
                     LS.getRawValue(),
                     rtc_get_date_time_str(),
                     bt.month, bt.day, bt.year, bt.hour, bt.min, bt.sec,
                     u0.getRxQueueWatermark(), u0.getTxQueueWatermark()
     );
+
+    // TODO: Print U2/U3 and CAN statistics if it is initialized
+
     return true;
 }
 
@@ -214,16 +217,11 @@ CMD_HANDLER_FUNC(logHandler)
         logger_log_raw(cmdParams());
     }
     else if ( (enablePrintf = cmdParams.beginsWith("enable")) || cmdParams.beginsWith("disable")) {
-        // 'enableprint info/warning/error'
+        // command is: 'enableprint info/warning/error'
 
-        logger_msg_t type = log_info;
         cmdParams.eraseFirstWords(1);
-        if (cmdParams.beginsWithIgnoreCase("warn")) {
-            type = log_warn;
-        }
-        else if (cmdParams.beginsWithIgnoreCase("error")) {
-            type = log_error;
-        }
+        logger_msg_t type = cmdParams.beginsWithIgnoreCase("warn") ? log_warn :
+                            cmdParams.beginsWithIgnoreCase("error") ? log_error : log_info;
 
         logger_set_printf(type, enablePrintf);
         output.printf("%s logger printf for %s\n",
@@ -274,7 +272,12 @@ CMD_HANDLER_FUNC(catHandler)
     cmdParams.trimStart(" ");
     cmdParams.trimEnd(" ");
 
-    output.printf("Press a key to print one buffer at a time...\n");
+    char c = 0;
+    output.printf("Press a key to print one buffer at a time or enter 'x' to quit...\n");
+    output.getChar(&c, portMAX_DELAY);
+    if ('x' == c) {
+        return true;
+    }
 
     FIL file;
     if(FR_OK != f_open(&file, cmdParams(), FA_OPEN_EXISTING | FA_READ))
@@ -298,8 +301,10 @@ CMD_HANDLER_FUNC(catHandler)
                     output.putChar(buffer[i]);
                 }
 
-                char c = 0;
                 output.getChar(&c, portMAX_DELAY);
+                if ('x' == c) {
+                    break;
+                }
             }
         }
         f_close(&file);
@@ -342,6 +347,7 @@ CMD_HANDLER_FUNC(lsHandler)
         return true;
     }
 
+#if 0
     // Offset the listing
     while(lsOffset-- > 0) {
         #if _USE_LFN
@@ -352,6 +358,7 @@ CMD_HANDLER_FUNC(lsHandler)
             break;
         }
     }
+#endif
 
     output.printf("Directory listing of: %s\n\n", dirPath);
     for (;;)
@@ -429,16 +436,19 @@ CMD_HANDLER_FUNC(i2cIoHandler)
             output.putline("Need device and register address");
             return false;
         }
+
+        char buffer[256] = { 0 };
         if (count <= 0) {
             count = 1;
         }
+        else if (count > sizeof(buffer)) {
+            count = sizeof(buffer);
+        }
 
-        char buffer[256] = { 0 };
         bool ok = I2C2::getInstance().readRegisters(addr, reg, &buffer[0], count);
-
-        output.printf("Read status from device 0x%02X: %s: \n", addr, ok ? "OK" : "ERROR");
+        output.printf("Read status from device %#2X: %s: \n", addr, ok ? "OK" : "ERROR");
         for (int i = 0; i < count; i++) {
-            output.printf("    0x%02X: 0x%02X\n", (reg + i), (buffer[i] & 0xFF));
+            output.printf("    %#2X: %#2X\n", (reg + i), (buffer[i] & 0xFF));
         }
     }
     else if (write) {
@@ -448,7 +458,7 @@ CMD_HANDLER_FUNC(i2cIoHandler)
         }
 
         if (I2C2::getInstance().writeReg(addr, reg, data)) {
-            output.printf("Wrote 0x%02X to 0x%02X::0x%02X\n", data, addr, reg);
+            output.printf("Wrote %#2X to %#2X::%#2X\n", data, addr, reg);
         }
         else {
             output.printf("Error writing to device %#x\n", addr);
@@ -457,7 +467,7 @@ CMD_HANDLER_FUNC(i2cIoHandler)
     else if (discover) {
         for (addr = 2; addr <= 254; addr += 2) {
             if (I2C2::getInstance().checkDeviceResponse(addr)) {
-                output.printf("Found device with address %#4x\n", addr);
+                output.printf("I2C device responded to address %#4x\n", addr);
             }
         }
     }
@@ -750,9 +760,9 @@ CMD_HANDLER_FUNC(canBusHandler)
         msg.frame_fields.is_29bit = 1;
         msg.msg_id = message_id;
 
-        output.printf("Send CAN message with length: %u, ID: 0x%04X\n    ", length, message_id);
+        output.printf("Send CAN message with length: %u, ID: %#4X\n    ", length, message_id);
         for (int i = 0; i < msg.frame_fields.data_len; i++) {
-            printf("0x%02X, ", msg.data.bytes[i]);
+            printf("%#2X, ", msg.data.bytes[i]);
         }
         output.printf("\n");
         output.flush();
@@ -773,9 +783,9 @@ CMD_HANDLER_FUNC(canBusHandler)
         can_msg_t msg;
         while (CAN_rx(can, &msg, timeout)) {
             rx = true;
-            output.printf("Received a can frame with ID: 0x%04X\n", msg.msg_id);
+            output.printf("Received a can frame with ID: %#4X\n", msg.msg_id);
             for (int i = 0; i < msg.frame_fields.data_len; i++) {
-                output.printf("0x%02X, ", msg.data.bytes[i]);
+                output.printf("%#2X, ", msg.data.bytes[i]);
             }
             output.printf("\n");
         }
@@ -788,20 +798,20 @@ CMD_HANDLER_FUNC(canBusHandler)
     {
         /* Read CAN registers for debugging */
         output.printf("CANBus Status: %s\n", CAN_is_bus_off(can) ? "OFF" : "OK");
-        output.printf("MOD : 0x%08X\n", LPC_CAN1->MOD);
-        output.printf("IER : 0x%08X\n", LPC_CAN1->IER);
-        output.printf("ICR : 0x%08X\n", LPC_CAN1->ICR);
-        output.printf("GSR : 0x%08X\n", LPC_CAN1->GSR);
-        output.printf("AMFR: 0x%08X\n", LPC_CANAF->AFMR);
+        output.printf("MOD : %#8X\n", LPC_CAN1->MOD);
+        output.printf("IER : %#8X\n", LPC_CAN1->IER);
+        output.printf("ICR : %#8X\n", LPC_CAN1->ICR);
+        output.printf("GSR : %#8X\n", LPC_CAN1->GSR);
+        output.printf("AMFR: %#8X\n", LPC_CANAF->AFMR);
 
         output.printf("\n");
-        output.printf(" SFF SA: 0x%08X\n", LPC_CANAF->SFF_sa);
-        output.printf("SFFG SA: 0x%08X\n", LPC_CANAF->SFF_GRP_sa);
-        output.printf("EFFG SA: 0x%08X\n", LPC_CANAF->EFF_GRP_sa);
-        output.printf("END PTR: 0x%08X\n", LPC_CANAF->ENDofTable);
+        output.printf(" SFF SA: %#8X\n", LPC_CANAF->SFF_sa);
+        output.printf("SFFG SA: %#8X\n", LPC_CANAF->SFF_GRP_sa);
+        output.printf("EFFG SA: %#8X\n", LPC_CANAF->EFF_GRP_sa);
+        output.printf("END PTR: %#8X\n", LPC_CANAF->ENDofTable);
 
         for (int i = 0; i < 4; i++) {
-            output.printf("%2i: 0x%08X\n", i, (uint32_t) LPC_CANAF_RAM->mask[i]);
+            output.printf("%2i: s8X\n", i, (uint32_t) LPC_CANAF_RAM->mask[i]);
         }
     }
     else {

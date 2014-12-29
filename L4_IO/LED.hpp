@@ -23,6 +23,8 @@
  
 #ifndef LED_HPP__
 #define LED_HPP__
+#include <stdint.h>
+
 
 
 /**
@@ -35,15 +37,15 @@ class LED : public SingletonTemplate<LED>
     public:
         bool init(); ///< Initializes this device, @returns true if successful
 
-        void on(int ledNum);            ///< Turns  ON LED. @param ledNum The LED # from 1-4
-        void off(int ledNum);           ///< Turns OFF LED. @param ledNum The LED # from 1-4
-        void set(int ledNum, bool on);  ///< Turns on/off led based on @param on
-        void toggle(int ledNum);        ///< Toggles the LED
-        void setAll(char value);        ///< Sets 8-bit value of 8 LEDs; 1 bit per LED
-        uint8_t getValues(void) const;  ///< Get the LED bit values currently set
+        void on(uint8_t ledNum);            ///< Turns  ON LED. @param ledNum The LED # from 1-4
+        void off(uint8_t ledNum);           ///< Turns OFF LED. @param ledNum The LED # from 1-4
+        void set(uint8_t ledNum, bool on);  ///< Turns on/off led based on @param on
+        void toggle(uint8_t ledNum);        ///< Toggles the LED
+        void setAll(uint8_t value);         ///< Sets 8-bit value of 8 LEDs; 1 bit per LED
+        uint8_t getValues(void) const;      ///< Get the LED bit values currently set
 
     private:
-        unsigned char mLedValue; ///< Current bits set on the LEDs
+        uint8_t mLedValue; ///< Current bits set on the LEDs
 
         LED() : mLedValue (0) {}    ///< Private constructor of this Singleton class
         friend class SingletonTemplate<LED>;  ///< Friend class used for Singleton Template

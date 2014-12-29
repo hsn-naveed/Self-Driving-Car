@@ -120,7 +120,7 @@ static char * logger_get_buffer_ptr(const bool os_running)
 {
     char * buffer = NULL;
 
-    /* Get an available buffer to write the data to, and if OS is not running, just use our first buffer */
+    /* Get an available buffer to write the data to, and if OS is not running, we will always get a buffer */
     if (!os_running) {
         xQueueReceive(g_empty_buffer_queue, &buffer, 0);
     }

@@ -108,7 +108,7 @@ class GPIO
         void enablePullUp();            ///< Enables pull-up resistor
         void enablePullDown();          ///< Enables pull-down resistor
         void disablePullUpPullDown();   ///< Disables pull-up/down resistor
-        void enableOpenDrainMode(bool openDrain); ///< Enables open drain mode
+        void enableOpenDrainMode(bool openDrain=true); ///< Enables open drain mode
 
     protected:
     private:

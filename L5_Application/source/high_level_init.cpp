@@ -107,7 +107,7 @@ void high_level_init(void)
      *
      * The slightly tricky part is that the mesh networking task will start to be serviced every
      * one millisecond, so initialize this and immediately initialize the wireless (mesh/nordic)
-     * so by the time 1ms elapses, the pointers are initalized (and not NULL).
+     * so by the time 1ms elapses, the pointers are initialized (and not NULL).
      */
     lpc_sys_setup_system_timer();
 

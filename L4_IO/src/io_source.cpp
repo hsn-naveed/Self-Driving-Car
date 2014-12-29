@@ -272,33 +272,32 @@ bool LED::init()
     /* Pins initialized by bio.h */
     return true;
 }
-void LED::on(int ledNum)
+void LED::on(uint8_t ledNum)
 {
     portENTER_CRITICAL();
     mLedValue or_eq (1 << (ledNum-1));
     setAll(mLedValue);
     portEXIT_CRITICAL();
 }
-void LED::off(int ledNum)
+void LED::off(uint8_t ledNum)
 {
     portENTER_CRITICAL();
     mLedValue and_eq ~(1 << (ledNum-1));
     setAll(mLedValue);
     portEXIT_CRITICAL();
 }
-void LED::toggle(int ledNum)
+void LED::toggle(uint8_t ledNum)
 {
     portENTER_CRITICAL();
     mLedValue xor_eq (1 << (ledNum-1));
     setAll(mLedValue);
     portEXIT_CRITICAL();
 }
-void LED::set(int ledNum, bool o)
+void LED::set(uint8_t ledNum, bool on)
 {
-    if (o) on(ledNum);
-    else   off(ledNum);
+    on ? this->on(ledNum) : this->off(ledNum);
 }
-void LED::setAll(char value)
+void LED::setAll(uint8_t value)
 {
     portENTER_CRITICAL();
     {

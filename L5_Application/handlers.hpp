@@ -19,8 +19,6 @@
 /**
  * @file
  * @brief Contains the terminal handler function declarations.
- *
- * 12082013 : Added I2C handler
  */
 #ifndef HANDLERS_HPP_
 #define HANDLERS_HPP_
@@ -38,7 +36,7 @@ CMD_HANDLER_FUNC(memInfoHandler);
 /// Handler to get system health
 CMD_HANDLER_FUNC(healthHandler);
 
-/// Handler for Logger Flush
+/// Handler for Logger stuff
 CMD_HANDLER_FUNC(logHandler);
 
 /// Handler for setting and getting time

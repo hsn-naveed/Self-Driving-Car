@@ -53,7 +53,7 @@ int main(void)
      *
      * Disable remote task if you are not using it.  Also, it needs SYS_CFG_ENABLE_TLM
      * such that it can save remote control codes to non-volatile memory.  IR remote
-     * control codes can be learned by typing "learn" command.
+     * control codes can be learned by typing the "learn" terminal command.
      */
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
@@ -63,9 +63,8 @@ int main(void)
     /* The task for the IR receiver */
     // scheduler_add_task(new remoteTask  (PRIORITY_LOW));
 
-    /* Your tasks should probably used PRIORITY_MEDIUM or PRIORITY_LOW because you
-     * want the terminal task to always be responsive so you can poke around in
-     * case something goes wrong.
+    /* Your tasks should probably used PRIORITY_MEDIUM or PRIORITY_LOW because you want the terminal
+     * task to always be responsive so you can poke around in case something goes wrong.
      */
 
     /**

@@ -31,13 +31,11 @@
  * IR Sensor class used to get signals from the on-board IR Sensor
  * This sensor can decode a remote's IR signals, such as a TV remote control.
  *
- * To make sure no decoded signals are over-written, or you do not get a
- * decoded signal that is very obsolete, the user should periodically
- * check isIRCodeReceived() every 50ms, and buffer signals externally.
+ * To make sure no decoded signals are over-written, or you do not get a decoded signal that is very
+ * obsolete, the user should periodically check isIRCodeReceived() every 50ms, and buffer signals externally.
  *
- * If a signal is decoded, getLastIRCode() will provide it, and clear out
- * the buffer to receive future signal.  If getLastIRCode() is not called
- * regularly, it is possible that this may return an older signal, even if
+ * If a signal is decoded, getLastIRCode() will provide it, and clear out the buffer to receive future signal.
+ * If getLastIRCode() is not called regularly, it is possible that this may return an older signal, even if
  * it was many hours ago.
  *
  * @ingroup BoardIO
