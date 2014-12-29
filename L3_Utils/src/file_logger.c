@@ -45,7 +45,12 @@ static char * gp_file_buffer = NULL;                ///< Pointer to local buffer
 static QueueHandle_t g_write_buffer_queue = NULL;   ///< Log message pointers are written to this queue
 static QueueHandle_t g_empty_buffer_queue = NULL;   ///< Log message pointers are available from this queue
 static uint32_t g_logger_calls[log_last] = { 0 };   ///< Number of logged messages of each severity
-static uint8_t g_logger_printf_mask = 0;            ///< Chooses severity levels that are printed on stdio and logged
+
+/**
+ * Chooses severity levels that are printed on stdio and logged
+ * By default, the debug log will be printed to stdio
+ */
+static uint8_t g_logger_printf_mask = (1 << log_debug);
 
 /**
  * Writes the buffer to the file.
@@ -397,7 +402,7 @@ void logger_log(logger_msg_t type, const char * filename, const char * func_name
     const bool os_running = (taskSCHEDULER_RUNNING == xTaskGetSchedulerState());
 
     /* This must match up with the logger_msg_t enumeration */
-    const char * const type_str[] = { "invalid", "info", "warn", "error" };
+    const char * const type_str[] = { "debug", "info", "warn", "error" };
 
     // Find the back-slash or forward-slash to get filename only, not absolute or relative path
     if(0 != filename) {

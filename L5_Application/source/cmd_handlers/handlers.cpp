@@ -216,17 +216,18 @@ CMD_HANDLER_FUNC(logHandler)
         cmdParams.eraseFirstWords(1);
         logger_log_raw(cmdParams());
     }
-    else if ( (enablePrintf = cmdParams.beginsWith("enable")) || cmdParams.beginsWith("disable")) {
+    else if ( (enablePrintf = cmdParams.beginsWith("enable ")) || cmdParams.beginsWith("disable ")) {
         // command is: 'enableprint info/warning/error'
 
         cmdParams.eraseFirstWords(1);
-        logger_msg_t type = cmdParams.beginsWithIgnoreCase("warn") ? log_warn :
-                            cmdParams.beginsWithIgnoreCase("error") ? log_error : log_info;
+        logger_msg_t type = cmdParams.beginsWithIgnoreCase("warn")  ? log_warn  :
+                            cmdParams.beginsWithIgnoreCase("error") ? log_error :
+                            cmdParams.beginsWithIgnoreCase("info")  ? log_info  : log_debug;
 
         logger_set_printf(type, enablePrintf);
         output.printf("%s logger printf for %s\n",
                       enablePrintf ? "Enabled" : "Disabled",
-                      type == log_info ? "info" : type == log_warn ? "warn" : "error");
+                      type == log_debug ? "debug" : type == log_info ? "info" : type == log_warn ? "warn" : "error");
     }
     else {
         // This loop was the test code used while testing the logger such that the user

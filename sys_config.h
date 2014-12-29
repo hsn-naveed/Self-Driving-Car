@@ -33,7 +33,7 @@ extern "C" {
  * @warning
  *      The AIR data rate, and channel number must be consistent for your wireless
  *      nodes to talk to each other.  It seems that 2000kbps works better than 250kbps
- *      although slower data rate is supposed to get longer higher range.
+ *      although slower data rate is supposed to get longer range.
  *
  * @warning Go to   "PROJECT" --> "Clean"   if you change the settings here.
  */

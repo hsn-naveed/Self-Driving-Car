@@ -72,6 +72,7 @@ extern "C" {
  * But these can be passed to logger_get_logged_call_count()
  */
 typedef enum {
+    log_debug,  ///< Debug logs are printed to stdio (printf) unless disabled by logger_set_printf()
     log_info,
     log_warn,
     log_error,
@@ -107,6 +108,7 @@ void logger_set_printf(logger_msg_t type, bool enable);
 #define LOG_ERROR(msg, p...)  logger_log (log_error, __FILE__, __FUNCTION__, __LINE__, msg, ## p)
 #define LOG_WARN(msg, p...)   logger_log (log_warn,  __FILE__, __FUNCTION__, __LINE__, msg, ## p)
 #define LOG_INFO(msg, p...)   logger_log (log_info,  __FILE__, __FUNCTION__, __LINE__, msg, ## p)
+#define LOG_DEBUG(msg, p...)  logger_log (log_debug, __FILE__, __FUNCTION__, __LINE__, msg, ## p)
 /** @} */
 
 
