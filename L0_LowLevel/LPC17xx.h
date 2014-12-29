@@ -41,7 +41,7 @@
 #define     __O     volatile                  /*!< defines 'write only' permissions     */
 #define     __IO    volatile                  /*!< defines 'read / write' permissions   */
 #include <stdint.h>
-#include "source/bit_manip.h"
+#include "bit_manip.h"
 #include "source/lpc_peripherals.h"
 
 /*
