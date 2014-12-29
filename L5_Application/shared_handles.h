@@ -21,8 +21,6 @@
  * @file
  * @brief Contains enumeration of shared handles used in the project.
  * @see   scheduler_task::addSharedHandle()
- *
- * 20140215     : Initial
  */
 #ifndef SHARED_HANDLES_H__
 #define SHARED_HANDLES_H__

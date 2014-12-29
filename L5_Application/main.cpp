@@ -22,7 +22,6 @@
  * 			FreeRTOS and stdio printf is pre-configured to use uart0_min.h before main() enters.
  * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
  *
- * @note  printf of %f may be turned off to save memory, this can be configured at sys_config.h
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
@@ -30,7 +29,7 @@
 
 
 /**
- * The main() creates tasks or "threads".  See the documentation of scheduler_task class at cpp_task.hpp
+ * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
  * for details.  There is a very simple example towards the beginning of this class's declaration.
  *
  * @warning SPI #1 bus usage notes (interfaced to SD & Flash):

@@ -104,8 +104,8 @@ bool terminalTask::taskEntry()
     cp.addHandler(rebootHandler,   "reboot",   "Reboots the system");
     cp.addHandler(logHandler,      "log",      "'log <hello>' to log info\n"
                                                "'log flush' to flush logs\n"
-                                               "'log enableprint info/warning/error' : Enables logger calls to printf\n"
-                                               "'log disableprint info/warning/error': Disables logger calls to printf\n"
+                                               "'log enableprint debug/info/warn/error' : Enables logger calls to printf\n"
+                                               "'log disableprint debug/info/warn/error': Disables logger calls to printf\n"
                                                );
     cp.addHandler(learnIrHandler,  "learn",    "Begin to learn IR codes for numbers 0-9");
     cp.addHandler(wirelessHandler, "wireless", "Use 'wireless' to see the nested commands");
@@ -304,10 +304,7 @@ terminalTask::cmdChan_t terminalTask::getCommand(void)
 
         for (idx = 0; idx < mCmdIface.size(); idx++)
         {
-            /* Use block time only on the last interface */
-            TickType_t timeout = (idx == mCmdIface.size() - 1) ? 2 : 0;
-
-            if (mCmdIface[idx].iodev->isReady() && mCmdIface[idx].iodev->getChar(&c, timeout))
+            if (mCmdIface[idx].iodev->isReady() && mCmdIface[idx].iodev->getChar(&c, 0))
             {
                 ret = mCmdIface[idx];
                 handleEchoAndBackspace(&ret, c);
@@ -322,7 +319,7 @@ terminalTask::cmdChan_t terminalTask::getCommand(void)
          * so we don't want to hog the CPU, so just delay here by one tick
          */
         if (!gotChar && xTaskGetTickCount() == ticksBefore) {
-            vTaskDelay(1);
+            vTaskDelay(2);
         }
 
         /* Guard against command length too large */
