@@ -24,7 +24,7 @@ BaseType_t  uxTaskGetCpuUsage(TaskHandle_t xTask)
     uint64_t taskRunTime;
     
     vPortEnterCritical();
-    totalRunTime = pxTCB->ulRunTimeCounter;
+    taskRunTime = pxTCB->ulRunTimeCounter;
 #ifdef portALT_GET_RUN_TIME_COUNTER_VALUE
     portALT_GET_RUN_TIME_COUNTER_VALUE( totalRunTime );
 #else
