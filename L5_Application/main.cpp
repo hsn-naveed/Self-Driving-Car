@@ -18,7 +18,6 @@
 
 /**
  * @file
-<<<<<<< HEAD
  * @brief This is the application entry point.
  */
 
@@ -26,18 +25,11 @@
 #include "utilities.h"
 #include "io.hpp"
 
-=======
- * @brief This is the application entry point.
- */
->>>>>>> f345158... simple main() method
 
-#include <stdio.h>
-#include "io.hpp"
 
 int main(void)
 {
     int count = 0;
-<<<<<<< HEAD
 
     while(1)
     {
@@ -46,12 +38,5 @@ int main(void)
                count, TS.getFarenheit(), LS.getPercentValue());
 
         delay_ms(1000);
-=======
-
-    while(1)
-    {
-        count = count + 1;
-        printf("%3u: Temperature: %0.2f    Light: %u%%\n", count, TS.getFarenheit(), LS.getPercentValue());
->>>>>>> f345158... simple main() method
     }
 }
