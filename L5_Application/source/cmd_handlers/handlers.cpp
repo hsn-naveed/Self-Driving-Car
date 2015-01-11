@@ -212,6 +212,16 @@ CMD_HANDLER_FUNC(logHandler)
         LOG_FLUSH();
         output.putline("Log(s) have been flushed");
     }
+    else if (cmdParams == "status") {
+        output.printf("Blocked calls  : %u\n", logger_get_blocked_call_count());
+        output.printf("Queue watermark: %u\n", logger_get_num_buffers_watermark());
+        output.printf("Highest file write time: %ums\n", logger_get_highest_file_write_time_ms());
+        output.printf("Call counts    : %u dgb %u info %u warn %u err\n",
+                      logger_get_logged_call_count(log_debug),
+                      logger_get_logged_call_count(log_info),
+                      logger_get_logged_call_count(log_warn),
+                      logger_get_logged_call_count(log_error));
+    }
     else if (cmdParams.beginsWith("raw")) {
         cmdParams.eraseFirstWords(1);
         logger_log_raw(cmdParams());
@@ -670,7 +680,7 @@ CMD_HANDLER_FUNC(learnIrHandler)
     }
     else
     {
-        output.putline("ERROR: Semaphore was NULL");
+        output.putline("ERROR: Semaphore was NULL, is the 'remote' task running?");
     }
 
     return true;

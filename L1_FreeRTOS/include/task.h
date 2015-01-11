@@ -1,5 +1,5 @@
 /*
-    FreeRTOS V8.0.0 - Copyright (C) 2014 Real Time Engineers Ltd.
+    FreeRTOS V8.1.2 - Copyright (C) 2014 Real Time Engineers Ltd.
     All rights reserved
 
     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
@@ -24,10 +24,10 @@
     the terms of the GNU General Public License (version 2) as published by the
     Free Software Foundation >>!AND MODIFIED BY!<< the FreeRTOS exception.
 
-    >>! NOTE: The modification to the GPL is included to allow you to distribute
-    >>! a combined work that includes FreeRTOS without being obliged to provide
-    >>! the source code for proprietary components outside of the FreeRTOS
-    >>! kernel.
+    >>!   NOTE: The modification to the GPL is included to allow you to     !<<
+    >>!   distribute a combined work that includes FreeRTOS without being   !<<
+    >>!   obliged to provide the source code for proprietary components     !<<
+    >>!   outside of the FreeRTOS kernel.                                   !<<
 
     FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
     WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -81,10 +81,10 @@ extern "C" {
  * MACROS AND DEFINITIONS
  *----------------------------------------------------------*/
 
-#define tskKERNEL_VERSION_NUMBER "V8.0.0"
+#define tskKERNEL_VERSION_NUMBER "V8.1.2"
 #define tskKERNEL_VERSION_MAJOR 8
-#define tskKERNEL_VERSION_MINOR 0
-#define tskKERNEL_VERSION_BUILD 0
+#define tskKERNEL_VERSION_MINOR 1
+#define tskKERNEL_VERSION_BUILD 2
 
 /**
  * task. h
@@ -1507,7 +1507,7 @@ void vTaskPriorityInherit( TaskHandle_t const pxMutexHolder ) PRIVILEGED_FUNCTIO
  * Set the priority of a task back to its proper priority in the case that it
  * inherited a higher priority while it was holding a semaphore.
  */
-void vTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder ) PRIVILEGED_FUNCTION;
+BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder ) PRIVILEGED_FUNCTION;
 
 /*
  * Generic version of the task creation function which is in turn called by the
@@ -1552,16 +1552,13 @@ void vTaskStepTick( const TickType_t xTicksToJump ) PRIVILEGED_FUNCTION;
  */
 eSleepModeStatus eTaskConfirmSleepModeStatus( void ) PRIVILEGED_FUNCTION;
 
+/*
+ * For internal use only.  Increment the mutex held count when a mutex is
+ * taken and return the handle of the task that has taken the mutex.
+ */
+void *pvTaskIncrementMutexHeldCount( void );
 
-
-/* Modified functions to extend FreeRTOS task API */
-void vTaskResetRunTimeStats(void);
-BaseType_t  uxTaskGetCpuUsage(TaskHandle_t xTask);
-void vRunTimeStatIsrEntry();
-void vRunTimeStatIsrExit();
-
-
-
+#include "tasks_mod.h.inc"
 #ifdef __cplusplus
 }
 #endif

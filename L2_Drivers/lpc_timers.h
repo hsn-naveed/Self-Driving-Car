@@ -81,7 +81,8 @@ void lpc_timer_enable(const lpc_timer_t timer, const uint32_t us_per_tick);
 uint32_t lpc_timer_get_value(const lpc_timer_t timer);
 
 /**
- * Set the value of the timer
+ * Set the value of the timer; you normally shouldn't do this as the hardware
+ * is ticking the timer in the background but you can use it to reset it to zero.
  * @param [in] timer    The timer type
  * @param [in] value    The value to set.
  */

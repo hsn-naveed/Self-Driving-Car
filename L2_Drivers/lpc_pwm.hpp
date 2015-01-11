@@ -54,6 +54,9 @@ class PWM
          */
         PWM(pwmType pwm, unsigned int frequencyHz=50);
 
+        /// Destructor that will destroy PWM configuration
+        ~PWM();
+
         /**
          * Sets the PWM based on the percentage.
          * If 50Hz Servo PWM was setup, then you can use the following :
@@ -67,12 +70,6 @@ class PWM
         bool set(float percent);
 
     private:
-        /**
-         * This is an intentional private destructor because if you are getting a compiler error
-         * that means your PWM object is destructing and this is not what you want.
-         */
-        ~PWM(){}
-
         PWM();                          ///< Disallow default constructor
         const pwmType mPwm;             ///< The PWM channel number set by constructor
         static unsigned int msTcMax;    ///< PWM TC max (this controls the frequency)

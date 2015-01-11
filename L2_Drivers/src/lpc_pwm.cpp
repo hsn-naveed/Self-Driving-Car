@@ -59,6 +59,12 @@ PWM::PWM(pwmType pwm, unsigned int frequencyHz) :
     LPC_PWM1->PCR |= (1 << (mPwm + 9));
 }
 
+PWM::~PWM()
+{
+    LPC_PWM1->PCR &= ~(1 << (mPwm + 9));
+    LPC_PINCON->PINSEL4 &= ~(3 << (mPwm*2));
+}
+
 bool PWM::set(float percent)
 {
     if(percent > 100) {

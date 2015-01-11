@@ -1,5 +1,5 @@
 /*
-    FreeRTOS V8.0.0 - Copyright (C) 2014 Real Time Engineers Ltd.
+    FreeRTOS V8.1.2 - Copyright (C) 2014 Real Time Engineers Ltd.
     All rights reserved
 
     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
@@ -24,10 +24,10 @@
     the terms of the GNU General Public License (version 2) as published by the
     Free Software Foundation >>!AND MODIFIED BY!<< the FreeRTOS exception.
 
-    >>! NOTE: The modification to the GPL is included to allow you to distribute
-    >>! a combined work that includes FreeRTOS without being obliged to provide
-    >>! the source code for proprietary components outside of the FreeRTOS
-    >>! kernel.
+    >>!   NOTE: The modification to the GPL is included to allow you to     !<<
+    >>!   distribute a combined work that includes FreeRTOS without being   !<<
+    >>!   obliged to provide the source code for proprietary components     !<<
+    >>!   outside of the FreeRTOS kernel.                                   !<<
 
     FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
     WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -216,7 +216,7 @@ static BaseType_t prvIsQueueFull( const Queue_t *pxQueue ) PRIVILEGED_FUNCTION;
  * Copies an item into the queue, either at the front of the queue or the
  * back of the queue.
  */
-static void prvCopyDataToQueue( Queue_t * const pxQueue, const void *pvItemToQueue, const BaseType_t xPosition ) PRIVILEGED_FUNCTION;
+static BaseType_t prvCopyDataToQueue( Queue_t * const pxQueue, const void *pvItemToQueue, const BaseType_t xPosition ) PRIVILEGED_FUNCTION;
 
 /*
  * Copies an item out of a queue.
@@ -461,7 +461,7 @@ QueueHandle_t xReturn = NULL;
 		taskEXIT_CRITICAL();
 
 		return pxReturn;
-	}
+	} /*lint !e818 xSemaphore cannot be a pointer to const because it is a typedef. */
 
 #endif
 /*-----------------------------------------------------------*/
@@ -508,7 +508,8 @@ QueueHandle_t xReturn = NULL;
 		}
 		else
 		{
-			/* We cannot give the mutex because we are not the holder. */
+			/* The mutex cannot be given because the calling task is not the
+			holder. */
 			xReturn = pdFAIL;
 
 			traceGIVE_MUTEX_RECURSIVE_FAILED( pxMutex );
@@ -543,8 +544,9 @@ QueueHandle_t xReturn = NULL;
 		{
 			xReturn = xQueueGenericReceive( pxMutex, NULL, xTicksToWait, pdFALSE );
 
-			/* pdPASS will only be returned if we successfully obtained the mutex,
-			we may have blocked to reach here. */
+			/* pdPASS will only be returned if the mutex was successfully
+			obtained.  The calling task may have entered the Blocked state
+			before reaching here. */
 			if( xReturn == pdPASS )
 			{
 				( pxMutex->u.uxRecursiveCallCount )++;
@@ -592,7 +594,7 @@ QueueHandle_t xReturn = NULL;
 
 BaseType_t xQueueGenericSend( QueueHandle_t xQueue, const void * const pvItemToQueue, TickType_t xTicksToWait, const BaseType_t xCopyPosition )
 {
-BaseType_t xEntryTimeSet = pdFALSE;
+BaseType_t xEntryTimeSet = pdFALSE, xYieldRequired;
 TimeOut_t xTimeOut;
 Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
@@ -620,7 +622,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 			if( ( pxQueue->uxMessagesWaiting < pxQueue->uxLength ) || ( xCopyPosition == queueOVERWRITE ) )
 			{
 				traceQUEUE_SEND( pxQueue );
-				prvCopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
+				xYieldRequired = prvCopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
 
 				#if ( configUSE_QUEUE_SETS == 1 )
 				{
@@ -657,6 +659,14 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 								mtCOVERAGE_TEST_MARKER();
 							}
 						}
+						else if( xYieldRequired != pdFALSE )
+						{
+							/* This path is a special case that will only get
+							executed if the task was holding multiple mutexes
+							and the mutexes were given back in an order that is
+							different to that in which they were taken. */
+							queueYIELD_IF_USING_PREEMPTION();
+						}
 						else
 						{
 							mtCOVERAGE_TEST_MARKER();
@@ -682,6 +692,14 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 							mtCOVERAGE_TEST_MARKER();
 						}
 					}
+					else if( xYieldRequired != pdFALSE )
+					{
+						/* This path is a special case that will only get
+						executed if the task was holding multiple mutexes and
+						the mutexes were given back in an order that is
+						different to that in which they were taken. */
+						queueYIELD_IF_USING_PREEMPTION();
+					}
 					else
 					{
 						mtCOVERAGE_TEST_MARKER();
@@ -690,9 +708,6 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 				#endif /* configUSE_QUEUE_SETS */
 
 				taskEXIT_CRITICAL();
-
-				/* Return to the original privilege level before exiting the
-				function. */
 				return pdPASS;
 			}
 			else
@@ -1059,7 +1074,20 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 		{
 			traceQUEUE_SEND_FROM_ISR( pxQueue );
 
-			prvCopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
+			if( prvCopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition ) != pdFALSE )
+			{
+				/* This is a special case that can only be executed if a task
+				holds multiple mutexes and then gives the mutexes back in an
+				order that is different to that in which they were taken. */
+				if( pxHigherPriorityTaskWoken != NULL )
+				{
+					*pxHigherPriorityTaskWoken = pdTRUE;
+				}
+				else
+				{
+					mtCOVERAGE_TEST_MARKER();
+				}
+			}
 
 			/* The event list is not altered if the queue is locked.  This will
 			be done when the queue is unlocked later. */
@@ -1094,8 +1122,8 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						{
 							if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != pdFALSE )
 							{
-								/* The task waiting has a higher priority so record that a
-								context	switch is required. */
+								/* The task waiting has a higher priority so
+								record that a context switch is required. */
 								if( pxHigherPriorityTaskWoken != NULL )
 								{
 									*pxHigherPriorityTaskWoken = pdTRUE;
@@ -1212,14 +1240,14 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						{
 							/* Record the information required to implement
 							priority inheritance should it become necessary. */
-							pxQueue->pxMutexHolder = ( int8_t * ) xTaskGetCurrentTaskHandle(); /*lint !e961 Cast is not redundant as TaskHandle_t is a typedef. */
+							pxQueue->pxMutexHolder = ( int8_t * ) pvTaskIncrementMutexHeldCount(); /*lint !e961 Cast is not redundant as TaskHandle_t is a typedef. */
 						}
 						else
 						{
 							mtCOVERAGE_TEST_MARKER();
 						}
 					}
-					#endif
+					#endif /* configUSE_MUTEXES */
 
 					if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == pdFALSE )
 					{
@@ -1591,8 +1619,10 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 #endif /* configUSE_TRACE_FACILITY */
 /*-----------------------------------------------------------*/
 
-static void prvCopyDataToQueue( Queue_t * const pxQueue, const void *pvItemToQueue, const BaseType_t xPosition )
+static BaseType_t prvCopyDataToQueue( Queue_t * const pxQueue, const void *pvItemToQueue, const BaseType_t xPosition )
 {
+BaseType_t xReturn = pdFALSE;
+
 	if( pxQueue->uxItemSize == ( UBaseType_t ) 0 )
 	{
 		#if ( configUSE_MUTEXES == 1 )
@@ -1600,7 +1630,7 @@ static void prvCopyDataToQueue( Queue_t * const pxQueue, const void *pvItemToQue
 			if( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX )
 			{
 				/* The mutex is no longer being held. */
-				vTaskPriorityDisinherit( ( void * ) pxQueue->pxMutexHolder );
+				xReturn = xTaskPriorityDisinherit( ( void * ) pxQueue->pxMutexHolder );
 				pxQueue->pxMutexHolder = NULL;
 			}
 			else
@@ -1658,12 +1688,14 @@ static void prvCopyDataToQueue( Queue_t * const pxQueue, const void *pvItemToQue
 	}
 
 	++( pxQueue->uxMessagesWaiting );
+
+	return xReturn;
 }
 /*-----------------------------------------------------------*/
 
 static void prvCopyDataFromQueue( Queue_t * const pxQueue, void * const pvBuffer )
 {
-	if( pxQueue->uxQueueType != queueQUEUE_IS_MUTEX )
+	if( pxQueue->uxItemSize != ( UBaseType_t ) 0 )
 	{
 		pxQueue->u.pcReadFrom += pxQueue->uxItemSize;
 		if( pxQueue->u.pcReadFrom >= pxQueue->pcTail ) /*lint !e946 MISRA exception justified as use of the relational operator is the cleanest solutions. */
@@ -1675,10 +1707,6 @@ static void prvCopyDataFromQueue( Queue_t * const pxQueue, void * const pvBuffer
 			mtCOVERAGE_TEST_MARKER();
 		}
 		( void ) memcpy( ( void * ) pvBuffer, ( void * ) pxQueue->u.pcReadFrom, ( size_t ) pxQueue->uxItemSize ); /*lint !e961 !e418 MISRA exception as the casts are only redundant for some ports.  Also previous logic ensures a null pointer can only be passed to memcpy() when the count is 0. */
-	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
 	}
 }
 /*-----------------------------------------------------------*/
@@ -2367,8 +2395,9 @@ BaseType_t xReturn;
 		if( pxQueueSetContainer->uxMessagesWaiting < pxQueueSetContainer->uxLength )
 		{
 			traceQUEUE_SEND( pxQueueSetContainer );
-			/* The data copies is the handle of the queue that contains data. */
-			prvCopyDataToQueue( pxQueueSetContainer, &pxQueue, xCopyPosition );
+			/* The data copied is the handle of the queue that contains data. */
+			xReturn = prvCopyDataToQueue( pxQueueSetContainer, &pxQueue, xCopyPosition );
+
 			if( listLIST_IS_EMPTY( &( pxQueueSetContainer->xTasksWaitingToReceive ) ) == pdFALSE )
 			{
 				if( xTaskRemoveFromEventList( &( pxQueueSetContainer->xTasksWaitingToReceive ) ) != pdFALSE )

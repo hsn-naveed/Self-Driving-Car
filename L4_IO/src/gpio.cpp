@@ -33,6 +33,13 @@ GPIO::GPIO(LPC1758_GPIO_Type gpioId) :
     *pinsel &= ~(3 << (2*mPinNum));
 }
 
+GPIO::~GPIO()
+{
+    setAsInput();
+    enableOpenDrainMode(false);
+    enablePullUp();
+}
+
 /** @{ Simple functions*/
 void GPIO::setAsInput(void)   {   mpOurGpio->FIODIR &= ~(1 << mPinNum);          }
 void GPIO::setAsOutput(void)  {   mpOurGpio->FIODIR |= (1 << mPinNum);           }

@@ -96,6 +96,8 @@ class GPIO
 {
     public:
         GPIO(LPC1758_GPIO_Type gpioId); ///< Constructor to choose the pin
+        ~GPIO(); ///< Destructor that will destroy the pin configuration
+
         void setAsInput(void);   ///< Sets pin as input pin
         void setAsOutput(void);  ///< Sets pin as output pin
 
@@ -113,12 +115,6 @@ class GPIO
     protected:
     private:
         GPIO(); ///< Do not use this constructor
-
-        /**
-         * This is an intentional private destructor because if you are getting a compiler error
-         * that means your GPIO object is destructing and this is not what you want.
-         */
-        ~GPIO();
 
         const uint8_t mPortNum;                 ///< This GPIOs port number
         const uint8_t mPinNum;                  ///< This GPIOs pin number

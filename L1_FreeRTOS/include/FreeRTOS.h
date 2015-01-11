@@ -1,5 +1,5 @@
 /*
-    FreeRTOS V8.0.0 - Copyright (C) 2014 Real Time Engineers Ltd.
+    FreeRTOS V8.1.2 - Copyright (C) 2014 Real Time Engineers Ltd.
     All rights reserved
 
     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
@@ -24,10 +24,10 @@
     the terms of the GNU General Public License (version 2) as published by the
     Free Software Foundation >>!AND MODIFIED BY!<< the FreeRTOS exception.
 
-    >>! NOTE: The modification to the GPL is included to allow you to distribute
-    >>! a combined work that includes FreeRTOS without being obliged to provide
-    >>! the source code for proprietary components outside of the FreeRTOS
-    >>! kernel.
+    >>!   NOTE: The modification to the GPL is included to allow you to     !<<
+    >>!   distribute a combined work that includes FreeRTOS without being   !<<
+    >>!   obliged to provide the source code for proprietary components     !<<
+    >>!   outside of the FreeRTOS kernel.                                   !<<
 
     FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
     WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -90,17 +90,11 @@
 extern "C" {
 #endif
 
-/* Basic FreeRTOS definitions. */
-#include "projdefs.h"
-
 /* Application specific configuration options. */
 #include "FreeRTOSConfig.h"
 
-/* configUSE_PORT_OPTIMISED_TASK_SELECTION must be defined before portable.h
-is included as it is used by the port layer. */
-#ifndef configUSE_PORT_OPTIMISED_TASK_SELECTION
-	#define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
-#endif
+/* Basic FreeRTOS definitions. */
+#include "projdefs.h"
 
 /* Definitions specific to the port being used. */
 #include "portable.h"
@@ -609,7 +603,7 @@ is included as it is used by the port layer. */
 
 #ifndef tracePEND_FUNC_CALL_FROM_ISR
 	#define tracePEND_FUNC_CALL_FROM_ISR(xFunctionToPend, pvParameter1, ulParameter2, ret)
-#endif 
+#endif
 
 #ifndef traceQUEUE_REGISTRY_ADD
 	#define traceQUEUE_REGISTRY_ADD(xQueue, pcQueueName)
@@ -715,6 +709,14 @@ is included as it is used by the port layer. */
 
 #ifndef mtCOVERAGE_TEST_MARKER
 	#define mtCOVERAGE_TEST_MARKER()
+#endif
+
+#ifndef portASSERT_IF_IN_ISR
+	#define portASSERT_IF_IN_ISR()
+#endif
+
+#ifndef configUSE_PORT_OPTIMISED_TASK_SELECTION
+	#define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #endif
 
 /* Definitions to allow backward compatibility with FreeRTOS versions prior to
