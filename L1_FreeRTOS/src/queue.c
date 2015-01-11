@@ -85,6 +85,7 @@ header files above, but not in this file, in order to generate the correct
 privileged Vs unprivileged linkage and placement. */
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE /*lint !e961 !e750. */
 
+#include "MemMang/freertos_mem_man.c.inc"
 
 /* Constants used with the xRxLock and xTxLock structure members. */
 #define queueUNLOCKED					( ( BaseType_t ) -1 )

@@ -13,7 +13,7 @@ MEMORY
 /* Define any symbols */
 __top_RamAHB32 = 0x2007c000 + 0x8000;
 
-ENTRY(ResetISR)
+ENTRY(isr_reset)
 
 SECTIONS
 {
