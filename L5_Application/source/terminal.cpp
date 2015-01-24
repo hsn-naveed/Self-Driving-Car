@@ -102,8 +102,9 @@ bool terminalTask::taskEntry()
 
     cp.addHandler(storageHandler,  "storage",  "Parameters: 'format sd', 'format flash', 'mount sd', 'mount flash'");
     cp.addHandler(rebootHandler,   "reboot",   "Reboots the system");
-    cp.addHandler(logHandler,      "log",      "'log <hello>' to log info\n"
-                                               "'log flush' to flush logs\n"
+    cp.addHandler(logHandler,      "log",      "'log <hello>': log an info message\n"
+                                               "'log flush'  : flush the logs\n"
+                                               "' log status': get status of the logger\n"
                                                "'log enableprint debug/info/warn/error' : Enables logger calls to printf\n"
                                                "'log disableprint debug/info/warn/error': Disables logger calls to printf\n"
                                                );

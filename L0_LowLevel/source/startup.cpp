@@ -38,7 +38,7 @@ extern void __libc_init_array(void);
 #endif
 
 /// CPU execution begins from this function
-static void isr_reset(void);
+void isr_reset(void);
 
 /// The common ISR handler for the chip level interrupts that forwards to the user interrupts
 static void isr_forwarder_routine(void);
@@ -218,15 +218,14 @@ extern unsigned int __data_section_table_end;
 //extern unsigned int __bss_section_table;
 extern unsigned int __bss_section_table_end;
 
-
-
 //*****************************************************************************
 // Code Entry Point : The CPU RESET Handler
 // This sets up the system and copies global memory contensts from FLASH to RAM
 // and initializes C/C++ environment
 //*****************************************************************************
+extern "C" {
 __attribute__ ((section(".after_vectors"), naked))
-static void isr_reset(void)
+void isr_reset(void)
 {
     // remove compiler warning
     (void)g_pfnVectors;
@@ -285,6 +284,7 @@ static void isr_reset(void)
     while (1) {
         ;
     }
+}
 }
 
 /**

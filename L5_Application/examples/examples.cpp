@@ -82,14 +82,17 @@ bool example_io_demo::run(void *p)
     {
         case sw1 :
             printf("Acceleration: %4i %4i %4i\n", AS.getX(), AS.getY(), AS.getZ());
+            LD.setNumber(AS.getX());
             break;
 
         case sw2 :
             printf("Light : %4d\n", LS.getRawValue());
+            LD.setNumber(LS.getRawValue());
             break;
 
         case sw3 :
             printf("Temperature: %i\n", (int) TS.getFarenheit());
+            LD.setNumber(TS.getFarenheit());
             break;
 
         case sw4 :

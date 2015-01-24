@@ -207,11 +207,15 @@ bool scheduler_init_all(bool register_internal_tlm)
             scheduler_task *task = e->task;
             e = e->next;
 
+            UBaseType_t taskPriority = task->mPriority;
+#if BUILD_CFG_MPU
+            taskPriority |= portPRIVILEGE_BIT;
+#endif
             if (!xTaskCreate(scheduler_c_task_private,
                              task->mName,                    /* Name  */
                              STACK_BYTES(task->mStackSize),  /* Stack */
                              task,                           /* Task param    */
-                             task->mPriority,                /* Task priority */
+                             taskPriority,                   /* Task priority */
                              &(task->mHandle)))              /* Task Handle   */
             {
                 printline(task->mName, "  --> FAILED xTaskCreate()");

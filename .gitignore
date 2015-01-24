@@ -1,3 +1,5 @@
 _build/*
 _build_mpu/*
 
+/_build_mpu
+/_build

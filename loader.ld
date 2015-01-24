@@ -1,24 +1,27 @@
 MEMORY
 {
-    /* Define each memory region */
-    MFlash512 (rx) : ORIGIN = 64k, LENGTH = 448k
+    /* Flash memory region for the program, offset by the bootloader section */
+    FLASH (rx) : ORIGIN = 64k, LENGTH = 448k
   
     /* 32k (Heap starts here) */
-    RamLoc32 (rwx) : ORIGIN = 0x10000000, LENGTH = 0x8000
+    SRAM (rwx) : ORIGIN = 0x10000000, LENGTH = 32k
   
     /* 32k (Globals at bottom, stack on top), heap continues from here */
-    RamAHB32 (rwx) : ORIGIN = 0x2007c000, LENGTH = 0x8000
+    SRAM_AHB (rwx) : ORIGIN = 0x2007c000, LENGTH = 32k
+    
+    /* Heap starts at SRAM because if heap starts from higher memory, then
+     * malloc tracking routines get confused when sbrk() system function
+     * returns higher heap memory first, and then lower heap memory.
+     * So we start heap from SRAM, and then move it up to SRAM_AHB if SRAM
+     * portion runs out completely.
+     */
 }
 
-/* Define any symbols */
-__top_RamAHB32 = 0x2007c000 + 0x8000;
-
+/* Program entry point */
 ENTRY(isr_reset)
 
 SECTIONS
 {
-	/* Multiple text regions not supported with this license */
-
 	/* MAIN TEXT SECTION */	
 	.text : ALIGN(4)
 	{
@@ -40,6 +43,7 @@ SECTIONS
 		__section_table_end = . ;
 		/* End of Global Section Table */
 
+        /* Functions that are placed after the interrupt vector */
 		*(.after_vectors*)
 		
 		*(.text*)
@@ -76,7 +80,7 @@ SECTIONS
 		KEEP (*crtend.o(.dtors))
 		/* End C++ */
 		
-	} > MFlash512
+	} > FLASH
 
 	/*
 	 * for exception handling/unwind - some Newlib functions (in common
@@ -85,25 +89,25 @@ SECTIONS
 	.ARM.extab : ALIGN(4)
 	{
 		*(.ARM.extab* .gnu.linkonce.armextab.*)
-	} > MFlash512
+	} > FLASH
 	__exidx_start = .;
 	
 	.ARM.exidx : ALIGN(4)
 	{
 		*(.ARM.exidx* .gnu.linkonce.armexidx.*)
-	} > MFlash512
+	} > FLASH
 	__exidx_end = .;
 	
 /*
 	.debug : ALIGN(4)
     {
         *(.debug* *debug.*)
-    } > MFlash512
+    } > FLASH
     
     .stabs : ALIGN(4)
     {
         *(.stabs* *stabs.*)
-    } > MFlash512
+    } > FLASH
 */
 
 	_etext = .;
@@ -112,7 +116,7 @@ SECTIONS
 	.uninit_RESERVED : ALIGN(4)
 	{
 		KEEP(*(.bss.$RESERVED*))
-	} > RamAHB32
+	} > SRAM_AHB
 
 	.data : ALIGN(4)
 	{
@@ -122,7 +126,7 @@ SECTIONS
 		*(.data*)
 		. = ALIGN(4) ;
 		_edata = .;
-	} > RamAHB32 AT>MFlash512
+	} > SRAM_AHB AT>FLASH
 
 	/* MAIN BSS SECTION */
 	.bss : ALIGN(4)
@@ -133,8 +137,13 @@ SECTIONS
 		. = ALIGN(4) ;
 		_ebss = .;
 		PROVIDE(end = .);
-	} > RamAHB32
+	} > SRAM_AHB
 	
+	/* Provide a symbol of the heap pointer to C/C++ code */
 	PROVIDE(_pvHeapStart = .);
-	PROVIDE(_vStackTop = __top_RamAHB32 - 32); /* Debugger and ISP may use 32-bytes of space? */
+	
+	/* Provide the start of the initial stack pointer
+	 * Debugger and ISP may use 32-bytes of space?
+	 */
+	PROVIDE(_vStackTop = ORIGIN(SRAM_AHB) + LENGTH(SRAM_AHB) - 32);
 }

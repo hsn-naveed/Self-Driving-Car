@@ -265,7 +265,7 @@ static bool logger_initialized(void)
  * @param [in] logger_priority  The priority at which the logger task will run.
  * @returns true if memory allocation succeeded.
  */
-static bool logger_internal_init(int logger_priority)
+static bool logger_internal_init(UBaseType_t logger_priority)
 {
     uint32_t i = 0;
     char * ptr = NULL;
@@ -306,6 +306,10 @@ static bool logger_internal_init(int logger_priority)
     {
         goto failure;
     }
+#endif
+
+#if BUILD_CFG_MPU
+    logger_priority |= portPRIVILEGE_BIT;
 #endif
 
     if (!xTaskCreate(logger_task, "logger", FILE_LOGGER_STACK_SIZE, NULL, logger_priority, NULL))
