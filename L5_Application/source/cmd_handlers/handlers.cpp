@@ -227,7 +227,7 @@ CMD_HANDLER_FUNC(logHandler)
         logger_log_raw(cmdParams());
     }
     else if ( (enablePrintf = cmdParams.beginsWith("enable ")) || cmdParams.beginsWith("disable ")) {
-        // command is: 'enableprint info/warning/error'
+        // command is: 'enable print info/warning/error'
 
         cmdParams.eraseFirstWords(1);
         logger_msg_t type = cmdParams.beginsWithIgnoreCase("warn")  ? log_warn  :
