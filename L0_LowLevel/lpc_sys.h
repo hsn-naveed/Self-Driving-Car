@@ -35,6 +35,7 @@ extern "C" {
 #include <stdbool.h>
 
 #include "LPC17xx.h"
+#include "fault_registers.h"
 #include "rtc.h"
 #include "sys_config.h"
 
@@ -155,6 +156,15 @@ static inline void sys_reboot()
      */
     LPC_WDT->WDFEED = 0xAA;
     LPC_WDT->WDMOD = 0;
+}
+
+/**
+ * Restarts the system immediately and marks abnormal restart
+ */
+static inline void sys_reboot_abnormal(void)
+{
+    FAULT_EXISTS = FAULT_PRESENT_VAL;
+    sys_reboot();
 }
 
 /**

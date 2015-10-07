@@ -123,7 +123,7 @@ FRESULT Storage::write(const char* pFilename, void* pData, unsigned int bytesToW
     return status;
 }
 
-FRESULT Storage::append(const char* pFilename,void* pData, unsigned int bytesToAppend, unsigned int offset)
+FRESULT Storage::append(const char* pFilename, const void* pData, unsigned int bytesToAppend, unsigned int offset)
 {
     FRESULT status = FR_INT_ERR;
     FIL file;

@@ -96,7 +96,7 @@ class Storage
          * @param offset        If offset is non-zero, data is written to this offset.
          *                      If offset is not specified or zero, data is appended at the end of the file.
          */
-        static FRESULT append(const char* pFilename,void* pData, unsigned int bytesToAppend, unsigned int offset=0);
+        static FRESULT append(const char* pFilename, const void* pData, unsigned int bytesToAppend, unsigned int offset=0);
 
     private:
         /// Private constructor to restrict object creation
