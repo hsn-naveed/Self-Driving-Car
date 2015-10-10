@@ -56,6 +56,7 @@ enum Board_I2C_Device_Addresses{
     I2CAddr_AccelerationSensor = 0x38,
     I2CAddr_TemperatureSensor  = 0x90, /* AD0 pin tied to Gnd */
     I2CAddr_LED_Display        = 0x40,
+    I2CAddr_Magnetometer       = 0x3C,
 };
 
 

@@ -33,7 +33,7 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
-
+#define hw4LightSensor 0
 
 
 /// This is the stack size used for each of the period tasks
@@ -51,6 +51,8 @@ bool period_reg_tlm(void)
     // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
     return true; // Must return true upon success
 }
+#endif
+
 
 void period_1Hz(void)
 {
