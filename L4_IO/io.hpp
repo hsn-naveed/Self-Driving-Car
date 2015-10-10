@@ -36,6 +36,7 @@
 #include "light_sensor.hpp"
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
+#include "magnetometer_sensor.hpp"
 
 
 /**
@@ -49,6 +50,7 @@
 #define LD      LED_Display::getInstance()         ///< 2-Digit LED Display
 #define LE      LED::getInstance()                 ///< 4 On-board LEDs
 #define SW      Switches::getInstance()            ///< 4 On-board Switches
+#define MS      Magnetometer_Sensor::getInstance()         ///< Magnetometer Sensor
 /** @} */
 
 
