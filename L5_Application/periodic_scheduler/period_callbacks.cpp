@@ -33,11 +33,13 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
-
+#include "shared_handles.h"
+#include "tasks.hpp"
 
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
@@ -59,15 +61,19 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
+
     LE.toggle(2);
+
+   // LE.toggle(2);
+
 }
 
 void period_100Hz(void)
 {
-    LE.toggle(3);
+   // LE.toggle(3);
 }
 
 void period_1000Hz(void)
 {
-    LE.toggle(4);
+    //LE.toggle(4);
 }
