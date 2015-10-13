@@ -35,7 +35,7 @@ class MotorControl : public scheduler_task{
 
         void setSteeringDirectionAndSpeed();
 
-        bool motorHasBeenInitialized = false;
+        bool motorHasBeenInitialized;
     public:
         PWM motorPwm;
         PWM servoPwm;
@@ -52,7 +52,7 @@ class MotorControl : public scheduler_task{
         void back(int speed, int duration);
         #endif
 
-        #if 1   // Servo Steering functions
+        #if 1   // Servo Steering Functions
         // Parameters are subject to change
         void steerLeft(float amountToSteer, float distance);
         void steerRight(float amountToSteer, float distance);
