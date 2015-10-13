@@ -13,10 +13,7 @@
 #include "scheduler_task.hpp"
 #include "FreeRTOS.h"
 #include "io.hpp"
-//another comment
 
-
-//added comment
 
 class MotorControl : public scheduler_task{
     public:
