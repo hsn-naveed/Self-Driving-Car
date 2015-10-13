@@ -66,11 +66,12 @@ class CAN_Handler_Tx : public scheduler_task {
             msg.frame_fields.is_29bit = 1;
             msg.frame_fields.data_len = 8;       // Send 8 bytes
 
-            if (xQueueReceive(mCAN_QueueHandler, &msg_sw, portMAX_DELAY))  {
+            if (xQueueReceive(mCAN_QueueHandler, &msg_sw, 1))  {
                 msg.data.qword =  msg_sw;
-                CAN_tx(can_t::can1, &msg, portMAX_DELAY);
+                CAN_tx(can_t::can1, &msg, 1);
                 printf("CAN message sent: %i!!!\n", msg_sw);
             }
+            printf("exited tx\n");
 
            return true;
         }
@@ -108,7 +109,7 @@ class CAN_Handler_Rx : public scheduler_task {
         bool run(void* p)   {
 
 
-            if(xSemaphoreTake(mCAN_SemaphoreSignal_Rx, portMAX_DELAY))   {
+            if(xSemaphoreTake(mCAN_SemaphoreSignal_Rx, 1))   {
 
                 if(CAN_is_bus_off(can_t::can1)) {
                                   CAN_reset_bus(can_t::can1);
@@ -116,7 +117,7 @@ class CAN_Handler_Rx : public scheduler_task {
                              }
                 else    {
 
-                    CAN_rx(can_t::can1, &mMessageReceive, portMAX_DELAY);
+                    CAN_rx(can_t::can1, &mMessageReceive, 1);
                     printf("message_id: %" PRIu32 "\n", mMessageReceive.msg_id);
 
                     printf("received: %i\n", (uint8_t)mMessageReceive.data.qword);
@@ -124,8 +125,10 @@ class CAN_Handler_Rx : public scheduler_task {
 
                 }
 
-            }
 
+
+            }
+            printf("Rx scheduler called.\n");
 
             return true;
         }
