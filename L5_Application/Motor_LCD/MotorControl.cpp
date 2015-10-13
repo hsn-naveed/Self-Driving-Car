@@ -9,8 +9,12 @@
 #include "MotorControl.hpp"
 
 #if 1 Private Functions
-void MotorControl::setSteeringDirectionAndSpeed(){
+void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet){
+    currentServoValue = steeringDirectionToSet;
+    currentMotorValue = speedToSet;
 
+    motorPwm.set(currentMotorValue);
+    servoPwm.set(currentServoValue);
 }
 #endif // Private Functions
 
@@ -32,6 +36,7 @@ void MotorControl::initCarMotor(){
 
 #if 1   Motor Control Functions
 void MotorControl::forward(int speed, int duration){
+printf("-----Moving Forward--------");
 
 }
 

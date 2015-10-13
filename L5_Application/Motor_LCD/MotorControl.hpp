@@ -33,7 +33,7 @@ class MotorControl : public scheduler_task{
         float currentMotorValue;
         float currentServoValue;
 
-        void setSteeringDirectionAndSpeed();
+        void setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet);
 
         bool motorHasBeenInitialized;
     public:
