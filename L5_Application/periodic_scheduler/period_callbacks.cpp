@@ -34,6 +34,10 @@
 #include "periodic_callback.h"
 #include "file_logger.h"
 
+#define tx_android_src (1 << 3)
+#define rx_android_dest (1 << 0)
+#define dest_gps_id (1 << 2)
+#define android_msg (0x8 << 10)
 
 
 /// This is the stack size used for each of the period tasks
@@ -86,6 +90,18 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
+    can_msg_t msg_tx = {0};   // INITIALIZE
+
+    uint32_t txID = android_msg | tx_android_src | dest_gps_id;
+    /* Initialize and then transfer*/
+    msg_tx.msg_id = txID;
+    msg_tx.frame_fields.is_29bit = 0;
+    msg_tx.frame_fields.data_len = 1;
+    msg_tx.data.bytes[0] = 0;
+    printf ("bout to send\n");
+    CAN_tx(can1, &msg_tx, 100);
+    printf ("sent\n");
+
     LE.toggle(2);
 
 #if hw4LightSensor

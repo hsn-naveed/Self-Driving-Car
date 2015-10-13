@@ -24,7 +24,54 @@
  *
  */
 #include "tasks.hpp"
-#include "examples/examples.hpp"
+#include <stdio.h>
+#include "eint.h"
+#include "io.hpp"
+#include "can.h"
+
+
+void initCAN (void);
+
+
+    void initCAN (void)
+    {
+        uint32_t baud_kbps = 100;
+        uint16_t rxq_size = 16;
+        uint16_t txq_size = 16;
+
+        /* Initialization */
+        CAN_init(can1, baud_kbps, rxq_size, txq_size, NULL, NULL);
+        CAN_bypass_filter_accept_all_msgs();
+        CAN_reset_bus(can1);
+    }
+
+class droid_rx : public scheduler_task
+{
+    public:
+        droid_rx(uint8_t priority) :
+            scheduler_task("droid_rx", 512, priority)
+        {
+            /* Nothing to init */
+        }
+
+
+        bool run(void *p)
+        {
+            can_msg_t msg_rx = {0};   // INITIALIZE
+
+            printf("RECIEVING\n");
+            if(CAN_rx(can1, &msg_rx, 100))
+            {
+                printf("RECIEVED\n");
+
+                printf("%x\n", msg_rx.msg_id);
+                printf("%x\n", msg_rx.data.qword);
+            }
+
+            return true;
+        }
+};
+
 
 //This is a test - MARVIN
 
@@ -58,6 +105,7 @@ int main(void)
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+    scheduler_add_task(new droid_rx(PRIORITY_HIGH));
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
 #if 1
