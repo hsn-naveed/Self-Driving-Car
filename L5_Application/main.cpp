@@ -30,20 +30,17 @@
 #include "can.h"
 
 
-void initCAN (void);
+/*void initCAN (void)
+{
+    uint32_t baud_kbps = 100;
+    uint16_t rxq_size = 16;
+    uint16_t txq_size = 16;
 
-
-    void initCAN (void)
-    {
-        uint32_t baud_kbps = 100;
-        uint16_t rxq_size = 16;
-        uint16_t txq_size = 16;
-
-        /* Initialization */
-        CAN_init(can1, baud_kbps, rxq_size, txq_size, NULL, NULL);
-        CAN_bypass_filter_accept_all_msgs();
-        CAN_reset_bus(can1);
-    }
+     Initialization
+    CAN_init(can1, baud_kbps, rxq_size, txq_size, NULL, NULL);
+    CAN_bypass_filter_accept_all_msgs();
+    CAN_reset_bus(can1);
+}*/
 
 class droid_rx : public scheduler_task
 {
@@ -54,6 +51,12 @@ class droid_rx : public scheduler_task
             /* Nothing to init */
         }
 
+        bool init(void)
+        {
+            CAN_init(can1, 100, 16, 16, NULL, NULL);
+            CAN_bypass_filter_accept_all_msgs();
+            CAN_reset_bus(can1);
+        }
 
         bool run(void *p)
         {
@@ -71,9 +74,6 @@ class droid_rx : public scheduler_task
             return true;
         }
 };
-
-
-//This is a test - MARVIN
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -105,6 +105,7 @@ int main(void)
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+
     scheduler_add_task(new droid_rx(PRIORITY_HIGH));
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
