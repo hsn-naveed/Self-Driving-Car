@@ -19,29 +19,39 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
 #endif // Private Functions
 
 #if 1 Public Functions
-MotorControl::MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet, uint8_t priorityToUse){
-currentMotorValue = speedSetting_t.STOP;
-currentServoValue = steeringDirection_t.STRAIGHT;
+MotorControl::MotorControl(uint8_t priorityToUse){
+    motorPwm = PWM(PWM::pwm1, frequency);
+    servoPwm = PWM(PWM::pwm2, frequency);
 
-motorHasBeenInitialized = false;
+    currentMotorValue = speedSetting_t.STOP;
+    currentServoValue = steeringDirection_t.STRAIGHT;
+
+#if MOTOR_INIT_NEEDED
+    motorHasBeenInitialized = false;
+#endif
 }
 
 bool MotorControl::run(void *p){
 
 }
 
+#if MOTOR_INIT_NEEDED
 void MotorControl::initCarMotor(){
 
 }
+#endif
 
 #if 1   Motor Control Functions
 void MotorControl::forward(int speed, int duration){
-printf("-----Moving Forward--------");
+    printf("-----Moving Forward--------");
 
+    setSteeringDirectionAndSpeed(steeringDirection_t.STRAIGHT, speedSetting_t.FAST_SPEED);
 }
 
 void MotorControl::back(int speed, int duration){
+    printf("----Moving Backward-------");
 
+    setSteeringDirectionAndSpeed(steeringDirection_t.STRAIGHT, speedSetting_t.BACK_SPEED);
 }
 #endif // Motor Control Functions
 
