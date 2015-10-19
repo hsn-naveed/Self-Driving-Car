@@ -36,6 +36,7 @@
 #define hw4LightSensor 0
 
 
+
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
