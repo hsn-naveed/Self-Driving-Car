@@ -1,59 +1,44 @@
-/*
- *     SocialLedge.com - Copyright (C) 2013
- *
- *     This file is part of free software framework for embedded processors.
- *     You can use it and/or distribute it as long as this copyright header
- *     remains unmodified.  The code is free for personal use and requires
- *     permission to use in a commercial product.
- *
- *      THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
- *      OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
- *      MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
- *      I SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR
- *      CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- *
- *     You can reach the author of this software at :
- *          p r e e t . w i k i @ g m a i l . c o m
- */
 
-/**
- * @file
- * @brief This is the application entry point.
- * 			FreeRTOS and stdio printf is pre-configured to use uart0_min.h before main() enters.
- * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
- *
- */
+#include <stdio.h>
+#include "utilities.h"
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+#include "adc0.h"
+#include "io.hpp"
+#include <math.h>
+#include "uart2.hpp"
 
-//This is a test - MARVIN
+char p;
+float adc_middle ;
+const float to_inches = 6.4; // devide adc reading by 6.4 (when 3.3V Vcc used) to get the distance in inches
+double sonar_middle_inches;
 
-/**
- * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
- * for details.  There is a very simple example towards the beginning of this class's declaration.
- *
- * @warning SPI #1 bus usage notes (interfaced to SD & Flash):
- *      - You can read/write files from multiple tasks because it automatically goes through SPI semaphore.
- *      - If you are going to use the SPI Bus in a FreeRTOS task, you need to use the API at L4_IO/fat/spi_sem.h
- *
- * @warning SPI #0 usage notes (Nordic wireless)
- *      - This bus is more tricky to use because if FreeRTOS is not running, the RIT interrupt may use the bus.
- *      - If FreeRTOS is running, then wireless task may use it.
- *        In either case, you should avoid using this bus or interfacing to external components because
- *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
- */
 int main(void)
 {
-    /**
-     * A few basic tasks for this bare-bone system :
-     *      1.  Terminal task provides gateway to interact with the board through UART terminal.
-     *      2.  Remote task allows you to use remote control to interact with the board.
-     *      3.  Wireless task responsible to receive, retry, and handle mesh network.
-     *
-     * Disable remote task if you are not using it.  Also, it needs SYS_CFG_ENABLE_TLM
-     * such that it can save remote control codes to non-volatile memory.  IR remote
-     * control codes can be learned by typing the "learn" terminal command.
-     */
+///UART
+
+    Uart2 &U2 = Uart2::getInstance();
+    U2.init(9600,256,256);
+    while (1){
+
+    U2.getChar(&p,50);
+
+    printf("\n Distance in inches with UART2 is : %i", p);
+    delay_ms(1000);
+    }
+
+/// Analog
+/*    while(1){
+
+        LPC_PINCON->PINSEL3 |= (3<<28); //ADC 3
+        adc_middle = adc0_get_reading(4);
+
+        sonar_middle_inches = floor(adc_middle/to_inches);
+
+        printf("\n adc value is : %.11f",sonar_middle_inches);
+        delay_ms(250);
+    }*/
+
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
