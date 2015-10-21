@@ -15,8 +15,8 @@ double sonar_middle_inches;
 
 int main(void)
 {
-///UART
-
+///UART--- does not generate exact values!!
+/*
     Uart2 &U2 = Uart2::getInstance();
     U2.init(9600,256,256);
     while (1){
@@ -25,10 +25,10 @@ int main(void)
 
     printf("\n Distance in inches with UART2 is : %i", p);
     delay_ms(1000);
-    }
+    }*/
 
 /// Analog
-/*    while(1){
+   while(1){
 
         LPC_PINCON->PINSEL3 |= (3<<28); //ADC 3
         adc_middle = adc0_get_reading(4);
@@ -37,7 +37,7 @@ int main(void)
 
         printf("\n adc value is : %.11f",sonar_middle_inches);
         delay_ms(250);
-    }*/
+    }
 
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
