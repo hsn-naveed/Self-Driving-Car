@@ -30,7 +30,7 @@
 #include "file_logger.h"
 #include "can.h"
 #include <inttypes.h>
-
+#include "FullCan.cpp"
 //This is a test - MARVIN
 
 
@@ -245,7 +245,7 @@ int main(void)
     u3.init(WIFI_BAUD_RATE, WIFI_RXQ_SIZE, WIFI_TXQ_SIZE);
     scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
 #endif
-
+    scheduler_add_task(new canBUS(PRIORITY_MEDIUM));
     scheduler_start(); ///< This shouldn't return
     return -1;
 }
