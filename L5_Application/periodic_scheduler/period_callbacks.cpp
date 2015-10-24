@@ -33,6 +33,7 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
+#include "can.h"
 
 #define tx_android_src (1 << 3)
 #define rx_android_dest (1 << 0)
@@ -44,69 +45,15 @@
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 
-// Homework 4 Filtered Light Sensor
-#define hw4LightSensor 1
-int filteredLightSensorValue = 0;
-int sumOfLightSensorValues = 0;
-int counterOfLightSensorValues = 0;
-
-
-void averageOfLightSensor(){
-    sumOfLightSensorValues += LS.getPercentValue();
-
-    counterOfLightSensorValues++;
-
-    if (counterOfLightSensorValues == 10){
-        filteredLightSensorValue = sumOfLightSensorValues/counterOfLightSensorValues;
-
-        LOG_INFO("\nCounter has reached 10!\n\n");
-    }
-    else{
-        LOG_INFO("Counter not at 10 yet\n");
-        filteredLightSensorValue = -1;
-    }
-}
-
-void printFilteredLightSensorValue(){
-    if (counterOfLightSensorValues == 10){
-        printf("Filtered Light Sensor value = %i\n", filteredLightSensorValue);
-
-        sumOfLightSensorValues = 0;
-        counterOfLightSensorValues = 0;
-    }
-    else{
-        LOG_INFO("Counter is not equal to 10 after 10 cycles of 10Hz func calls\n");
-    }
-}
 
 void period_1Hz(void)
 {
     LE.toggle(1);
-
-#if hw4LightSensor
-    printFilteredLightSensorValue();
-#endif
 }
 
 void period_10Hz(void)
 {
-    can_msg_t msg_tx = {0};   // INITIALIZE
-
-    uint32_t txID = android_msg | tx_android_src | dest_gps_id;
-    /* Initialize and then transfer*/
-    msg_tx.msg_id = txID;
-    msg_tx.frame_fields.is_29bit = 0;
-    msg_tx.frame_fields.data_len = 1;
-    msg_tx.data.bytes[0] = 0;
-    printf ("bout to send\n");
-    CAN_tx(can1, &msg_tx, 100);
-    printf ("sent\n");
-
     LE.toggle(2);
-
-#if hw4LightSensor
-    averageOfLightSensor();
-#endif
 }
 
 void period_100Hz(void)
