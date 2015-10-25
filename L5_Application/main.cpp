@@ -1,4 +1,4 @@
-
+//Sensor board
 #include <stdio.h>
 #include "utilities.h"
 #include "tasks.hpp"
@@ -7,30 +7,36 @@
 #include "io.hpp"
 #include <math.h>
 #include "uart2.hpp"
+#include "gpio.hpp"
 
 char p;
 float adc_middle ;
-const float to_inches = 6.4; // devide adc reading by 6.4 (when 3.3V Vcc used) to get the distance in inches
+const float to_inches = 6.4; // divide ADC reading by 6.4 (when 3.3V Vcc used) to get the distance in inches
 double sonar_middle_inches;
 
 int main(void)
 {
 
-//int   sensor (left_sensor)
+GPIO En(P2_0); //  'ACTIVE LOW' P2.0 as Enable signal for Analog MUX
+GPIO S0(P2_1); //  P2.1 as MUX select bit S0
+GPIO S1(P2_2); //  P2.2 as MUX select bit S1
 
-LPC_PINCON->PINSEL3 |= (3<<28); //ADC 3
+LPC_PINCON->PINSEL3 |= (3<<28); //Select ADC 3
 
 /// Analog_Sonar
-  while(1){
+En.setLow(); //Enable MUX
+//Select input 0(Left Sonar) 00
+S0.setLow(); //
+S1.setLow(); //
 
-        adc_middle = adc0_get_reading(4);
+while(1)
+{
+    adc_middle = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
+    sonar_middle_inches = floor(adc_middle/to_inches); //converts the sensor value to inches, pretty exact!
 
-        sonar_middle_inches = floor(adc_middle/to_inches); //converts the sensor value to inches, pretty exact!
-
-        printf("\n adc value is : %.11f",sonar_middle_inches);
-        delay_ms(250);
-    }
-
+    printf("\n adc value is : %.11f",sonar_middle_inches);
+    delay_ms(250);
+}
 
 
 /*
