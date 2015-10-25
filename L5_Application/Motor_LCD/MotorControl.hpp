@@ -13,6 +13,8 @@
 #include "scheduler_task.hpp"
 #include "FreeRTOS.h"
 #include "io.hpp"
+#include "file_logger.h"
+#include <stdio.h>
 
 #define MOTOR_INIT_NEEDED 0
 
@@ -21,6 +23,7 @@ struct{
         float SLOW_SPEED = 76.7;
         float MEDIUM_SPEED = 77.9;
         float FAST_SPEED = 79.3;
+        float NO_CHANGE = 1;
         float BACK_SPEED = 70;
         float MAX_SPEED = 96;
         float STOP = 71.3;
@@ -56,13 +59,14 @@ class MotorControl{
 
         #if 1   // Motor Control Functions
         // Parameters are subject to change
-        void forward(int speed, int duration);
-        void back(int speed, int duration);
+        void forward(float speedToSet);
+        void back(float speedToSet);
         #endif
 
         #if 1   // Servo Steering Functions
         // Parameters are subject to change
-        void steerLeft(float amountToSteer, float distance);
-        void steerRight(float amountToSteer, float distance);
+        void steerLeft(float amountToSteer);
+        void steerRight(float amountToSteer);
         #endif
 };
+#endif
