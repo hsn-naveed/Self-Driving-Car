@@ -19,6 +19,7 @@
 
 struct{
         float SLOW_SPEED = 76.7;
+        float MEDIUM_SPEED = 77.9;
         float FAST_SPEED = 79.3;
         float BACK_SPEED = 70;
         float MAX_SPEED = 96;
@@ -31,7 +32,7 @@ struct{
         float STRAIGHT = 72;
 } steeringDirection_t;
 
-class MotorControl : public scheduler_task{
+class MotorControl{
     private:
         int frequency = 480;
         float currentMotorValue;
@@ -39,15 +40,14 @@ class MotorControl : public scheduler_task{
 
         void setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet);
 
-#if MOTOR_INIT_NEEDED
+        #if MOTOR_INIT_NEEDED
         bool motorHasBeenInitialized;
-#endif
+        #endif
     public:
         PWM motorPwm;
         PWM servoPwm;
 
-        MotorControl(uint8_t priorityToUse);
-        bool run(void *p);
+        MotorControl();
 
         #if MOTOR_INIT_NEEDED
         // In case motor needs to be pulsed to get going prior to starting

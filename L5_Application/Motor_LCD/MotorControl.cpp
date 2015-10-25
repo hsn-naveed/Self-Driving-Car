@@ -19,7 +19,7 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
 #endif // Private Functions
 
 #if 1 Public Functions
-MotorControl::MotorControl(uint8_t priorityToUse){
+MotorControl::MotorControl(){
     motorPwm = PWM(PWM::pwm1, frequency);
     servoPwm = PWM(PWM::pwm2, frequency);
 
@@ -29,10 +29,6 @@ MotorControl::MotorControl(uint8_t priorityToUse){
 #if MOTOR_INIT_NEEDED
     motorHasBeenInitialized = false;
 #endif
-}
-
-bool MotorControl::run(void *p){
-
 }
 
 #if MOTOR_INIT_NEEDED
