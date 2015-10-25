@@ -15,29 +15,48 @@ double sonar_middle_inches;
 
 int main(void)
 {
-///UART--- does not generate exact values!!
-/*
-    Uart2 &U2 = Uart2::getInstance();
-    U2.init(9600,256,256);
-    while (1){
 
-    U2.getChar(&p,50);
+//int   sensor (left_sensor)
 
-    printf("\n Distance in inches with UART2 is : %i", p);
-    delay_ms(1000);
-    }*/
+LPC_PINCON->PINSEL3 |= (3<<28); //ADC 3
 
-/// Analog
-   while(1){
+/// Analog_Sonar
+  while(1){
 
-        LPC_PINCON->PINSEL3 |= (3<<28); //ADC 3
         adc_middle = adc0_get_reading(4);
 
-        sonar_middle_inches = floor(adc_middle/to_inches);
+        sonar_middle_inches = floor(adc_middle/to_inches); //converts the sensor value to inches, pretty exact!
 
         printf("\n adc value is : %.11f",sonar_middle_inches);
         delay_ms(250);
     }
+
+
+
+/*
+/// Analog_IR
+//////////////////////
+    LPC_PINCON->PINSEL3 |= (3<<28); //ADC 3
+
+      while(1)
+      {
+           for(int i =0; i<10; i++)
+           {
+               adc_middle = adc0_get_reading(4);
+               sonar_middle_inches = floor(adc_middle/to_inches); //converts the sensor value to inches, pretty exact!
+               sonar_middle_inches = + sonar_middle_inches;
+               //adc_middle = +adc_middle;
+
+               delay_ms(60);
+           }
+           sonar_middle_inches =  sonar_middle_inches/10;
+
+           printf("\n adc value is : %.11f", sonar_middle_inches);
+           delay_ms(1200);
+       }
+   //////////////////////
+*/
+
 
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
