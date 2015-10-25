@@ -14,29 +14,74 @@ float adc_middle ;
 const float to_inches = 6.4; // divide ADC reading by 6.4 (when 3.3V Vcc used) to get the distance in inches
 double sonar_middle_inches;
 
-int main(void)
-{
-
 GPIO En(P2_0); //  'ACTIVE LOW' P2.0 as Enable signal for Analog MUX
 GPIO S0(P2_1); //  P2.1 as MUX select bit S0
 GPIO S1(P2_2); //  P2.2 as MUX select bit S1
 
+
+void reset(void)
+{
+    En.setHigh(); //Disable MUX
+    delay_ms(2);
+    En.setLow();  //Enable MUX
+}
+
+int main(void)
+{
+
 LPC_PINCON->PINSEL3 |= (3<<28); //Select ADC 3
 
-/// Analog_Sonar
-En.setLow(); //Enable MUX
-//Select input 0(Left Sonar) 00
-S0.setLow(); //
-S1.setLow(); //
+/// Analog_Sonar/////////////////////
 
 while(1)
 {
+//Select input 0 (LEFT Sensor) 00
+reset();
+
+S0.setLow(); //S0=0
+S1.setLow(); //S0=0
+
     adc_middle = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
     sonar_middle_inches = floor(adc_middle/to_inches); //converts the sensor value to inches, pretty exact!
 
-    printf("\n adc value is : %.11f",sonar_middle_inches);
-    delay_ms(250);
-}
+    printf("\n Left Sonar value is : %.11f",sonar_middle_inches);
+    delay_ms(100);
+
+reset();
+
+//Select input 1(MIDDLE Sonar) 01
+S0.setHigh(); //S0=1
+S1.setLow();  //S1=0
+
+    adc_middle = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
+    sonar_middle_inches = floor(adc_middle/to_inches); //converts the sensor value to inches, pretty exact!
+
+    printf("\n Middle Sonar value is : %.11f",sonar_middle_inches);
+    delay_ms(100);
+
+reset();
+
+//Select input 2(RIGHT Sonar) 10
+S0.setLow();  //S0=0
+S1.setHigh(); //S1=1
+
+    adc_middle = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
+    sonar_middle_inches = floor(adc_middle/to_inches); //converts the sensor value to inches, pretty exact!
+
+    printf("\n Right Sonar value is : %.11f",sonar_middle_inches);
+    delay_ms(100);
+
+reset();
+
+//Select input 3(REAR Sonar) 11
+S0.setHigh();  //S0=1
+S1.setHigh();  //S1=1
+
+    adc_middle = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
+    sonar_middle_inches = floor(adc_middle/to_inches); //converts the sensor value to inches, pretty exact!
+
+    printf("\n Rear Sonar value is : %.11f",sonar_middle_inches);
+    delay_ms(100);
 
 
 /*
@@ -62,7 +107,8 @@ while(1)
        }
    //////////////////////
 */
-
+delay_ms(1000);
+}
 
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
