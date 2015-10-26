@@ -40,57 +40,14 @@
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 
-// Homework 4 Filtered Light Sensor
-#define hw4LightSensor 1
-int filteredLightSensorValue = 0;
-int sumOfLightSensorValues = 0;
-int counterOfLightSensorValues = 0;
-
-
-void averageOfLightSensor(){
-    sumOfLightSensorValues += LS.getPercentValue();
-
-    counterOfLightSensorValues++;
-
-    if (counterOfLightSensorValues == 10){
-        filteredLightSensorValue = sumOfLightSensorValues/counterOfLightSensorValues;
-
-        LOG_INFO("\nCounter has reached 10!\n\n");
-    }
-    else{
-        LOG_INFO("Counter not at 10 yet\n");
-        filteredLightSensorValue = -1;
-    }
-}
-
-void printFilteredLightSensorValue(){
-    if (counterOfLightSensorValues == 10){
-        printf("Filtered Light Sensor value = %i\n", filteredLightSensorValue);
-
-        sumOfLightSensorValues = 0;
-        counterOfLightSensorValues = 0;
-    }
-    else{
-        LOG_INFO("Counter is not equal to 10 after 10 cycles of 10Hz func calls\n");
-    }
-}
-
 void period_1Hz(void)
 {
     LE.toggle(1);
-
-#if hw4LightSensor
-    printFilteredLightSensorValue();
-#endif
 }
 
 void period_10Hz(void)
 {
     LE.toggle(2);
-
-#if hw4LightSensor
-    averageOfLightSensor();
-#endif
 }
 
 void period_100Hz(void)
