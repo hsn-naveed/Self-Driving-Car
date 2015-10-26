@@ -25,7 +25,8 @@
 
 #include "command_handler.hpp"
 
-
+//Handler for master_controller commands
+CMD_HANDLER_FUNC(masterHandler);
 
 /// Handler for task list & CPU Information
 CMD_HANDLER_FUNC(taskListHandler);

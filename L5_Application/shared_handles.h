@@ -35,6 +35,26 @@ enum {
     shared_SensorQueue,    ///< Shared handle used by examples (producer and consumer tasks)
     shared_learnSemaphore, ///< Terminal command gives this semaphore to remoteTask (IR sensor task)
 
+    //This is used to simulate
+    //The receiving logic of CAN
+    shared_CAN_message_queue_terminal, //shared by periodic_tasks and the terminal
+
+    //this is shared by the task
+    //that handles the CAN receive
+    //contains the whole message receive from CAN BUS
+    shared_CAN_message_queue_receive,
+
+    //this is shared by the task
+    //that handles the CAN transmit
+    //contains the whole message to transmit
+    shared_CAN_message_queue_transmit,
+
+    //this shared handle is used to send the whole CAN message to the control_handler_task
+    //if a new CAN message was detected
+    shared_CAN_message_queue_master, //shared by periodic_tasks and the control_handler_task
+
+    shared_sensor_data,
+
     shared_CAN_Semaphore_Rx,
     shared_LEDSignalForCAN,
 
