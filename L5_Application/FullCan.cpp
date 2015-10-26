@@ -8,6 +8,8 @@
 #include "tasks.hpp"
 #include "stdio.h"
 #include "can.h"
+#include "shared_handles.h"
+
 
 class canBUS : public scheduler_task
 {
@@ -60,16 +62,24 @@ class canBUS : public scheduler_task
                         can_fullcan_msg_t msg;
                         can_fullcan_msg_t* msgPtr = CAN_fullcan_get_entry_ptr(CAN_gen_sid(bus, 0x123));
 
+                        can_msg_t msg_tx = { 0 };
+
                          if(CAN_fullcan_read_msg_copy(msgPtr,&msg)){
                              puts("\nReceived!");
-                             vTaskDelay(3000);
+                             //pass the received message to the period_callback functions
+                             xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &msg, 0);
                              return true;
                              }
+                         else if(xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_transmit), &msg_tx, 0)) {
+                               //send data
+                         }
 
                          else{
                              puts ("\nNo message received!");
                              return false;
                          }
+
+                         vTaskDelay(1);
                 }
 };
 

@@ -31,9 +31,11 @@
 #include "can.h"
 #include <inttypes.h>
 #include "FullCan.cpp"
-//This is a test - MARVIN
+
+#include "master_control.hpp"
 
 
+/*
 
 class CAN_Handler_Tx : public scheduler_task {
     private:
@@ -135,6 +137,7 @@ class CAN_Handler_Rx : public scheduler_task {
 
 
 };
+*/
 
 
 
@@ -176,8 +179,11 @@ int main(void)
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
     /*Add scheduler for our CAN task */
-    scheduler_add_task(new CAN_Handler_Tx(5));
-    scheduler_add_task(new CAN_Handler_Rx(5));
+    //scheduler_add_task(new CAN_Handler_Tx(5));
+    //scheduler_add_task(new CAN_Handler_Rx(5));
+
+    //master control task
+    scheduler_add_task(new control_handler_task(5));
 
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */

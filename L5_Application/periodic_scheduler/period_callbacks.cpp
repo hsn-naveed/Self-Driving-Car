@@ -35,10 +35,20 @@
 #include "file_logger.h"
 #include "shared_handles.h"
 #include "tasks.hpp"
+#include <inttypes.h>
+
+#include "master_control.hpp"
+#include "can.h"
+
+
 
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+
+can_msg_t msg_rx = { 0 };
+can_msg_t msg_tx = { 0 };
+
 
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
@@ -54,6 +64,7 @@ bool period_reg_tlm(void)
     return true; // Must return true upon success
 }
 
+
 void period_1Hz(void)
 {
     LE.toggle(1);
@@ -62,18 +73,22 @@ void period_1Hz(void)
 void period_10Hz(void)
 {
 
-    LE.toggle(2);
-
-   // LE.toggle(2);
-
 }
 
 void period_100Hz(void)
 {
-   // LE.toggle(3);
+
 }
 
 void period_1000Hz(void)
 {
     //LE.toggle(4);
 }
+
+
+void handleMessage()    {
+
+
+}
+
+
