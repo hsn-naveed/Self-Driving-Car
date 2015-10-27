@@ -26,8 +26,9 @@
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "Magnetometer/Magnetometer.hpp"
-#include "can.h"
+#include "car_can.hpp"
 #include <stdio.h>
+
 
 
 /**
@@ -46,25 +47,8 @@
  */
 int main(void)
 {
-    can_std_id_t canid1, canid2;
-    canid1 = CAN_gen_sid(can1, 0x101);
-    canid2 = CAN_gen_sid(can1, 0x102);
-    CAN_init(can1,100, 16, 16, 0, 0);
-    printf("Completed init of Sender\n");
-    if(CAN_fullcan_add_entry(can1, canid1, canid2)){
-//                CAN_setup_filter(slist, 4,sglist, 2, NULL, 0, NULL, 0);
-    }
-    else{
-        printf("CAN 1 failed to initialize\n");
-    }
-//    CAN_bypass_filter_accept_all_msgs();
-    printf("Completing init of Sender\n");
-    CAN_reset_bus(can1);
-    if(CAN_is_bus_off(can1)){
-        printf("Can bus is off\n");
-        CAN_reset_bus(can1);
-    }
-    else printf("CAN bus is on\n");
+    car_init_can_bus();
+
     scheduler_add_task(new Magnetometer(PRIORITY_MEDIUM));
     /**
      * A few basic tasks for this bare-bone system :

@@ -36,7 +36,7 @@ bool Magnetometer::run(void *p)
 
     if (CAN_tx(can1, &can_msg_1, 100))
     {
-        printf("CAN msg: %f sent out through can bus 1\n", can_msg_1.data.dwords[0]);
+        printf("CAN msg: %i sent out through can bus 1\n", can_msg_1.data.dwords[0]);
         printf("TX watermark: %i\n", CAN_get_tx_watermark(can1));
         printf("TX sent: %i\n", CAN_get_tx_count(can1));
         sent = 1;
