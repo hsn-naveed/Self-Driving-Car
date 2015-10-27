@@ -23,6 +23,7 @@
  * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
  *
  */
+#include <full_can.cpp>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "io.hpp"
@@ -30,7 +31,8 @@
 #include "file_logger.h"
 #include "can.h"
 #include <inttypes.h>
-#include "FullCan.cpp"
+
+//This is a test - MARVIN
 
 #include "master_control.hpp"
 
@@ -251,7 +253,7 @@ int main(void)
     u3.init(WIFI_BAUD_RATE, WIFI_RXQ_SIZE, WIFI_TXQ_SIZE);
     scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
 #endif
-    scheduler_add_task(new canBUS(PRIORITY_MEDIUM));
+    scheduler_add_task(new can_receive(PRIORITY_MEDIUM));
     scheduler_start(); ///< This shouldn't return
     return -1;
 }
