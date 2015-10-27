@@ -4,7 +4,7 @@
 
 
 /// Initializes the can bus with FullCAN
-void car_init_can_bus(void);
+void car_can_init_can_bus(void);
 
 /// Callback function if the bus is heavy
 void * bus_off_cb(void);
@@ -23,5 +23,11 @@ bool car_can_rx(can_fullcan_msg_t *fc1, uint16_t msg_id);
  * @param [in] msg_id   Message id of the CAN msg being sent
  */
 bool car_can_tx(can_msg_t *msg, uint32_t msg_id);
+
+/**
+ * Sends the x-coordinates, y-coordinates, and the heading direction
+ * @returns true if msg sent successfully
+ */
+void car_can_send_coordinates_and_heading(void);
 
 #endif /* L5_APPLICATION_CAR_CAN_HPP_ */

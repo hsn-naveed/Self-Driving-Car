@@ -33,6 +33,7 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
+#include "car_can.hpp"
 #define hw4LightSensor 0
 
 
@@ -43,6 +44,8 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 void period_1Hz(void)
 {
     LE.toggle(1);
+
+    car_can_send_coordinates_and_heading();
 }
 
 void period_10Hz(void)
