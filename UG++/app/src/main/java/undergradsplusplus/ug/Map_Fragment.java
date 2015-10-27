@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.SupportMapFragment;
 
 /**
@@ -19,16 +20,21 @@ import com.google.android.gms.maps.SupportMapFragment;
 public class Map_Fragment extends Fragment{
     TextView text;
 
+    MapView mapView;
     private GoogleMap map;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        //return inflater.inflate(R.layout.map_layout, container, false);
+//        return inflater.inflate(R.layout.map_layout, container, false);
 
         View v = inflater.inflate(R.layout.map_layout, container, false);
 
-        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.gmaps)).getMap();
+//        mapView = (MapView) mapView.findViewById(R.id.gmaps);
+//        mapView.onCreate(savedInstanceState);
+
+        map = ((MapFragment) getChildFragmentManager().findFragmentById(R.id.gmaps)).getMap();
+
 
         return v;
     }
@@ -41,4 +47,5 @@ public class Map_Fragment extends Fragment{
 
         Log.d("phil", "in map");
     }
+
 }
