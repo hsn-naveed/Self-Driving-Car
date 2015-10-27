@@ -49,7 +49,7 @@ extern "C" {
 
 #define TERMINAL_USE_NRF_WIRELESS       0             ///< Terminal command can be sent through nordic wireless
 #define TERMINAL_END_CHARS              {3, 3, 4, 4}  ///< The last characters sent after processing a terminal command
-#define TERMINAL_USE_CAN_BUS_HANDLER    0             ///< CAN bus terminal command
+#define TERMINAL_USE_CAN_BUS_HANDLER    1             ///< CAN bus terminal command
 
 
 
