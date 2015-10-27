@@ -1,5 +1,4 @@
 #include <stdint.h>
-
 #include "io.hpp" // All IO Class definitions
 #include "bio.h"
 #include "magnetometer_sensor.hpp"
