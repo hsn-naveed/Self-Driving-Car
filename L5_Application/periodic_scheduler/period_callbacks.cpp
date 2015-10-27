@@ -28,6 +28,7 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+
 #include <stdio.h>
 #include <stdint.h>
 #include "io.hpp"
@@ -40,6 +41,9 @@
 #include "master_control.hpp"
 #include "can.h"
 
+#include <L4_IO/can_definitions.hpp>
+#include "L4_IO/can_storage.hpp"
+
 
 
 
@@ -50,12 +54,12 @@ can_msg_t msg_rx = { 0 };
 can_msg_t msg_tx = { 0 };
 
 
-
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
     return true; // Must return true upon success
 }
+
 
 /// Register any telemetry variables
 bool period_reg_tlm(void)
