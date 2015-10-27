@@ -1,15 +1,10 @@
-/*
- * magneometer_sensor.hpp
- *
- *  Created on: Apr 17, 2015
- *      Author: Calvin
- */
-
 #ifndef L4_IO_MAGNETOMETER_SENSOR_HPP_
 #define L4_IO_MAGNETOMETER_SENSOR_HPP_
 
 #include <stdint.h>
 #include "i2c2_device.hpp"  // I2C Device Base Class
+
+
 
 struct rawHeading{
         float x = 0;
