@@ -9,10 +9,10 @@
 #include "stdio.h"
 #include "can.h"
 
-class canBUS : public scheduler_task
+class can_receive : public scheduler_task
 {
     public:
-        canBUS(uint8_t priority) :
+        can_receive(uint8_t priority) :
             scheduler_task("canBUS", 2048, priority)
         {
             /* Nothing to init */
@@ -35,7 +35,7 @@ class canBUS : public scheduler_task
                                                       };
                     const can_ext_id_t *elist = NULL;
                     const can_ext_grp_id_t *eglist= NULL;
-                    if(CAN_setup_filter(slist, 4, sglist, 0, elist, 0, eglist, 0)){
+                    if(CAN_setup_filter(slist, 4, sglist, 2, elist, 0, eglist, 0)){
                         puts("\nIn Full Can Mode and Filter Setup!");
                     }
 
