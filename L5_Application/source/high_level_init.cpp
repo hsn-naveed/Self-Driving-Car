@@ -271,6 +271,7 @@ static bool hl_init_board_io(void)
     LS.init(); // Light sensor
     LE.init(); // LEDs
     SW.init(); // Switches
+    MS.init(); // Magnetometer sensor
 
     /* Turn off all LEDs */
     LE.setAll(0);

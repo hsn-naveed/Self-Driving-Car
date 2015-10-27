@@ -9,11 +9,8 @@ void car_can_init_can_bus(void)
     const uint32_t baudrate_kbps = 100;
     const uint16_t queue_size = 16;
     can_std_id_t canid1, canid2;
-    canid1 = CAN_gen_sid(can1, 0x101);
-    canid2 = CAN_gen_sid(can1, 0x102);
-
-    // Initialize the magnetometer sensors
-    MS.init();
+    canid1 = CAN_gen_sid(can1, 0x314);
+    canid2 = CAN_gen_sid(can1, 0x315);
 
     // Initialize the CAN HW
     CAN_init(can1, baudrate_kbps, queue_size, queue_size, (can_void_func_t) bus_off_cb, 0);
@@ -50,12 +47,9 @@ void * bus_off_cb(void)
 bool car_can_rx(can_fullcan_msg_t *fc1, uint32_t msg_id)
 {
     can_fullcan_msg_t fc_temp;
-
     fc1 = CAN_fullcan_get_entry_ptr(CAN_gen_sid(can1, msg_id));
 
-    CAN_fullcan_read_msg_copy(fc1, &fc_temp);
-
-    return (msg_id == fc1->msg_id);
+    return (CAN_fullcan_read_msg_copy(fc1, &fc_temp) && fc1->msg_id == msg_id);
 }
 
 bool car_can_tx(can_msg_t *msg, uint32_t msg_id)
@@ -81,6 +75,7 @@ void car_can_send_heading(void)
     msg->data.bytes[1] = x coordinate
     msg->data.bytes[2] = y coordinate
 #endif
+
     msg->data.bytes[0] = MS.getHeading();
 
     if (!car_can_tx(msg, msg_id)) {
