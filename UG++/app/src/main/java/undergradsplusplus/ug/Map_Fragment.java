@@ -9,15 +9,28 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.SupportMapFragment;
+
 /**
  * Created by PhiTran on 10/24/15.
  */
 public class Map_Fragment extends Fragment{
     TextView text;
+
+    private GoogleMap map;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.map_layout, container, false);
+        //return inflater.inflate(R.layout.map_layout, container, false);
+
+        View v = inflater.inflate(R.layout.map_layout, container, false);
+
+        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.gmaps)).getMap();
+
+        return v;
     }
 
     @Override
