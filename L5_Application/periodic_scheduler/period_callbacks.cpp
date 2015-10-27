@@ -28,6 +28,7 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+
 #include <stdio.h>
 #include <stdint.h>
 #include "io.hpp"
@@ -39,6 +40,9 @@
 
 #include "master_control.hpp"
 #include "can.h"
+
+#include <L4_IO/can_definitions.hpp>
+#include "L4_IO/can_storage.hpp"
 
 
 
@@ -58,11 +62,19 @@ can_msg_t msg_rx = { 0 };
 can_msg_t msg_tx = { 0 };
 
 
+
+
 void period_1Hz(void)
 {
      LE.toggle(1);
-
+     printf ("CAN_STORAGE MOTOR VALUE %d\n", CAN_ST.getMotorSpeed());
     //sen_value = scheduler_task::getSharedObject(shared_sensor_data);
+
+     uint8_t *sampleArray;
+     sampleArray = CAN_ST.getSensorValues();
+     for (int i = 0; i < SIZE_OF_SENSOR_ARRAY; i++) {
+         printf("SENSOR [%d]: %d\n", i, sampleArray[i]);
+     }
 
 }
 

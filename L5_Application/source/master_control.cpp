@@ -19,6 +19,10 @@
 #include <inttypes.h>
 
 
+#include "L4_IO/can_definitions.hpp"
+#include "L4_IO/can_storage.hpp"
+
+
 control_handler_task::control_handler_task(uint8_t priority) :
    scheduler_task("control_handler_task", 8*512, priority),
    mCANMessage_QueueHandler(NULL),
@@ -30,12 +34,8 @@ control_handler_task::control_handler_task(uint8_t priority) :
     mCAN_MSG_Tx = { 0 };
 
 
-    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++){
-        mSensorValue[i] = 0;
-        //global_sensor_value[i] = mSensorValue[i];
-    }
 
-    addSharedObject(shared_sensor_data, &mSensorValue);
+//addSharedObject(shared_sensor_data, &mSensorValue);
 
     mStateCount = 0;
 }
@@ -69,6 +69,8 @@ bool control_handler_task::init() {
     //initialize LD display
     LD.init();
 
+    CAN_ST.init();
+
     printf("CONTROL HANDLER TASK INITIATED!\n");
     return true;
 }
@@ -78,6 +80,7 @@ bool control_handler_task::run(void *p) {
     //read message_id_queue
     //depending of the message, a function that handles the states will be called
    // printf("control handler running\n");
+    uint8_t tempSensorValues[SIZE_OF_SENSOR_ARRAY] = { 0 };
 
     if(xQueueReceive(mCANMessage_QueueHandler, &mCAN_MSG_Rx, 0)) {
            // printf("Handler Received ID: 0x%03" PRIx32 "\n", mCAN_MSG_Rx.msg_id);
@@ -89,24 +92,24 @@ bool control_handler_task::run(void *p) {
                     printf("ANDROID_COMMANDS_MASTER: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
                     if(mCAN_MSG_Rx.data.bytes[0] != (uint8_t) VALUE_NO_CHANGE) {
                         //set mManualControlValue
-                        mManualControlValue = mCAN_MSG_Rx.data.bytes[0];
-                            if(MANUAL_CONTROL_ENABLED == mManualControlValue)   {
+                        CAN_ST.setManualControlValue(mCAN_MSG_Rx.data.bytes[0]);
+                            if((uint8_t)MANUAL_CONTROL_ENABLED == CAN_ST.getManualControlValue())   {
                                 printf("Manual Control Enabled.\n");
                                 LOG_INFO("Manual Control Enabled");
                             }
-                            else if(MANUAL_CONTROL_DISABLED == mManualControlValue) {
+                            else if(MANUAL_CONTROL_DISABLED == CAN_ST.getManualControlValue()) {
                                printf("Manual Control Enabled.\n");
                                LOG_DEBUG("Manual Control Enabled");
                             }
                     }
                     else if (mCAN_MSG_Rx.data.bytes[1] != (uint8_t) VALUE_NO_CHANGE)   {
                         //set Go Signal
-                        mGoSignal = mCAN_MSG_Rx.data.bytes[1];
-                            if(VALUE_TRUE == mGoSignal) {
+                        CAN_ST.setGoSignalValue(mCAN_MSG_Rx.data.bytes[1]);
+                            if(VALUE_TRUE == CAN_ST.getGoSignalValue()) {
                                 printf("GO signal set to TRUE\n");
                                 LOG_DEBUG("GO signal set to TRUE\n");
                             }
-                            else if(VALUE_FALSE == mGoSignal)   {
+                            else if(VALUE_FALSE == CAN_ST.getGoSignalValue())   {
                                 printf("Go signal set to FALSE\n");
                                 LOG_DEBUG("Go signal set to FALSE\n");
                             }
@@ -127,16 +130,18 @@ bool control_handler_task::run(void *p) {
                     break;
 
             case (uint32_t) SENSOR_MASTER_REG:
-                    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++){
-                            mSensorValue[i] = mCAN_MSG_Rx.data.bytes[i];
+
+                    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++)     {
+                        tempSensorValues[i] = mCAN_MSG_Rx.data.bytes[i];
                            // global_sensor_value[i] = mSensorValue[i];
 
                         }
-
+                    CAN_ST.setSensorValues(tempSensorValues, (int) SIZE_OF_SENSOR_ARRAY);
                     break;
 
             default:
               //  printf("No applicable message ID's received.\n");
+               // printf ("CAN_STORAGE MOTOR VALUE %d\n", CAN_ST.getMotorSpeed());
                 break;
 
         }

@@ -37,6 +37,8 @@
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
 
+#include "can_storage.hpp"
+
 
 /**
  * @{ Short-hand notation of getting to the on-board IO Devices
@@ -51,6 +53,7 @@
 #define SW      Switches::getInstance()            ///< 4 On-board Switches
 /** @} */
 
+#define CAN_ST  CAN_STORAGE::getInstance()  //can data storage
 
 
 #endif /* IO_SHORTCUTS_HPP_ */

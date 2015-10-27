@@ -26,7 +26,13 @@
 
 #include "src/FileSystemObject.hpp"
 
+//Sensor
+#define LEFT_SENSOR 0
+#define MIDDLE_SENSOR 1
+#define RIGHT_SENSOR 2
+#define BACK_SENSOR 3
 
+#define SIZE_OF_SENSOR_ARRAY 4
 
 /**
  * Storage class contains the File System Objects
