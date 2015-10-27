@@ -13,15 +13,34 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 /**
  * Created by PhiTran on 10/24/15.
  */
 public class Map_Fragment extends Fragment{
-    TextView text;
+    double Latitude;
+    double Longitude;
 
-    MapView mapView;
     private GoogleMap map;
+    GoogleMap.OnMapClickListener listener = new GoogleMap.OnMapClickListener() {
+        @Override
+        public void onMapClick(LatLng latLng) {
+            Latitude = latLng.latitude;
+            Longitude = latLng.longitude;
+
+            Log.d("hello", "Latitude:" + Latitude);
+            Log.d("hello", "Longitude:" + Longitude);
+
+
+            TextView text;
+
+            text = (TextView) getActivity().findViewById(R.id.longitude1);
+            text.setText("Longitude\n" + Longitude);
+
+        }
+    };
+    LatLng point;
 
     @Nullable
     @Override
@@ -35,6 +54,8 @@ public class Map_Fragment extends Fragment{
 
         map = ((MapFragment) getChildFragmentManager().findFragmentById(R.id.gmaps)).getMap();
 
+        map.setOnMapClickListener(listener);
+
 
         return v;
     }
@@ -43,7 +64,7 @@ public class Map_Fragment extends Fragment{
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        text = (TextView) getActivity().findViewById(R.id.textView);
+
 
         Log.d("phil", "in map");
     }

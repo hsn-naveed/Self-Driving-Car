@@ -9,7 +9,7 @@
         android:layout_height="match_parent"
         android:id="@+id/gmaps"
         class="com.google.android.gms.maps.MapFragment"
-        android:layout_above="@+id/button" />
+        android:layout_above="@+id/longitude1" />
 
 
     <Button
@@ -34,8 +34,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="MAP"
-        android:id="@+id/textView"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+        android:id="@+id/longitude1"
+        android:layout_alignParentLeft="true"
+        android:layout_above="@id/button" />
 </RelativeLayout>

@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:text="UG++"
-            android:textSize="150dip"
+            android:textSize="120dip"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:id="@+id/textView3"
