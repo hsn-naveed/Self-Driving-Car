@@ -25,7 +25,6 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
-#include "Magnetometer/Magnetometer.hpp"
 #include "car_can.hpp"
 #include <stdio.h>
 
@@ -47,9 +46,11 @@
  */
 int main(void)
 {
-    car_init_can_bus();
+    car_can_init_can_bus();
 
+#if 0
     scheduler_add_task(new Magnetometer(PRIORITY_MEDIUM));
+#endif
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.

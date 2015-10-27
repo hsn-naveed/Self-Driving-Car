@@ -1,17 +1,20 @@
 #include <stdio.h>
 #include "car_can.hpp"
 #include "can.h"
+#include "Magnetometer/Magnetometer.hpp"
 
 
-
-void car_init_can_bus(void)
+void car_can_init_can_bus(void)
 {
+    Magnetometer_Sensor msensor = Magnetometer_Sensor::getInstance();
     const uint32_t baudrate_kbps = 100;
     const uint16_t queue_size = 16;
-
     can_std_id_t canid1, canid2;
     canid1 = CAN_gen_sid(can1, 0x101);
     canid2 = CAN_gen_sid(can1, 0x102);
+
+    // Initialize the magnetometer sensors
+    msensor.init();
 
     // Initialize the CAN HW
     CAN_init(can1, baudrate_kbps, queue_size, queue_size, (can_void_func_t) bus_off_cb, 0);
@@ -65,4 +68,24 @@ bool car_can_tx(can_msg_t *msg, uint32_t msg_id)
     msg->frame_fields.data_len = 8;
 
     return CAN_tx(can1, msg, 0);
+}
+
+void car_can_send_coordinates_and_heading(void)
+{
+    Magnetometer_Sensor msensor = Magnetometer_Sensor::getInstance();
+    can_msg_t *msg;
+
+    uint32_t msg_id = 0x362;
+    msg->msg_id = msg_id;
+
+#if 0
+    // TODO: Send x and y coordinates
+    msg->data.bytes[1] = x coordinate
+    msg->data.bytes[2] = y coordinate
+#endif
+    msg->data.bytes[3] = msensor.getHeading();
+
+    if (!car_can_tx(msg, msg_id)) {
+        printf("Failed to send Coordinates and heading\n");
+    }
 }

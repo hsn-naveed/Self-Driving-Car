@@ -33,6 +33,7 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
+#include "car_can.hpp"
 #define hw4LightSensor 0
 
 
@@ -58,6 +59,8 @@ bool period_reg_tlm(void)
 void period_1Hz(void)
 {
     LE.toggle(1);
+
+    car_can_send_coordinates_and_heading();
 }
 
 void period_10Hz(void)
