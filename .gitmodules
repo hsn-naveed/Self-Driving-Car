@@ -1,0 +1,3 @@
+[submodule "243_can"]
+	path = 243_can
+	url = https://github.com/jhongpananon/243_can.git
