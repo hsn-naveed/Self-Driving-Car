@@ -44,7 +44,7 @@ void period_1Hz(void)
 {
     LE.toggle(1);
 
-    gps_car_send_heading();
+    gps_car_send_heading(); /// XXX: This should probably be 10 or 100Hz
     gps_car_send_heartbeat();
 }
 
