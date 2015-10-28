@@ -39,8 +39,10 @@ enum {
     /*
      * Handles for CANBus queues
      */
-    shared_CAN_Queue_Rx,
-    shared_CAN_Queue_Tx,
+    shared_CAN_Motor_Queue_Rx,
+    shared_CAN_Motor_Queue_Tx,
+    shared_CAN_LCD_Queue_Rx,
+    shared_CAN_LCD_Queue_Tx,
 };
 
 

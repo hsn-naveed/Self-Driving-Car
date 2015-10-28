@@ -6,6 +6,7 @@
 #include "tasks.hpp"
 #include "can.h"
 #include "shared_handles.h"
+#include "CAN_structs.h"
 
 class CANBus :public scheduler_task{
     private:
