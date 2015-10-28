@@ -68,7 +68,6 @@ bool period_reg_tlm(void)
     return true; // Must return true upon success
 }
 
-
 void period_1Hz(void)
 {
     LE.toggle(1);
