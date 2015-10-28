@@ -2,17 +2,9 @@
 #include <stdio.h>
 #include "can.h"
 #include "io.hpp"
+#include "CAN_structs.h"
 
 
-
-typedef struct {
-    uint64_t heading : 8;
-} gps_heading_msg_t;
-
-typedef struct {
-    uint64_t x_coordinate : 8;
-    uint64_t y_coordinate : 8;
-} gps_coordinate_msg_t;
 
 static const uint32_t HEADING_MSG_RECV_ID = 0x362;
 static const uint32_t HEARTBEAT_MSG_SEND_ID = 0x462;
