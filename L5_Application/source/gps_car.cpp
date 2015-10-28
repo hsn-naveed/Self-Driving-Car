@@ -1,10 +1,20 @@
+#include <gps_car.hpp>
 #include <stdio.h>
-#include "car_can.hpp"
 #include "can.h"
 #include "io.hpp"
 
 
-void car_can_init_can_bus(void)
+
+typedef struct {
+    uint64_t heading : 8;
+} gps_heading_msg_t;
+
+typedef struct {
+    uint64_t x_coordinate : 8;
+    uint64_t y_coordinate : 8;
+} gps_coordinate_msg_t;
+
+void gps_car_init_can_bus(void)
 {
     const uint32_t baudrate_kbps = 100;
     const uint16_t queue_size = 16;
@@ -44,7 +54,7 @@ void * bus_off_cb(void)
     CAN_reset_bus(can1);
 }
 
-bool car_can_rx(can_fullcan_msg_t *fc1, uint32_t msg_id)
+bool gps_car_rx(can_fullcan_msg_t *fc1, uint32_t msg_id)
 {
     can_fullcan_msg_t fc_temp;
     fc1 = CAN_fullcan_get_entry_ptr(CAN_gen_sid(can1, msg_id));
@@ -52,7 +62,7 @@ bool car_can_rx(can_fullcan_msg_t *fc1, uint32_t msg_id)
     return (CAN_fullcan_read_msg_copy(fc1, &fc_temp) && fc1->msg_id == msg_id);
 }
 
-bool car_can_tx(can_msg_t *msg, uint32_t msg_id)
+bool gps_car_tx(can_msg_t *msg, uint32_t msg_id)
 {
     msg->msg_id = msg_id;
     msg->frame = 0;
@@ -63,11 +73,12 @@ bool car_can_tx(can_msg_t *msg, uint32_t msg_id)
     return CAN_tx(can1, msg, 0);
 }
 
-void car_can_send_heading(void)
+void gps_car_send_heading(void)
 {
     can_msg_t *msg;
-
     uint32_t msg_id = 0x362;
+
+    gps_heading_msg_t *p = (gps_heading_msg_t*) msg->data.bytes[0];
     msg->msg_id = msg_id;
 
 #if 0
@@ -76,9 +87,30 @@ void car_can_send_heading(void)
     msg->data.bytes[2] = y coordinate
 #endif
 
-    msg->data.bytes[0] = MS.getHeading();
+    p->heading = MS.getHeading();
 
-    if (!car_can_tx(msg, msg_id)) {
-        printf("Failed to send Coordinates and heading\n");
+    if (!gps_car_tx(msg, msg_id)) {
+        printf("Failed to send heading\n");
+    }
+}
+
+void gps_car_send_heartbeat(void)
+{
+    can_msg_t *msg;
+    uint8_t heartbeat_msg = 0x03;
+    uint32_t msg_id = 0x462;
+
+    msg->msg_id = msg_id;
+
+#if 0
+    // TODO: Send x and y coordinates in separate function
+    msg->data.bytes[1] = x coordinate
+    msg->data.bytes[2] = y coordinate
+#endif
+
+    msg->data.bytes[0] = heartbeat_msg;
+
+    if (!gps_car_tx(msg, msg_id)) {
+        printf("Failed to send heartbeat message\n");
     }
 }

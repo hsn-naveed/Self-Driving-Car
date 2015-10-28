@@ -23,9 +23,9 @@
  * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
  *
  */
+#include <gps_car.hpp>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
-#include "car_can.hpp"
 #include <stdio.h>
 
 
@@ -46,7 +46,7 @@
  */
 int main(void)
 {
-    car_can_init_can_bus();
+    gps_car_init_can_bus();
 
 #if 0
     scheduler_add_task(new Magnetometer(PRIORITY_MEDIUM));

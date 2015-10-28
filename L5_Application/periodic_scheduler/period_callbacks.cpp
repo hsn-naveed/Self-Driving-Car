@@ -28,12 +28,12 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+#include <gps_car.hpp>
 #include <stdio.h>
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
-#include "car_can.hpp"
 
 
 
@@ -44,7 +44,8 @@ void period_1Hz(void)
 {
     LE.toggle(1);
 
-    car_can_send_heading();
+    gps_car_send_heading();
+    gps_car_send_heartbeat();
 }
 
 void period_10Hz(void)
