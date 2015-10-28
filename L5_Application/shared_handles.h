@@ -34,6 +34,13 @@
 enum {
     shared_SensorQueue,    ///< Shared handle used by examples (producer and consumer tasks)
     shared_learnSemaphore, ///< Terminal command gives this semaphore to remoteTask (IR sensor task)
+
+
+    /*
+     * Handles for CANBus queues
+     */
+    shared_CAN_Queue_Rx,
+    shared_CAN_Queue_Tx,
 };
 
 
