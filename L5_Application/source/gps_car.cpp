@@ -3,10 +3,10 @@
 #include "can.h"
 #include "io.hpp"
 #include "CAN_structs.h"
+#include "iCAN.hpp"
 
 
 
-static const uint32_t HEADING_MSG_RECV_ID = 0x362;
 static const uint32_t HEARTBEAT_MSG_SEND_ID = 0x462;
 static const uint32_t HEARTBEAT_MSG = 0x03;
 
@@ -52,36 +52,15 @@ void gps_car_init_can_bus(void)
 // XXX: This is inside an ISR, so shouldn't use printf(), it will likely kill periodic scheduler and reboot
 void * bus_off_cb(void)
 {
-    printf("Bus detection =  off ~ resetting CAN bus!\n");
     CAN_reset_bus(can1);
-}
-
-bool gps_car_rx(can_fullcan_msg_t *fc1, uint32_t msg_id)
-{
-    can_fullcan_msg_t fc_temp;
-    fc1 = CAN_fullcan_get_entry_ptr(CAN_gen_sid(can1, msg_id));
-
-    return (CAN_fullcan_read_msg_copy(fc1, &fc_temp) && fc1->msg_id == msg_id);
-}
-
-// XXX: Consider using this "common" code on all controllers
-bool gps_car_tx(can_msg_t *msg, uint32_t msg_id)
-{
-    msg->msg_id = msg_id;
-    msg->frame = 0;
-    msg->msg_id = msg_id;
-    msg->frame_fields.is_29bit = 0;
-    msg->frame_fields.data_len = 8;
-
-    return CAN_tx(can1, msg, 0);
 }
 
 void gps_car_send_heading(void)
 {
-    can_msg_t *msg;
+    can_msg_t msg;
 
-    gps_heading_msg_t *p = (gps_heading_msg_t*) msg->data.bytes[0];
-    msg->msg_id = HEADING_MSG_RECV_ID;
+    gps_heading_msg_t *p = (gps_heading_msg_t*) &msg.data.bytes[0];
+    msg.msg_id = HEADING_MSG_RECV_ID;
 
 #if 0
     // TODO: Send x and y coordinates in separate function
@@ -91,16 +70,16 @@ void gps_car_send_heading(void)
 
     p->heading = MS.getHeading(); // XXX: this will get casted down to 8-bit uint from float
 
-    if (!gps_car_tx(msg, HEADING_MSG_RECV_ID)) {
+    if (!iCAN_tx(&msg, HEADING_MSG_RECV_ID)) {
         printf("Failed to send heading\n");
     }
 }
 
 void gps_car_send_heartbeat(void)
 {
-    can_msg_t *msg;
+    can_msg_t msg;
 
-    msg->msg_id = HEARTBEAT_MSG_SEND_ID;
+    msg.msg_id = HEARTBEAT_MSG_SEND_ID;
 
 #if 0
     // TODO: Send x and y coordinates in separate function
@@ -109,9 +88,9 @@ void gps_car_send_heartbeat(void)
 #endif
 
     /// XXX : Put heartbeat in a common typedef struct to be shared by others
-    msg->data.bytes[0] = HEARTBEAT_MSG;
+    msg.data.bytes[0] = HEARTBEAT_MSG;
 
-    if (!gps_car_tx(msg, HEARTBEAT_MSG_SEND_ID)) {
+    if (!iCAN_tx(&msg, HEARTBEAT_MSG_SEND_ID)) {
         printf("Failed to send heartbeat message\n");
     }
 }
