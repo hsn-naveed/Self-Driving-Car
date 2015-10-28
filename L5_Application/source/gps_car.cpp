@@ -14,6 +14,10 @@ typedef struct {
     uint64_t y_coordinate : 8;
 } gps_coordinate_msg_t;
 
+static const uint32_t HEADING_MSG_RECV_ID = 0x362;
+static const uint32_t HEARTBEAT_MSG_SEND_ID = 0x462;
+static const uint32_t HEARTBEAT_MSG = 0x03;
+
 void gps_car_init_can_bus(void)
 {
     const uint32_t baudrate_kbps = 100;
@@ -76,10 +80,9 @@ bool gps_car_tx(can_msg_t *msg, uint32_t msg_id)
 void gps_car_send_heading(void)
 {
     can_msg_t *msg;
-    uint32_t msg_id = 0x362;
 
     gps_heading_msg_t *p = (gps_heading_msg_t*) msg->data.bytes[0];
-    msg->msg_id = msg_id;
+    msg->msg_id = HEADING_MSG_RECV_ID;
 
 #if 0
     // TODO: Send x and y coordinates in separate function
@@ -89,7 +92,7 @@ void gps_car_send_heading(void)
 
     p->heading = MS.getHeading();
 
-    if (!gps_car_tx(msg, msg_id)) {
+    if (!gps_car_tx(msg, HEADING_MSG_RECV_ID)) {
         printf("Failed to send heading\n");
     }
 }
@@ -97,10 +100,8 @@ void gps_car_send_heading(void)
 void gps_car_send_heartbeat(void)
 {
     can_msg_t *msg;
-    uint8_t heartbeat_msg = 0x03;
-    uint32_t msg_id = 0x462;
 
-    msg->msg_id = msg_id;
+    msg->msg_id = HEARTBEAT_MSG_SEND_ID;
 
 #if 0
     // TODO: Send x and y coordinates in separate function
@@ -108,9 +109,9 @@ void gps_car_send_heartbeat(void)
     msg->data.bytes[2] = y coordinate
 #endif
 
-    msg->data.bytes[0] = heartbeat_msg;
+    msg->data.bytes[0] = HEARTBEAT_MSG;
 
-    if (!gps_car_tx(msg, msg_id)) {
+    if (!gps_car_tx(msg, HEARTBEAT_MSG_SEND_ID)) {
         printf("Failed to send heartbeat message\n");
     }
 }
