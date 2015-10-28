@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#992200">
+    android:background="#FFFFFF">
 
     <fragment
         android:layout_width="match_parent"
@@ -16,7 +16,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Stop"
-        android:id="@+id/button"
+        android:id="@+id/stop_button"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
@@ -25,7 +25,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Go"
-        android:id="@+id/button2"
+        android:id="@+id/go_button"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
@@ -36,5 +36,21 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/longitude1"
         android:layout_alignParentLeft="true"
-        android:layout_above="@id/button" />
+        android:layout_above="@id/go_button" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/latitude1"
+        android:layout_alignParentRight="true"
+        android:layout_above="@id/go_button" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RESET"
+        android:id="@+id/reset_button"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

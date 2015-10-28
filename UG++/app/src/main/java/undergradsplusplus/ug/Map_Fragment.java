@@ -14,13 +14,17 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.text.DecimalFormat;
 
 /**
  * Created by PhiTran on 10/24/15.
  */
 public class Map_Fragment extends Fragment{
-    double Latitude;
-    double Longitude;
+    public double Latitude;
+    public double Longitude;
 
     private GoogleMap map;
     GoogleMap.OnMapClickListener listener = new GoogleMap.OnMapClickListener() {
@@ -32,15 +36,28 @@ public class Map_Fragment extends Fragment{
             Log.d("hello", "Latitude:" + Latitude);
             Log.d("hello", "Longitude:" + Longitude);
 
-
             TextView text;
 
-            text = (TextView) getActivity().findViewById(R.id.longitude1);
-            text.setText("Longitude\n" + Longitude);
+            DecimalFormat df = new DecimalFormat("#.######");
 
+            text = (TextView) getActivity().findViewById(R.id.longitude1);
+            text.setText("Longitude\n" + df.format(Longitude));
+
+            text = (TextView) getActivity().findViewById(R.id.latitude1);
+            text.setText("Latitude\n" + df.format(Latitude));
+
+            addMarker(latLng);
         }
     };
-    LatLng point;
+
+    public void addMarker(LatLng latLng)
+    {
+        map.addMarker(new MarkerOptions()
+            .position(latLng)
+            .title("I'M HERE"));
+    }
+
+
 
     @Nullable
     @Override
