@@ -60,7 +60,22 @@ bool CANBus::run(void *p){
     can_fullcan_msg_t *lcdFullCanMessagePointer = CAN_fullcan_get_entry_ptr(CAN_gen_sid(canBusObj, LCD_CAN_ID));
 
     if (CAN_fullcan_read_msg_copy(motorfullCanMessagePointer, &motorFullCanMessage)){
+        // Pass message along to queue to get accessed inside the period_callback
+        xQueueSend(scheduler_task::getSharedObject(shared_CAN_Motor_Queue_Rx), &motorFullCanMessage, 0);
 
+        return true;
     }
+    else if (CAN_fullcan_read_msg_copy(lcdFullCanMessagePointer, &lcdFullCanMessage)){
+        // Pass message along to queue to get accessed inside the period_callback
+        xQueueSend(scheduler_task::getSharedObject(shared_CAN_LCD_Queue_Rx), &lcdFullCanMessage, 0);
+
+        return true;
+    }
+    else{
+        puts("\nNo Message received!\n");
+        return false;
+    }
+
+    vTaskDelay(1);
 }
 
