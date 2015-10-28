@@ -3,7 +3,8 @@
 
 
 
-// MSG ID: 0x362
+
+const uint32_t HEADING_MSG_RECV_ID = 0x362;
 typedef struct {
     uint64_t heading : 8;
 } gps_heading_msg_t;
