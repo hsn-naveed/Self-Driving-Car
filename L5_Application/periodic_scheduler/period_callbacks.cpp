@@ -70,6 +70,7 @@ void period_1Hz(void)
      printf ("CAN_STORAGE MOTOR VALUE %d\n", CAN_ST.getMotorSpeed());
     //sen_value = scheduler_task::getSharedObject(shared_sensor_data);
 
+     //get our sensor values
      uint8_t *sampleArray;
      sampleArray = CAN_ST.getSensorValues();
      for (int i = 0; i < SIZE_OF_SENSOR_ARRAY; i++) {
