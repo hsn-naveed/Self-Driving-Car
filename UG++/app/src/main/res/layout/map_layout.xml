@@ -51,6 +51,7 @@
         android:layout_height="wrap_content"
         android:text="RESET"
         android:id="@+id/reset_button"
+        android:clickable="true"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 </RelativeLayout>
