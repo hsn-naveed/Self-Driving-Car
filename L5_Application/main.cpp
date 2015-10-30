@@ -1,128 +1,85 @@
-//Sensor board
-#include <stdio.h>
-#include "utilities.h"
 #include "tasks.hpp"
 #include "examples/examples.hpp"
-#include "adc0.h"
-#include "io.hpp"
-#include <math.h>
-#include "uart2.hpp"
-#include "gpio.hpp"
-
-char p;
-float adc_in ;
-const float to_inches = 6.4; // divide ADC reading by 6.4 (when 3.3V Vcc used) to get the distance in inches
-double sonar_left, sonar_middle, sonar_right, sonar_rear;
-
-GPIO En(P2_0); //  'ACTIVE LOW' P2.0 as Enable signal for Analog MUX
-GPIO S0(P2_1); //  P2.1 as MUX select bit S0
-GPIO S1(P2_2); //  P2.2 as MUX select bit S1
+#include "eint.h"
+#include <stdio.h>
+#include"gpio.hpp"
+#include"utilities.h" //delay lib
+#include"io.hpp"
+#include"lpc_timers.h"
+#include "lpc_sys.h"
 
 
-void reset(void)
+bool flag = false; //global flag
+int Left_trig_time, distance;
+
+const uint8_t p2_0 = 0; // will be pulled Low when object detected
+
+GPIO Left_en(P0_0);
+
+SemaphoreHandle_t range= xSemaphoreCreateMutex();
+
+
+void calc_dist(void)
 {
-    En.setHigh(); //Disable MUX
-    delay_ms(2);
-    En.setLow();  //Enable MUX
+   distance = ((sys_get_uptime_us() - Left_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
+//Main problem was using this type of timer and puting intrrrupt line in while loop!USE sys_get_uptime_us
+//distance = (lpc_timer_get_value(lpc_timer0)/147)-2; //each 147uS is 1 inch (Datasheet)
+
+    printf("\ninterrupt occured");
+    printf("\n distance in inches is : %i", distance);
+
+     xSemaphoreGive(range);
+}
+
+void rng_lt(void)
+{
+    Left_en.setHigh(); // enable Ranging   (enable left sonar)
+    delay_us(21);  //hold high  >20uS to enable ranging
+    Left_trig_time = sys_get_uptime_us();  //get timer at the moment ranging starts
+
+    Left_en.setLow();   // disable ranging of left sonar
 }
 
 int main(void)
 {
+//    SemaphoreHandle_t range= xSemaphoreCreateMutex();
 
-LPC_PINCON->PINSEL3 |= (3<<28); //Select ADC 3
+    eint3_enable_port2(p2_0, eint_falling_edge, calc_dist); //wait for the interrupt
 
-/// Analog_Sonar/////////////////////
-
-while(1)
-{
-//Select input 0 (LEFT Sensor) 00
-reset();
-
-S0.setLow(); //S0=0
-S1.setLow(); //S0=0
-
-    adc_in = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
-    sonar_left = floor(adc_in/to_inches); //converts the sensor value to inches, pretty exact!
-
-    printf("\n Left Sonar value is : %.11f",sonar_left);
-    delay_ms(100);
-
-reset();
-
-//Select input 1(MIDDLE Sonar) 01
-S0.setHigh(); //S0=1
-S1.setLow();  //S1=0
-
-    adc_in = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
-    sonar_middle = floor(adc_in/to_inches); //converts the sensor value to inches, pretty exact!
-
-    printf("\n Middle Sonar value is : %.11f",sonar_middle);
-    delay_ms(100);
-
-reset();
-
-//Select input 2(RIGHT Sonar) 10
-S0.setLow();  //S0=0
-S1.setHigh(); //S1=1
-
-    adc_in = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
-    sonar_right = floor(adc_in/to_inches); //converts the sensor value to inches, pretty exact!
-
-    printf("\n Right Sonar value is : %.11f",sonar_right);
-    delay_ms(100);
-
-reset();
-
-//Select input 3(REAR Sonar) 11
-S0.setHigh();  //S0=1
-S1.setHigh();  //S1=1
-
-    adc_in = adc0_get_reading(4); // Read P1.30 for Analog input from sonar sensor
-    sonar_rear = floor(adc_in/to_inches); //converts the sensor value to inches, pretty exact!
-
-    printf("\n Rear Sonar value is : %.11f",sonar_rear);
-    delay_ms(100);
+    Left_en.setAsOutput(); // set p0.0 as an output pin to enable or disable Left Sonar
+    delay_ms(251); // 250ms after power up RX is ready to receive commands!
+    //Left_en.setLow(); // disable Left Sonar Reading
 
 
-/*
-/// Analog_IR
-//////////////////////
-    LPC_PINCON->PINSEL3 |= (3<<28); //ADC 3
+    while(1)
+    {
+        // trigger only once until falling edge arrives
+        rng_lt();
 
-      while(1)
-      {
-           for(int i =0; i<10; i++)
-           {
-               adc_in = adc0_get_reading(4);
-               sonar_middle_inches = floor(adc_in/to_inches); //converts the sensor value to inches, pretty exact!
-               sonar_middle_inches = + sonar_middle_inches;
-               //adc_in = +adc_in;
+        xSemaphoreTake(range, portMAX_DELAY);
+        // Wait for the RX pulse
+        delay_ms(500);
+    }
 
-               delay_ms(60);
-           }
-           sonar_middle_inches =  sonar_middle_inches/10;
+    // p01.setAsOutput(); //sets p0.1 as output
 
-           printf("\n adc value is : %.11f", sonar_middle_inches);
-           delay_ms(1200);
-       }
-   //////////////////////
-*/
-delay_ms(1000);
-}
-
+    /**
+     * A few basic tasks for this bare-bone system :
+     *      1.  Terminal task provides gateway to interact with the board through UART terminal.
+     *      2.  Remote task allows you to use remote control to interact with the board.
+     *      3.  Wireless task responsible to receive, retry, and handle mesh network.
+     *
+     * Disable remote task if you are not using it.  Also, it needs SYS_CFG_ENABLE_TLM
+     * such that it can save remote control codes to non-volatile memory.  IR remote
+     * control codes can be learned by typing the "learn" terminal command.
+     */
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
-    /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-#if 1
-    scheduler_add_task(new periodicSchedulerTask());
-#endif
-
     /* The task for the IR receiver */
     // scheduler_add_task(new remoteTask  (PRIORITY_LOW));
-
     /* Your tasks should probably used PRIORITY_MEDIUM or PRIORITY_LOW because you want the terminal
      * task to always be responsive so you can poke around in case something goes wrong.
      */
