@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">UG++</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="edit_message">Enter a Message</string>
+    <string name="button_send">Send</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_display_message">Entered Text</string>
+    <string name="action_search">Search</string>
+
+    <string name="map">MAP</string>
+    <string name="setup">SETUP</string>
+    <string name="status">STATUS</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="API_KEY">AIzaSyAB6Gz8JLmxprs75hgfL9DAmwGr2Xu1GiM</string>
+</resources>
