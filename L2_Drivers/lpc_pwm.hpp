@@ -54,9 +54,14 @@ class PWM
          */
         PWM(pwmType pwm, unsigned int frequencyHz=50);
 
+        PWM();                          ///< Disallow default constructor
+
         /// Destructor that will destroy PWM configuration
         ~PWM();
-
+        PWM operator=(const PWM &obj){
+                            this->mPwm = obj.mPwm;
+                            this->msTcMax = obj.msTcMax;
+                        }
         /**
          * Sets the PWM based on the percentage.
          * If 50Hz Servo PWM was setup, then you can use the following :
@@ -70,8 +75,8 @@ class PWM
         bool set(float percent);
 
     private:
-        PWM();                          ///< Disallow default constructor
-        const pwmType mPwm;             ///< The PWM channel number set by constructor
+
+        pwmType mPwm;             ///< The PWM channel number set by constructor
         static unsigned int msTcMax;    ///< PWM TC max (this controls the frequency)
 };
 

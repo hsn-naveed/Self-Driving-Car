@@ -15,12 +15,13 @@
 #include "io.hpp"
 #include "file_logger.h"
 #include <stdio.h>
+#include "utilities.h"
 
-#define MOTOR_INIT_NEEDED 0
+#define MOTOR_INIT_NEEDED 1
 
 
 struct{
-        float SLOW_SPEED = 76.7;
+        float SLOW_SPEED = 1;
         float MEDIUM_SPEED = 77.9;
         float FAST_SPEED = 79.3;
         float NO_CHANGE = 1;
@@ -37,7 +38,7 @@ struct{
 
 class MotorControl{
     private:
-        int frequency = 480;
+        int frequency = 12000;
         float currentMotorValue;
         float currentServoValue;
 
