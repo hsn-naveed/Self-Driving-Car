@@ -9,29 +9,43 @@
 #include "lpc_sys.h"
 
 
-bool flag = false; //global flag
-int Left_trig_time, distance;
+int Left_trig_time,Middle_trig_time,Right_trig_time,Rear_trig_time,left_dist,middle_dist,right_dist,rear_dist;
 
 const uint8_t p2_0 = 0; // will be pulled Low when object detected
+const uint8_t p2_1 = 1; // will be pulled Low when object detected
 
-GPIO Left_en(P0_0);
+GPIO Left_en(P0_0);   // left Sonar RX enable pin
+GPIO Middle_en(P0_1); // Middle Sonar RX enable pin
 
 SemaphoreHandle_t range= xSemaphoreCreateMutex();
+SemaphoreHandle_t range2= xSemaphoreCreateMutex();
 
 
-void calc_dist(void)
+
+void calc_dist_left(void)
 {
-   distance = ((sys_get_uptime_us() - Left_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
+   left_dist = ((sys_get_uptime_us() - Left_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
 //Main problem was using this type of timer and puting intrrrupt line in while loop!USE sys_get_uptime_us
-//distance = (lpc_timer_get_value(lpc_timer0)/147)-2; //each 147uS is 1 inch (Datasheet)
+//left_dist = (lpc_timer_get_value(lpc_timer0)/147)-2; //each 147uS is 1 inch (Datasheet)
 
-    printf("\ninterrupt occured");
-    printf("\n distance in inches is : %i", distance);
+    printf("\n Left ninterrupt occured");
+    printf("\n Left dist in inches is : %i", left_dist);
+
+     xSemaphoreGive(range2);
+}
+
+
+void calc_dist_middle(void)
+{
+    middle_dist = ((sys_get_uptime_us() - Middle_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
+
+    printf("\n Middle ninterrupt occured");
+    printf("\n Middle distance in inches is : %i", middle_dist);
 
      xSemaphoreGive(range);
 }
 
-void rng_lt(void)
+void Range_left(void)
 {
     Left_en.setHigh(); // enable Ranging   (enable left sonar)
     delay_us(21);  //hold high  >20uS to enable ranging
@@ -40,25 +54,37 @@ void rng_lt(void)
     Left_en.setLow();   // disable ranging of left sonar
 }
 
+void Range_middle(void)
+{
+    Middle_en.setHigh(); // enable Ranging   (enable left sonar)
+    delay_us(21);  //hold high  >20uS to enable ranging
+    Middle_trig_time = sys_get_uptime_us();  //get timer at the moment ranging starts
+
+    Middle_en.setLow();   // disable ranging of left sonar
+}
+
 int main(void)
 {
-//    SemaphoreHandle_t range= xSemaphoreCreateMutex();
+    eint3_enable_port2(p2_0, eint_falling_edge, calc_dist_left); //wait for the interrupt
+    eint3_enable_port2(p2_1, eint_falling_edge, calc_dist_middle); //wait for the interrupt
 
-    eint3_enable_port2(p2_0, eint_falling_edge, calc_dist); //wait for the interrupt
 
     Left_en.setAsOutput(); // set p0.0 as an output pin to enable or disable Left Sonar
+    Middle_en.setAsOutput();
+
     delay_ms(251); // 250ms after power up RX is ready to receive commands!
-    //Left_en.setLow(); // disable Left Sonar Reading
 
 
     while(1)
     {
         // trigger only once until falling edge arrives
-        rng_lt();
+        Range_left();
+
+        xSemaphoreTake(range2, portMAX_DELAY);
+        Range_middle();
 
         xSemaphoreTake(range, portMAX_DELAY);
-        // Wait for the RX pulse
-        delay_ms(500);
+        delay_ms(2000);
     }
 
     // p01.setAsOutput(); //sets p0.1 as output
