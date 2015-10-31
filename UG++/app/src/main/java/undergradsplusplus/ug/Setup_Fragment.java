@@ -1,26 +1,43 @@
 package undergradsplusplus.ug;
 
 import android.app.Fragment;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.TextView;
+
+import java.util.Set;
 
 
 /**
  * Created by PhiTran on 10/24/15.
  */
-public class Setup_Fragment extends Fragment {
+public class Setup_Fragment extends Fragment implements View.OnClickListener{
 
     TextView text;
+    BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    ArrayAdapter<String> mArrayAdapter;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.setup_layout, container, false);
+        View v = inflater.inflate(R.layout.setup_layout, container, false);
+
+        Button ENABLE = (Button) v.findViewById(R.id.enable_button);
+        ENABLE.setOnClickListener(this);
+
+        return v;
     }
 
     @Override
@@ -30,4 +47,65 @@ public class Setup_Fragment extends Fragment {
         text = (TextView) getActivity().findViewById(R.id.text_setup);
         Log.d("phil", "in setup");
     }
+
+
+
+    @Override
+    public void onClick(View v) {
+
+        switch(v.getId())
+        {
+            case R.id.enable_button:
+                if (mBluetoothAdapter == null) {
+                    Log.i("BT", "No Adapter");
+                }
+
+                if (!mBluetoothAdapter.isEnabled()) {
+                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(enableBtIntent, 1);
+                }
+                break;
+
+            case R.id.discover_button:
+                broadcastReceiver();
+                IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+                getActivity().registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
+                break;
+        }
+
+
+    }
+
+    public void broadcastReceiver()
+    {
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        // If there are paired devices
+        if (pairedDevices.size() > 0) {
+            // Loop through paired devices
+            for (BluetoothDevice device : pairedDevices) {
+                // Add the name and address to an array adapter to show in a ListView
+                mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+        }
+
+    }
+
+    // Create a BroadcastReceiver for ACTION_FOUND
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            // When discovery finds a device
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                // Add the name and address to an array adapter to show in a ListView
+                mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+
+                Log.d("BR", "IN BROADCAST");
+            }
+        }
+    };
+
+
+
 }
