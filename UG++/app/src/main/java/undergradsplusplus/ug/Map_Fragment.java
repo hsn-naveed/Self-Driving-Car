@@ -1,10 +1,7 @@
 package undergradsplusplus.ug;
 
 import android.app.Fragment;
-import android.content.Context;
-import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -13,21 +10,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 
+import org.w3c.dom.Document;
 
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by PhiTran on 10/24/15.
@@ -40,6 +35,8 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
     public static double cLat, cLong;
 
     private GoogleMap map;
+    GoogleDirection gd;
+
     GoogleMap.OnMapClickListener listener = new GoogleMap.OnMapClickListener() {
         @Override
         public void onMapClick(LatLng latLng) {
@@ -125,6 +122,22 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         RESET.setOnClickListener(this);
         Button GO = (Button) v.findViewById(R.id.go_button);
         GO.setOnClickListener(this);
+
+        LatLng start = new LatLng(37.335434, -121.881380);
+        LatLng end = new LatLng(37.336506, -121.879081);
+
+        gd = new GoogleDirection(getActivity());
+        gd.setOnDirectionResponseListener(new GoogleDirection.OnDirectionResponseListener() {
+            public void onResponse(String status, Document doc, GoogleDirection gd) {
+                Toast.makeText(getActivity(), status, Toast.LENGTH_SHORT).show();
+
+                gd.animateDirection(map, gd.getDirection(doc), GoogleDirection.SPEED_NORMAL
+                        , true, false, true, false, null, false, true, new PolylineOptions().width(3));
+            }
+        });
+
+        gd.request(start, end, GoogleDirection.MODE_WALKING);
+
 
         return v;
     }
