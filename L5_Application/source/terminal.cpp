@@ -23,6 +23,7 @@
 #include "semphr.h"
 
 #include "uart0.hpp"        // Interrupt driven UART0 driver
+#include "uart2.hpp"
 #include "nrf_stream.hpp"
 
 #include "lpc_sys.h"        // Set input/output char functions
@@ -38,7 +39,6 @@
 #include "c_tlm_stream.h"
 #include "c_tlm_binary.h"
 
-#include "uart2.hpp"
 
 #define MAX_COMMANDLINE_INPUT   128              ///< Max characters for command-line input
 #define CMD_TIMEOUT_DISK_VARS   (2 * 60 * 1000)  ///< Disk variables are saved if no command comes in for this duration
@@ -138,14 +138,6 @@ bool terminalTask::taskEntry()
     /* Add UART0 to command input/output */
     addCommandChannel(&uart0, true);
 
-    /* Add UART2 to enable bluetooth */
-    Uart2& bluetooth = Uart2::getInstance();
-    bool success1 = bluetooth.init(9600, 32, SYS_CFG_UART0_TXQ_SIZE);
-    bluetooth.setReady(true);
-
-    /* Add UART2 to command input/output */
-    addCommandChannel(&bluetooth, false);
-
     #if TERMINAL_USE_NRF_WIRELESS
     do {
         NordicStream& nrf = NordicStream::getInstance();
@@ -173,6 +165,21 @@ bool terminalTask::taskEntry()
     STR_ON_STACK(help, 8);
     help = "help";
     mCmdProc.handleCommand(help, uart0);
+
+/* bluetooth initialization */
+    Uart2& u2 = Uart2::getInstance();
+    u2.init(38400);
+
+    printf("Initializing UART to bluetooth");
+    u2.putline("\r\n+STWMOD=0\r\n");
+    u2.putline("\r\n+STNA=Undergrad++\r\n");
+    u2.putline("\r\n+STOAUT=1\r\n");
+    u2.putline("\r\n+STAUTO=0\r\n");
+    u2.putline("\r\n +STPIN=0000\r\n");
+    delay_ms(2000); // This delay is required.
+    u2.putline("\r\n+INQ=1\r\n");
+    delay_ms(2000);
+    printf("\nDONE setup!\n");
 
     return success;
 }
