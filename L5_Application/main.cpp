@@ -1,3 +1,4 @@
+//2 sonar one not working rihgt
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "eint.h"
@@ -17,8 +18,9 @@ const uint8_t p2_1 = 1; // will be pulled Low when object detected
 GPIO Left_en(P0_0);   // left Sonar RX enable pin
 GPIO Middle_en(P0_1); // Middle Sonar RX enable pin
 
-SemaphoreHandle_t range= xSemaphoreCreateMutex();
-SemaphoreHandle_t range2= xSemaphoreCreateMutex();
+SemaphoreHandle_t left_sem= xSemaphoreCreateMutex(); //**can't use the same semaphor for more than 2 tasks!
+SemaphoreHandle_t middle_sem= xSemaphoreCreateMutex(); //another semaphore for the
+
 
 
 
@@ -28,10 +30,10 @@ void calc_dist_left(void)
 //Main problem was using this type of timer and puting intrrrupt line in while loop!USE sys_get_uptime_us
 //left_dist = (lpc_timer_get_value(lpc_timer0)/147)-2; //each 147uS is 1 inch (Datasheet)
 
-    printf("\n Left ninterrupt occured");
+    printf("\n \n Left ninterrupt occured");
     printf("\n Left dist in inches is : %i", left_dist);
 
-     xSemaphoreGive(range2);
+     xSemaphoreGive(middle_sem);
 }
 
 
@@ -39,14 +41,15 @@ void calc_dist_middle(void)
 {
     middle_dist = ((sys_get_uptime_us() - Middle_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
 
-    printf("\n Middle ninterrupt occured");
+    printf("\n \n Middle ninterrupt occured");
     printf("\n Middle distance in inches is : %i", middle_dist);
 
-     xSemaphoreGive(range);
+     xSemaphoreGive(left_sem);
 }
 
 void Range_left(void)
 {
+    delay_ms(50);
     Left_en.setHigh(); // enable Ranging   (enable left sonar)
     delay_us(21);  //hold high  >20uS to enable ranging
     Left_trig_time = sys_get_uptime_us();  //get timer at the moment ranging starts
@@ -56,6 +59,7 @@ void Range_left(void)
 
 void Range_middle(void)
 {
+    delay_ms(50);
     Middle_en.setHigh(); // enable Ranging   (enable left sonar)
     delay_us(21);  //hold high  >20uS to enable ranging
     Middle_trig_time = sys_get_uptime_us();  //get timer at the moment ranging starts
@@ -80,10 +84,10 @@ int main(void)
         // trigger only once until falling edge arrives
         Range_left();
 
-        xSemaphoreTake(range2, portMAX_DELAY);
+        xSemaphoreTake(middle_sem, portMAX_DELAY);
         Range_middle();
 
-        xSemaphoreTake(range, portMAX_DELAY);
+        xSemaphoreTake(left_sem, portMAX_DELAY);
         delay_ms(2000);
     }
 
