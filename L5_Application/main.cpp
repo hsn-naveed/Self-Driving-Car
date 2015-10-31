@@ -185,11 +185,11 @@ int main(void)
     //scheduler_add_task(new CAN_Handler_Rx(5));
 
     //master control task
-    scheduler_add_task(new control_handler_task(5));
+   // scheduler_add_task(new control_handler_task(5));
 
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-#if 1
+#if 0
     scheduler_add_task(new periodicSchedulerTask());
 #endif
 
