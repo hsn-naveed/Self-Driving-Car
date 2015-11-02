@@ -39,6 +39,7 @@ import javax.xml.parsers.ParserConfigurationException;
 /*
 *   This is a library from StackOverflow.com/Github.com.
 *   https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary
+*   http://stackoverflow.com/questions/14495030/get-driving-directions-using-google-maps-api-v2
 *   Credits to Akexorcist.
  */
 @SuppressLint("NewApi")
