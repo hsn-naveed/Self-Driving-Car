@@ -1,9 +1,9 @@
 #include "tasks.hpp"
 #include <stdio.h>
-#include "eint.h"
 #include "io.hpp"
 #include "can.h"
-#include "uart2.hpp"
+#include "communication.hpp"
+
 
 /*void initCAN (void)
 {
@@ -49,19 +49,76 @@ class droid_rx : public scheduler_task
             return true;
         }
 };*/
+/*
+
+
+class u2 : public scheduler_task
+{
+    public:
+        u2(uint8_t priority) :
+            scheduler_task("u2", 512, priority)
+        {
+             Nothing to init
+        }
+        bool init(void)
+        {
+            uart2.init(38400, 512, 512);
+            return true;
+        }
+
+        bool run(void *p)
+        {
+            c++;
+            printf("Sending\n");
+            uart2.putChar(c);
+            return true;
+        }
+
+    private:
+        Uart2& uart2 = Uart2::getInstance();
+        char c = 'A';
+};
+
+class u3 : public scheduler_task
+{
+    public:
+        u3(uint8_t priority) :
+            scheduler_task("u3", 512, priority)
+        {
+             Nothing to init
+        }
+        bool init(void)
+        {
+            uart3.init(38400, 512, 512);
+            return true;
+        }
+
+        bool run(void *p)
+        {
+            printf("Receving\n");
+            if (uart3.getChar(&c, portMAX_DELAY))
+                printf("            The data recieved: %c\n", c);
+            return true;
+        }
+
+    private:
+        Uart3& uart3 = Uart3::getInstance();
+        char c;
+};
+*/
 
 
 int main(void)
 {
+ //   scheduler_add_task(new bluetoothTask(PRIORITY_HIGH));
+
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
-//    scheduler_add_task(new droid_rx(PRIORITY_HIGH));
-
-#if 1
+#if 0
     scheduler_add_task(new periodicSchedulerTask());
 #endif
 
-    scheduler_start(); ///< This shouldn't return
+    scheduler_start();
 
     return -1;
 }
