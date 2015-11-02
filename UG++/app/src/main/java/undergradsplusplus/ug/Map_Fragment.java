@@ -37,6 +37,9 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
     private GoogleMap map;
     GoogleDirection gd;
 
+    /*
+    *   Allows map click.
+     */
     GoogleMap.OnMapClickListener listener = new GoogleMap.OnMapClickListener() {
         @Override
         public void onMapClick(LatLng latLng) {
@@ -46,6 +49,9 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         }
     };
 
+    /*
+    *   Acquire current location. Updates periodically.
+     */
     private GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
         @Override
         public void onMyLocationChange(Location location) {
@@ -57,6 +63,9 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         }
     };
 
+    /*
+    *   Adds marker on the map on tap.s
+     */
     public void addMarker(LatLng latLng)
     {
         map.addMarker(new MarkerOptions()
@@ -64,6 +73,9 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
                 .title("I'M HERE"));
     }
 
+    /*
+    *   Add point for the end destination.
+     */
     public void addPoints(LatLng latLng)
     {
         eLat = latLng.latitude;
@@ -82,6 +94,9 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
     }
 
+    /*
+    *   For reset button. Clears all points.
+     */
     public void clearPoints(LatLng latLng)
     {
         eLat = latLng.latitude;
@@ -124,6 +139,9 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         return v;
     }
 
+    /*
+    *   Gets directions based on start and end points. Uses GoogleDirection library.
+     */
     public void getAutoDirections (LatLng start, LatLng end)
     {
 
@@ -132,7 +150,7 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
             public void onResponse(String status, Document doc, GoogleDirection gd) {
                 Toast.makeText(getActivity(), status, Toast.LENGTH_SHORT).show();
 
-                dirPoints = gd.getDirection(doc);
+                dirPoints = gd.getDirection(doc);   //Extra copy of the array. This for transmitting checkpoints to master.
                 gd.animateDirection(map, gd.getDirection(doc), GoogleDirection.SPEED_NORMAL
                         , false, false, true, false, null, false, true, new PolylineOptions().width(3));
             }
@@ -171,9 +189,14 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
                 for (int i = 0; i < dirPoints.size(); i++)
                 {
+                    Log.d("HELLO", "" + dirPoints.size());
                     Log.d("DIR POINTS:", "LATITUDE: " + dirPoints.get(i).latitude
                             + ", LONGITUDE" + dirPoints.get(i).longitude);
                 }
+
+                break;
+
+            case R.id.stop_button:
 
                 break;
 
