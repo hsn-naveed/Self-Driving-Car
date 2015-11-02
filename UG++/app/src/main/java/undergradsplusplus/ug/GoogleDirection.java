@@ -36,6 +36,11 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+/*
+*   This is a library from StackOverflow.com/Github.com.
+*   https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary
+*   Credits to Akexorcist.
+ */
 @SuppressLint("NewApi")
 public class GoogleDirection {
     public final static String MODE_DRIVING = "driving";

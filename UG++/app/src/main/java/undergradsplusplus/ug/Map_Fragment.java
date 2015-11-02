@@ -28,11 +28,11 @@ import java.util.List;
  * Created by PhiTran on 10/24/15.
  */
 public class Map_Fragment extends Fragment implements View.OnClickListener{
-    public double Latitude;
-    public double Longitude;
-    List<LatLng> points = new ArrayList<LatLng>();
-
-    public static double cLat, cLong;
+    public static double eLat;
+    public static double eLong;
+    public static double cLat;
+    public static double cLong;
+    List<LatLng> dirPoints = new ArrayList<LatLng>();
 
     private GoogleMap map;
     GoogleDirection gd;
@@ -40,13 +40,9 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
     GoogleMap.OnMapClickListener listener = new GoogleMap.OnMapClickListener() {
         @Override
         public void onMapClick(LatLng latLng) {
-            Log.d("hello", "Latitude:" + Latitude);
-            Log.d("hello", "Longitude:" + Longitude);
-
             addPoints(latLng);
             addMarker(latLng);
 
-            points.add(latLng);
         }
     };
 
@@ -57,7 +53,7 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
             cLat = loc.latitude;
             cLong = loc.longitude;
-            Log.d("LOC", "" + loc.longitude + ", " + loc.latitude);
+            Log.d("LOC", "" + cLong + ", " + cLat);
         }
     };
 
@@ -70,8 +66,8 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
     public void addPoints(LatLng latLng)
     {
-        Latitude = latLng.latitude;
-        Longitude = latLng.longitude;
+        eLat = latLng.latitude;
+        eLong = latLng.longitude;
 
         TextView text;
 
@@ -79,17 +75,17 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
 
         text = (TextView) getActivity().findViewById(R.id.longitude1);
-        text.setText("Longitude\n" + df.format(Longitude));
+        text.setText("Longitude\n" + df.format(eLat));
 
         text = (TextView) getActivity().findViewById(R.id.latitude1);
-        text.setText("Latitude\n" + df.format(Latitude));
+        text.setText("Latitude\n" + df.format(eLong));
 
     }
 
     public void clearPoints(LatLng latLng)
     {
-        Latitude = latLng.latitude;
-        Longitude = latLng.longitude;
+        eLat = latLng.latitude;
+        eLong = latLng.longitude;
 
         TextView text;
 
@@ -97,12 +93,13 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
 
         text = (TextView) getActivity().findViewById(R.id.longitude1);
-        text.setText("Longitude\n" + df.format(Longitude));
+        text.setText("Longitude\n" + df.format(eLong));
 
         text = (TextView) getActivity().findViewById(R.id.latitude1);
-        text.setText("Latitude\n" + df.format(Latitude));
+        text.setText("Latitude\n" + df.format(eLat));
 
     }
+
 
 
     @Nullable
@@ -123,25 +120,26 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         Button GO = (Button) v.findViewById(R.id.go_button);
         GO.setOnClickListener(this);
 
-        LatLng start = new LatLng(37.335434, -121.881380);
-        LatLng end = new LatLng(37.336506, -121.879081);
+
+        return v;
+    }
+
+    public void getAutoDirections (LatLng start, LatLng end)
+    {
 
         gd = new GoogleDirection(getActivity());
         gd.setOnDirectionResponseListener(new GoogleDirection.OnDirectionResponseListener() {
             public void onResponse(String status, Document doc, GoogleDirection gd) {
                 Toast.makeText(getActivity(), status, Toast.LENGTH_SHORT).show();
 
+                dirPoints = gd.getDirection(doc);
                 gd.animateDirection(map, gd.getDirection(doc), GoogleDirection.SPEED_NORMAL
-                        , true, false, true, false, null, false, true, new PolylineOptions().width(3));
+                        , false, false, true, false, null, false, true, new PolylineOptions().width(3));
             }
         });
 
         gd.request(start, end, GoogleDirection.MODE_WALKING);
-
-
-        return v;
     }
-
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -157,14 +155,26 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         {
             case R.id.reset_button:
                 map.clear();
-                points.clear();
                 LatLng latty = new LatLng(0, 0);
                 clearPoints(latty);
+                dirPoints.clear();
                 Log.d("RESET", "RESET");
                 break;
 
             case R.id.go_button:
-                Log.d("CURR", "" + cLong + ", " + cLat);
+                LatLng start = new LatLng(cLat, cLong);
+                LatLng end = new LatLng(eLat, eLong);
+                Log.d("GO_BUTTON", "START: " + start.longitude + ", " + start.latitude);
+                Log.d("GO_BUTTON", "END: " + end.longitude + ", " + end.latitude);
+                getAutoDirections(start, end);
+
+
+                for (int i = 0; i < dirPoints.size(); i++)
+                {
+                    Log.d("DIR POINTS:", "LATITUDE: " + dirPoints.get(i).latitude
+                            + ", LONGITUDE" + dirPoints.get(i).longitude);
+                }
+
                 break;
 
             default:
