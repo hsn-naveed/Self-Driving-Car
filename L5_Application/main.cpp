@@ -30,6 +30,8 @@
 #include "io.hpp"
 #include "utilities.h"
 #include "stdio.h"
+#include "Motor_LCD/MotorControl.hpp"
+#include <utilities.h>
 
 #include "full_can.cpp"
 #include "CAN_structs.h"
@@ -53,6 +55,27 @@
 
 int main(void)
 {
+    int frequency = 480;
+    PWM carMotor = PWM(PWM::pwm1, frequency);
+
+      float motorDutyCycle = 76.7;
+      while(1){
+          carMotor.set(motorDutyCycle);
+              delay_ms(100);
+              printf("----MOVING FORWARD-------\n");
+              printf("Set to %.2f\n", motorDutyCycle);
+          }
+
+#if 0
+    int frequency = 480;
+    PWM pwmMotorObj = PWM(PWM::pwm1, frequency);
+    float dutyCycle = 76.7;
+    while(1){
+        pwmMotorObj.set(dutyCycle);
+        delay_ms(1000);
+        printf("Set to %.2f\n", dutyCycle);
+    }
+#endif
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
@@ -86,7 +109,7 @@ PWM motor(PWM::pwm1, 500);
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-#if 1
+#if 0
     scheduler_add_task(new periodicSchedulerTask());
 #endif
 

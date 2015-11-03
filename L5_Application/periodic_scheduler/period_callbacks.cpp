@@ -36,6 +36,7 @@
 #include "CAN_structs.h"
 #include "iCAN.hpp"
 #include "can.h"
+#include "Motor_LCD/MotorControl.hpp"s
 
 can_fullcan_msg_t *message_struct;
 
@@ -44,13 +45,43 @@ can_fullcan_msg_t *message_struct;
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 
+MotorControl motorObj;
+bool motorInit = false;
+
+PWM pwmMotorObj = PWM(PWM::pwm1, 480);
+float counter = 71.3;
+bool motorHasBeenSet = false;
+
 void period_1Hz(void)
 {
+//    if (counter < 100){
+//            //if (!motorHasBeenSet){
+//                pwmMotorObj.set(counter);
+//                motorHasBeenSet = true;
+//            //}
+//
+//            //        counter += 1;
+//            printf("Sent forward speed to motor: %.2f\n", counter);
+//        }
+//        else{
+//            puts("No servo values worked");
+//        }
+//
+//    #if 0
+//        if (!motorInit){
+//            motorObj.initCarMotor();
+//            motorInit = true;
+//            puts("motor has been initialized");
+//        }
+//        motorObj.forward(speedSetting_t.SLOW_SPEED);
+//    #endif
     LE.toggle(1);
 }
 
 void period_10Hz(void)
 {
+
+
     LE.toggle(2);
 if(iCAN_rx(  , 0x704)){
 
@@ -59,6 +90,7 @@ if(iCAN_rx(  , 0x704)){
 
 void period_100Hz(void)
 {
+    pwmMotorObj.set(counter);
     LE.toggle(3);
 }
 

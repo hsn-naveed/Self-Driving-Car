@@ -16,7 +16,7 @@
 #include "file_logger.h"
 #include <stdio.h>
 #include "can.h"
-
+#include "utilities.h"
 #define INIT_HZ 500
 #define MOTOR_INIT_NEEDED 0
 

@@ -59,6 +59,10 @@ PWM::PWM(pwmType pwm, unsigned int frequencyHz) :
     LPC_PWM1->PCR |= (1 << (mPwm + 9));
 }
 
+PWM::PWM(){
+
+}
+
 PWM::~PWM()
 {
     LPC_PWM1->PCR &= ~(1 << (mPwm + 9));

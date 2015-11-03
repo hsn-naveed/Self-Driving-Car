@@ -41,13 +41,21 @@ MotorControl::MotorControl():
 
 #if MOTOR_INIT_NEEDED
 void MotorControl::initCarMotor(){
+    if (motorHasBeenInitialized == false){
+            float startingSpeed = speedSetting_t.SLOW_SPEED - 1.3;
 
+            for (int i = 0; i < 3; i++){
+                MotorControl::forward(startingSpeed);
+                MotorControl::forward(startingSpeed);
+                delay_ms(100);
+            }
+    }
 }
 #endif
 
 #if Motor_Control_Functions
 void MotorControl::forward(float speedToSet){
-    printf("-----Moving Forward--------");
+    printf("-----Moving Forward--------\n");
 
     if (speedToSet == speedSetting_t.NO_CHANGE){
         setSteeringDirectionAndSpeed(steeringDirection_t.STRAIGHT, currentMotorValue);
@@ -58,7 +66,7 @@ void MotorControl::forward(float speedToSet){
 }
 
 void MotorControl::back(float speedToSet){
-    printf("----Moving Backward-------");
+    printf("----Moving Backward-------\n");
 
     if (speedToSet != speedSetting_t.BACK_SPEED){
      // Should never get here
