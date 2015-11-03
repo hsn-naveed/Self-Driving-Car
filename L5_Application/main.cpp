@@ -24,6 +24,7 @@
  *
  */
 #include <full_can.cpp>
+#include <iCAN-temp.hpp>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "io.hpp"
@@ -35,7 +36,6 @@
 //This is a test - MARVIN
 
 #include "master_control.hpp"
-#include "iCAN.hpp"
 
 
 /*

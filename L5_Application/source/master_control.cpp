@@ -144,7 +144,7 @@ bool control_handler_task::run(void *p) {
 
 
 
-                    printf("SENSOR VALUES MASTER CONTROL: %d %d %d %d", B, R, M, L);
+                    printf("SENSOR VALUES MASTER CONTROL: %d %d %d %d\n", B, R, M, L);
 //                    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++)     {
 //                        tempSensorValues[i] = mCAN_MSG_Rx.data.bytes[i];
 //                           // global_sensor_value[i] = mSensorValue[i];
