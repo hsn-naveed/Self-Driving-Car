@@ -44,6 +44,8 @@
 #include <L4_IO/can_definitions.hpp>
 #include "L4_IO/can_storage.hpp"
 
+#include "243_can/CAN_structs.h"
+
 
 
 
@@ -58,6 +60,12 @@ scheduler_task *myTask = scheduler_task::getTaskPtrByName("control_handler_task"
 //current state
 volatile int current_state_free_run = 0;
 
+//previous state
+volatile int prev_state_free_run = 0;
+
+//motor command values
+mast_mot_msg_t motor_commands = { 0 };
+
 can_msg_t msg_rx = { 0 };
 can_msg_t msg_tx = { 0 };
 
@@ -71,109 +79,190 @@ void period_1Hz(void)
     //sen_value = scheduler_task::getSharedObject(shared_sensor_data);
 
      //get our sensor values
-     uint8_t *sampleArray;
-     sampleArray = CAN_ST.getSensorValues();
-     for (int i = 0; i < SIZE_OF_SENSOR_ARRAY; i++) {
-         printf("SENSOR [%d]: %d\n", i, sampleArray[i]);
-     }
+    //     uint8_t *sampleArray;
+    //     sampleArray = CAN_ST.getSensorValues();
+    //     for (int i = 0; i < SIZE_OF_SENSOR_ARRAY; i++) {
+    //         printf("SENSOR [%d]: %d\n", i, sampleArray[i]);
+    //     }
 
 }
 
 void period_10Hz(void)
 {
+    //reset freerun state counter
+   // current_state_free_run = 0;
+
    // LE.toggle(2);
 
 
+    CAN_ST.motor_data = (mast_mot_msg_t*) & msg_tx.data.bytes[0];
 
-
-        //message coming from the terminal
-        if(xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &msg_rx, 0) ||
-                //message coming from the real CAN receiver
-                xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &msg_rx, 0) )    {
-            //send to control_handler_task
-            xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
-        }
-
-        //Handle if no message is received
-        else    {
-            msg_rx.msg_id = 0xFFF; //this one should be removed
-            xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
-        }
-
-        if (current_mode == FREERUN_MODE)   {
+       // if (current_mode == FREERUN_MODE)   {
             //state machine for free run
-            switch(current_state_free_run)  {
+           // while( current_state_free_run != 12) {
+                switch(current_state_free_run)  {
 
-                //request sensor readings
-                case 0:
-                    //put our message id
-                    msg_tx.msg_id = MASTER_COMMANDS_SENSOR;
-                    //pass our message to the master_control tasks
-                    //to handle the data parameters
-                    xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_tx, 0);
-
-                    printf("current_state_free_run %d finished\n", current_state_free_run);
-                    //move to the next state
-                    current_state_free_run = 1;
-
-                    break;
-                //read sensor readings
-                //during this state, the sensor readings should've been received (from sensor team)
-                //and our master_control task should've been updated the new sensor values
-                //Send Motor commands in this state as well
-                case 1:
-                    //Motor
-
-                  /* if( ((uint8_t)0x00 == global_sensor_value[(int)LEFT_SENSOR]) &&
-                           ((uint8_t)0x00 == global_sensor_value[(int)MIDDLE_SENSOR]) &&
-                           ((uint8_t)0x00 == global_sensor_value[(int)RIGHT_SENSOR]))  {
-
-                   }*/
-                    printf("current_state_free_run %d finished\n", current_state_free_run);
-                    current_state_free_run = 2;
-                    break;
-
-                case 2:
-                    printf("current_state_free_run %d finished\n", current_state_free_run);
-                    //reset state
-                    current_state_free_run = 0;
-                    break;
-
-                default:
-                    break;
-
-            }
-        }
-
-        //send the whole message to the control_handler_task
-        //xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
+                    printf("switch entered\n");
+                    //check sensor values
+                    case 0:
+                        prev_state_free_run = current_state_free_run;
+                        if (CAN_ST.sensor_data->L >= (int) MINIMUM_SENSOR_VALUE &&
+                                CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_VALUE &&
+                                CAN_ST.sensor_data->R >= (int) MINIMUM_SENSOR_VALUE)    {
 
 
-//        if (xQueueReceive(mCAN_QueueHandler, &msg_rx, 0)) {
-//
-//            xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
-//            printf("Sent message:\n");
-//        }
+                            //move to the next state to follow GPS data
+                            current_state_free_run = 1;
+                            printf("state %d -> %d\n", prev_state_free_run, current_state_free_run);
+                        } else  {
+                            //command motor based on sensor values
+                            current_state_free_run = 2;
+                            printf("state %d -> %d\n", prev_state_free_run, current_state_free_run);
+                        }
 
 
-       //int msg = SW.getSwitchValues();
-/*
-       if(msg == 0) timer_count++;
+                        break;
 
-       if(timer_count < 4 && (0 == msg)) {
-           xQueueSend(scheduler_task::getSharedObject(shared_LEDSignalForCAN), &msg, portMAX_DELAY);
-       }
-       else if (msg != 0)  {
-           xQueueSend(scheduler_task::getSharedObject(shared_LEDSignalForCAN), &msg, portMAX_DELAY);
-           timer_count = 0;
-       }
+                    // state where GPS and heading values are respected
+                    case 1:
+                        prev_state_free_run = current_state_free_run;
+                        //TO DO:
+                        //GPS IMPLEMENTATION
+                        //1. check heading
 
-       xSemaphoreGive(scheduler_task::getSharedObject(shared_CAN_Semaphore_Rx));*/
+                        current_state_free_run = 3;
+                        printf("state %d -> %d\n", prev_state_free_run, current_state_free_run);
+                        break;
+
+                    //Command motor based on sensor values
+                    case 2:
+                        prev_state_free_run = current_state_free_run;
+                        //if middle is blocked
+                       if ( CAN_ST.sensor_data->M < (int) MINIMUM_SENSOR_VALUE )    {
+
+                           //Command motor to stop
+                           CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_STOP;
+                           CAN_ST.motor_data->LR = (uint8_t) 0x80; //turn straight
+                           CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_MEDIUM; //no use
+                           msg_tx.msg_id = (uint32_t) MASTER_COMMANDS_MOTOR;
+                           xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_tx, 0);
+
+                           //then Handle back up
+                           current_state_free_run = 4;
+                           printf("state %d -> %d\n", prev_state_free_run, current_state_free_run);
+                       }
+                        //if only left sensor is blocked
+                       else if (CAN_ST.sensor_data->L < (int) MINIMUM_SENSOR_VALUE &&
+                            CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_VALUE &&
+                            CAN_ST.sensor_data->R >= (int) MINIMUM_SENSOR_VALUE)    {
+
+
+                           CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_FORWARD;
+                           CAN_ST.motor_data->LR = (uint8_t) 0xFF; //turn right
+                           CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_MEDIUM;
+
+                            current_state_free_run = 3;
+                            printf("state %d -> %d\n", prev_state_free_run, current_state_free_run);
+                        }
+
+                        //if only right sensor is blocked
+                        else if (CAN_ST.sensor_data->L >= (int) MINIMUM_SENSOR_VALUE &&
+                               CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_VALUE &&
+                               CAN_ST.sensor_data->R < (int) MINIMUM_SENSOR_VALUE)    {
+
+                             //  mast_mot_msg_t *p = (sen_msg_t*) & msg_tx.data.bytes[0];
+                            CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_FORWARD;
+                            CAN_ST.motor_data->LR = (uint8_t) 0x00; //turn left
+                            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_MEDIUM;
+
+                               current_state_free_run = 3;
+                               printf("state %d -> %d\n", prev_state_free_run, current_state_free_run);
+                         }
+                        break;
+
+                    //command the Motor
+                    case 3:
+                        prev_state_free_run = current_state_free_run;
+                        //send our motor commands
+                        msg_tx.msg_id = (uint32_t) MASTER_COMMANDS_MOTOR;
+                        xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_tx, 0);
+
+                        current_state_free_run = 0; //reset state
+                        printf("state %d -> %d\n", prev_state_free_run, current_state_free_run);
+                        break;
+
+                    //go to this state if middle sensor is blocked
+                    case 4:
+                        prev_state_free_run = current_state_free_run;
+
+                        //check if we can back up
+                        if(CAN_ST.sensor_data->B >= (int) MINIMUM_SENSOR_VALUE)    {
+                            //if both middle and left sensors are blocked
+                            // reverse while turning right
+                            if (CAN_ST.sensor_data->L < (int) MINIMUM_SENSOR_VALUE) {
+                                CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_REVERSE;
+                                CAN_ST.motor_data->LR = (uint8_t) 0xFF; //turn right
+                                CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW;
+                            }
+                            else if (CAN_ST.sensor_data->R < (int) MINIMUM_SENSOR_VALUE)  {
+                                CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_REVERSE;
+                                CAN_ST.motor_data->LR = (uint8_t) 0x00; //turn LEFT
+                                CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW;
+                            }
+                            else {
+                                //default, reverse while turning left
+                                CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_REVERSE;
+                                CAN_ST.motor_data->LR = (uint8_t) 0x00; //turn LEFT
+                                CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW;
+                            }
+                        }
+                        //if both middle and back sensors are blocked, stop the vehicle, light up
+                        // some LED, we're stuck, we need help!!!
+                        else {
+
+                            CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_REVERSE;
+                            CAN_ST.motor_data->LR = (uint8_t) 0x00; //turn LEFT
+                            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW;
+
+                        }
+
+
+                        // No matter what the result is, we go to state 3
+                        //Go to state 3 to send our command to motor
+                        current_state_free_run = 3;
+                        printf("state %d -> %d\n", prev_state_free_run, current_state_free_run);
+                        break;
+
+                    default:
+                        //Go back to state 0
+                        current_state_free_run = 0;
+                        break;
+
+                } //end  switch(current_state_free_run)
+          //  } //end while( current_state_free_run != 12)
+
+       // }
+
 
 }
 
 void period_100Hz(void)
 {
+
+    //message coming from the terminal
+      if(xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &msg_rx, 0) ||
+              //message coming from the real CAN receiver
+              xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &msg_rx, 0) )    {
+          //send to control_handler_task
+          xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
+      }
+
+      //Handle if no message is received
+       else    {
+           msg_rx.msg_id = 0xFFF; //this one should be removed
+           xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
+       }
+
    // LE.toggle(3);
     int sw_value = SW.getSwitchValues();
     if (sw_value == 1){

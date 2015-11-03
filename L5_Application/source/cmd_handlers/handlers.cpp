@@ -47,7 +47,7 @@
 
 #include <inttypes.h>
 
-
+#include "243_can/CAN_structs.h"
 
 
 CMD_HANDLER_FUNC(taskListHandler)
@@ -830,18 +830,25 @@ CMD_HANDLER_FUNC(canBusHandler)
 CMD_HANDLER_FUNC(masterHandler) {
 
     //uint32_t message_id;
-    can_msg_t msg_rx = { 0 };
+    can_msg_t term_msg = { 0 };
+
+    sen_msg_t* mySensor = (sen_msg_t*) & term_msg.data.bytes[0];
+
+    uint32_t leftSensor = 0;
+    uint32_t rightSensor = 0;
+    uint32_t middleSensor = 0;
+    uint32_t backSensor = 0;
 
     if(cmdParams.beginsWithIgnoreCase("test"))  {
         /* Get length and message id */
-           if (cmdParams.scanf("%*s %*s %x", &msg_rx.msg_id)) {
+           if (cmdParams.scanf("%*s %*s %x", &term_msg.msg_id)) {
                //output.printf("Test %" PRIu32 " \n", message_id);
-               output.printf("Message ID: %3x \n", msg_rx.msg_id);
+               output.printf("Message ID: %3x \n", term_msg.msg_id);
               // msg_rx.msg_id = message_id;
 
 
                //send queue to periodic_tasks
-               xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &msg_rx, 0);
+               xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &term_msg, 0);
 
                //bypass the periodic_tasks, sends straight to control_handler_task
                // xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
@@ -853,22 +860,63 @@ CMD_HANDLER_FUNC(masterHandler) {
         uint32_t temp_data_word_upper = 0;
         uint32_t temp_data_word_lower = 0;
        // if (cmdParams.scanf("%*s %x %" SCNx64 "", &msg_rx.msg_id, &temp_data))    {
-        if (cmdParams.scanf("%*s %x %x %x", &msg_rx.msg_id, &temp_data_word_upper, &temp_data_word_lower))    {
+        if (cmdParams.scanf("%*s %x %x %x", &term_msg.msg_id, &temp_data_word_upper, &temp_data_word_lower))    {
            // msg_rx.data.qword = temp_data;
-           msg_rx.data.dwords[1] = temp_data_word_upper;
-           msg_rx.data.dwords[0] = temp_data_word_lower;
+           term_msg.data.dwords[1] = temp_data_word_upper;
+           term_msg.data.dwords[0] = temp_data_word_lower;
 
-            output.printf("Message ID: %x \n", msg_rx.msg_id);
-            output.printf("Message DATA: %" PRIx64 " \n", msg_rx.data.qword);
+            output.printf("Message ID: %x \n", term_msg.msg_id);
+            output.printf("Message DATA: %" PRIx64 " \n", term_msg.data.qword);
             for (int i = 7; i>=0; i--){
-                output.printf("|%2x| ", msg_rx.data.bytes[i]);
+                output.printf("|%2x| ", term_msg.data.bytes[i]);
 
                 //send queue to periodic_tasks
-                xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &msg_rx, 0);
+                xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &term_msg, 0);
             }
 
         }
     }
+//    else if(cmdParams.beginsWithIgnoreCase("sensor"))  {
+//
+//        output.printf("SENSOR!!!!!!!!!!\n");
+//        if (cmdParams.scanf("%*s %x %x %x %x", &backSensor, &rightSensor, &middleSensor, &leftSensor))    {
+//            term_msg.msg_id = (uint32_t) SENSOR_MASTER_REG;
+//
+//
+//            mySensor->B = (uint8_t) backSensor;
+//            mySensor->R = (uint8_t) rightSensor;
+//            mySensor->M = (uint8_t) middleSensor;
+//            mySensor->L = (uint8_t) leftSensor;
+//        }
+//      }
+
+    else if(cmdParams.beginsWithIgnoreCase("sensor")) {
+
+        //sen_msg_t* mySensor;
+       // mySensor = new sen_msg_t;
+
+        if (cmdParams.scanf("%*s %x %x %x %x", &backSensor, &rightSensor, &middleSensor, &leftSensor))   {
+                   term_msg.msg_id = (uint32_t) SENSOR_MASTER_REG;
+
+
+                   mySensor->B = (uint8_t) backSensor;
+                   mySensor->R = (uint8_t) rightSensor;
+                  mySensor->M = (uint8_t) middleSensor;
+                   mySensor->L = (uint8_t) leftSensor;
+
+
+
+                   output.printf("Message ID: %x \n", term_msg.msg_id);
+                    //output.printf("%x %x %x %x\n", mySensor->B, mySensor->R, mySensor->M, mySensor->L);
+                   output.printf("DATA: %x %x %x %x\n", &backSensor, &rightSensor, &middleSensor, &leftSensor);
+                        //send queue to periodic_tasks
+                        xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &term_msg, 0);
+
+                }
+
+
+    }
+
 
     return true;
 

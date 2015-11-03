@@ -30,7 +30,9 @@ class can_receive : public scheduler_task
                 if(CAN_fullcan_add_entry(bus, CAN_gen_sid(bus, 0x123), CAN_gen_sid(bus, 0x124))){
                     const can_std_id_t slist[]      = {
                                                         CAN_gen_sid(can1, 0x123), CAN_gen_sid(can1, 0x124),   // 2 entries
-                                                        CAN_gen_sid(can1, 0x140), CAN_gen_sid(can1, 0x141)
+                                                        CAN_gen_sid(can1, 0x140), CAN_gen_sid(can1, 0x141),
+                                                        CAN_gen_sid(can1, 0x702), //sensor values
+                                                        CAN_gen_sid(can1, 0x704), //master command motor
                                                       };
                     const can_std_grp_id_t sglist[] = { {CAN_gen_sid(can1, 0x01), CAN_gen_sid(can1, 0x200)}, // Group 1
                                                         {CAN_gen_sid(can2, 0x201), CAN_gen_sid(can2, 0x500)}  // Group 2
@@ -62,25 +64,25 @@ class can_receive : public scheduler_task
                         can_fullcan_msg_t msg;
                         can_fullcan_msg_t* msgPtr = CAN_fullcan_get_entry_ptr(CAN_gen_sid(bus, 0x123));
 
-                        //can_msg_t msg_tx = { 0 };
+                        can_msg_t msg_tx = { 0 };
 
                          if(CAN_fullcan_read_msg_copy(msgPtr,&msg)){
                              puts("\nReceived!");
                              //pass the received message to the period_callback functions
-                             //xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &msg, 0);
-                             vTaskDelay(5000);
+                            // xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &msg, 0);
+                            // vTaskDelay(5000);
                              return true;
                              }
-                        // else if(xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_transmit), &msg_tx, 0)) {
+                         //else if(xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_transmit), &msg_tx, 0)) {
                                //send data
-                         //}
+                       //  }
 
                          else{
                              puts ("\nNo message received!");
                              return false;
                          }
 
-
+                       //  vTaskDelay(10);
                 }
 };
 

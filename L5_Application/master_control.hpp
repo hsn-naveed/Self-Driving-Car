@@ -49,20 +49,7 @@ class control_handler_task : public scheduler_task
         can_msg_t mCAN_MSG_Rx; //current Data Received
         can_msg_t mCAN_MSG_Tx; //current Data to Send
 
-        int mMode;
 
-        //state counter
-        volatile int mStateCount_Motor;
-        volatile int mStateCount;
-        volatile int mStateCount_Sensor;
-
-
-
-
-        //Motor
-        //int mMotorSpeed;
-        //int mMotorDirection;
-        //int mMotorTurn;
 };
 
 

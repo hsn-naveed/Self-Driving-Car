@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <L3_Utils/singleton_template.hpp>
 
+#include <243_can/CAN_structs.h>
+
 
 /**
  * LED class used to control the Board's 8 output LEDs
@@ -36,11 +38,17 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
         void setMotorSpeed(uint8_t speed) { mMotorSpeed = speed;}
 
         //Sensor
-        uint8_t* getSensorValues() {return mSensorValues;}
-        void setSensorValues(uint8_t arr[], int size);
+       // uint8_t* getSensorValues() {return mSensorValues;}
+       // void setSensorValues(uint8_t arr[], int size);
 
 
+        //Sensor
+        volatile sen_msg_t* sensor_data;
+
+        //Motor
+        volatile mast_mot_msg_t* motor_data;
     private:
+
 
 
         //Android
@@ -79,6 +87,7 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
 
             }*/
         CAN_STORAGE();
+        ~CAN_STORAGE();
         friend class SingletonTemplate<CAN_STORAGE>;  ///< Friend class used for Singleton Template
 };
 
