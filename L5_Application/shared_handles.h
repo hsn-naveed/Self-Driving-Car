@@ -34,6 +34,8 @@
 enum {
     shared_SensorQueue,    ///< Shared handle used by examples (producer and consumer tasks)
     shared_learnSemaphore, ///< Terminal command gives this semaphore to remoteTask (IR sensor task)
+
+    shared_CANsend //sending sensor readings to master
 };
 
 

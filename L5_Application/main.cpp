@@ -1,30 +1,48 @@
-//2 sonar one not working rihgt
 #include "tasks.hpp"
-#include "examples/examples.hpp"
 #include "eint.h"
-#include <stdio.h>
-#include"gpio.hpp"
-#include"utilities.h" //delay lib
-#include"io.hpp"
-#include"lpc_timers.h"
-#include "lpc_sys.h"
 
 
-int Left_trig_time,Middle_trig_time,Right_trig_time,Rear_trig_time,left_dist,middle_dist,right_dist,rear_dist;
+//#include "243_can/CAN_structs.h"
+#include "FullCan.cpp"
+//#include"iCAN.hpp"
+#include"sensor.hpp"
 
-const uint8_t p2_0 = 0; // will be pulled Low when object detected
-const uint8_t p2_1 = 1; // will be pulled Low when object detected
+//int Left_trig_time,Middle_trig_time,Right_trig_time,Rear_trig_time;
 
-GPIO Left_en(P0_0);   // left Sonar RX enable pin
-GPIO Middle_en(P0_1); // Middle Sonar RX enable pin
+/*
+int Left_trig_time,Middle_trig_time,Right_trig_time,Rear_trig_time,
+    left_dist,
+    middle_dist,
+    right_dist,
+    rear_dist;
+*/
 
-SemaphoreHandle_t left_sem= xSemaphoreCreateMutex(); //**can't use the same semaphor for more than 2 tasks!
-SemaphoreHandle_t middle_sem= xSemaphoreCreateMutex(); //another semaphore for the
+/*
+can_msg_t sonar = {0};
 
+//interrupt enabled GPIO ports Falling Edge
+const uint8_t p2_0  = 0; // Left
+const uint8_t p2_1  = 1; // Middle
+const uint8_t p2_2  = 2; //Right
+const uint8_t p2_3  = 3; // Rear
 
+//Sonar enable pins init , pull up for >20uS to start ranging
+GPIO Left_en(P2_7);   // left
+GPIO Middle_en(P2_6); // Middle
+GPIO Right_en(P0_30); // Right
+GPIO Rear_en(P0_29);  // Rear
+*/
 
+//------------------------------
+/*
+SemaphoreHandle_t left_sem   = xSemaphoreCreateMutex();  //**can't use the same semaphor for more than 2 tasks!
+SemaphoreHandle_t middle_sem = xSemaphoreCreateMutex();//give to middle
+SemaphoreHandle_t right_sem = xSemaphoreCreateMutex(); //give to right
+SemaphoreHandle_t rear_sem = xSemaphoreCreateMutex();      //give it to rear
+*/
+//------------------------------------
 
-void calc_dist_left(void)
+/*void calc_dist_left(void)
 {
    left_dist = ((sys_get_uptime_us() - Left_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
 //Main problem was using this type of timer and puting intrrrupt line in while loop!USE sys_get_uptime_us
@@ -36,7 +54,6 @@ void calc_dist_left(void)
      xSemaphoreGive(middle_sem);
 }
 
-
 void calc_dist_middle(void)
 {
     middle_dist = ((sys_get_uptime_us() - Middle_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
@@ -44,9 +61,32 @@ void calc_dist_middle(void)
     printf("\n \n Middle ninterrupt occured");
     printf("\n Middle distance in inches is : %i", middle_dist);
 
-     xSemaphoreGive(left_sem);
+     xSemaphoreGive(right_sem);
 }
 
+void calc_dist_right(void)
+{
+    right_dist = ((sys_get_uptime_us() - Right_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
+
+    printf("\n \n Right ninterrupt occured");
+    printf("\n Right distance in inches is : %i", right_dist);
+
+     xSemaphoreGive(rear_sem);
+}
+
+void calc_dist_rear(void)
+{
+    rear_dist = ((sys_get_uptime_us() - Rear_trig_time)/147)-2; //each 147uS is 1 inch (Datasheet)
+
+    printf("\n \n Rear ninterrupt occured");
+    printf("\n Rear distance in inches is : %i", rear_dist);
+
+     xSemaphoreGive(left_sem);
+}*/
+
+
+//-----------------------------------------------------------------
+/*
 void Range_left(void)
 {
     delay_ms(50);
@@ -67,31 +107,70 @@ void Range_middle(void)
     Middle_en.setLow();   // disable ranging of left sonar
 }
 
+void Range_right(void)
+{
+    delay_ms(50);
+    Right_en.setHigh(); // enable Ranging   (enable left sonar)
+    delay_us(21);  //hold high  >20uS to enable ranging
+    Right_trig_time = sys_get_uptime_us();  //get timer at the moment ranging starts
+
+    Right_en.setLow();   // disable ranging of left sonar
+}
+
+void Range_rear(void)
+{
+    delay_ms(50);
+    Rear_en.setHigh(); // enable Ranging   (enable left sonar)
+    delay_us(21);  //hold high  >20uS to enable ranging
+    Rear_trig_time = sys_get_uptime_us();  //get timer at the moment ranging starts
+
+    Rear_en.setLow();   // disable ranging of left sonar
+}
+
+void CAN_send(void)
+{
+    sen_msg_t* sensor_values = (sen_msg_t*) & sonar.data.bytes[0];
+
+     sonar.msg_id= uint32_t(0x702);
+     sensor_values->L = (uint8_t) left_dist;
+     sensor_values->M = (uint8_t) middle_dist;
+     sensor_values->R = (uint8_t) right_dist;
+     sensor_values->B = (uint8_t) rear_dist;
+
+   //  iCAN_tx(&sonar,uint32_t (0x702)); //transmit over the can
+  //   xQueueSend(scheduler_task::getSharedObject(shared_CANsend), &sonar,0);
+}
+
+
+*/
+//-----------------------------------------------------
+//sensor SonarSensor = sensor::getInstance();
 int main(void)
 {
-    eint3_enable_port2(p2_0, eint_falling_edge, calc_dist_left); //wait for the interrupt
-    eint3_enable_port2(p2_1, eint_falling_edge, calc_dist_middle); //wait for the interrupt
+
+    SonarSensor.init();
+
+//Interrupt init
+
+    eint3_enable_port2(0,eint_falling_edge, SonarSensor.calc_dist_left); //Left Sonar
+
+    eint3_enable_port2(1, eint_falling_edge, SonarSensor.calc_dist_middle); //Middle Sonar
+    eint3_enable_port2(2, eint_falling_edge, SonarSensor.calc_dist_right); //Right Sonar
+    eint3_enable_port2(3, eint_falling_edge, SonarSensor.calc_dist_rear); //Rear Sonar*/
+
 
 
     Left_en.setAsOutput(); // set p0.0 as an output pin to enable or disable Left Sonar
     Middle_en.setAsOutput();
+    Right_en.setAsOutput();
+    Rear_en.setAsOutput();
 
     delay_ms(251); // 250ms after power up RX is ready to receive commands!
 
+#if 1
+    scheduler_add_task(new periodicSchedulerTask());
+#endif
 
-    while(1)
-    {
-        // trigger only once until falling edge arrives
-        Range_left();
-
-        xSemaphoreTake(middle_sem, portMAX_DELAY);
-        Range_middle();
-
-        xSemaphoreTake(left_sem, portMAX_DELAY);
-        delay_ms(2000);
-    }
-
-    // p01.setAsOutput(); //sets p0.1 as output
 
     /**
      * A few basic tasks for this bare-bone system :
@@ -168,6 +247,9 @@ int main(void)
     scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
 #endif
 
+    scheduler_add_task(new can_receive(PRIORITY_MEDIUM));
+
     scheduler_start(); ///< This shouldn't return
+
     return -1;
 }
