@@ -9,22 +9,17 @@
 #include "stdio.h"
 #include "can.h"
 #include "shared_handles.h"
-
-#include "iCAN.hpp"
+#include "full_can_api.h"
 #include "io.hpp"
 //#include "eint.h"
 
 class can_receive : public scheduler_task
 {
     private :
-/*
-         const uint8_t p2_0  = 0; // Left
-        const uint8_t p2_1  = 1; // Middle
-        const uint8_t p2_2  = 2; //Right
-        const uint8_t p2_3  = 3; // Rear
-*/
+
 
         QueueHandle_t canMessage =xQueueCreate(1,sizeof(can_msg_t));//added
+
     public:
         can_receive(uint8_t priority) :
         scheduler_task("canBUS", 2048, priority)
@@ -35,49 +30,26 @@ class can_receive : public scheduler_task
         {
             addSharedObject(shared_CANsend,canMessage);//added
             canMessage = getSharedObject(shared_CANsend);//added
+            full_can_api::bus_init();
 
-
-
-
-            can_t bus = can1;
-            uint32_t baudrate_kbps = 100;
-            uint16_t rxq_size = 50;
-            uint16_t txq_size = 50;
-            //const int ID1 = 0x123;
-
-            if (CAN_init(bus, baudrate_kbps, rxq_size, txq_size,NULL,NULL)){
-                if(CAN_fullcan_add_entry(bus, CAN_gen_sid(bus, 0x123), CAN_gen_sid(bus, 0x124))){
-                    const can_std_id_t slist[]      = {
-                                                        CAN_gen_sid(can1, 0x123), CAN_gen_sid(can1, 0x124),   // 2 entries
-                                                        CAN_gen_sid(can1, 0x140), CAN_gen_sid(can1, 0x141),
-                                                        CAN_gen_sid(can1, 0x702), //sensor values
-                                                        CAN_gen_sid(can1, 0x704), //master command motor
-                                                      };
-                    const can_std_grp_id_t sglist[] = { {CAN_gen_sid(can1, 0x01), CAN_gen_sid(can1, 0x200)}, // Group 1
-                                                        {CAN_gen_sid(can2, 0x201), CAN_gen_sid(can2, 0x500)}  // Group 2
-                                                      };
-                    const can_ext_id_t *elist = NULL;
-                    const can_ext_grp_id_t *eglist= NULL;
-                    if(CAN_setup_filter(slist, 4, sglist, 2, elist, 0, eglist, 0)){
-                        puts("\nIn Full Can Mode and Filter Setup!");
-                    }
-
-                }
-                else{
-                    puts("\nFULL CAN FAILED");
-                }
-                CAN_reset_bus(bus);
-                puts("\nInitialization Successful\n");
-                return true;
-            }
-            else{
-                puts("\nFailed to Initialize");
-                return false;
-            }
         }
 
         bool run(void *p)
                 {
+                can_msg_t Sonar_Send;
+
+                xQueueReceive(canMessage, &Sonar_Send,0);
+              full_can_api::can_send(&Sonar_Send, 0);
+
+
+              if( full_can_api::can_send(&Sonar_Send, 0))
+                {
+                  printf("dataSent to CAN successfully");
+                      return true;
+                  }
+              }
+
+
 
                   /*      can_msg_t SonarReceive;
                         can_t bus = can1;
@@ -116,7 +88,7 @@ class can_receive : public scheduler_task
                          }
 */
                        //  vTaskDelay(10);
-                }
+
 };
 
 

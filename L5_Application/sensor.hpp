@@ -21,6 +21,7 @@
 #include <L3_Utils/singleton_template.hpp>
 #include <243_can/CAN_structs.h>
 #include "can.h"
+#include "semphr.h"
 
 
 class sensor : public SingletonTemplate <sensor>
@@ -34,6 +35,12 @@ public:
             rear_dist;
 
         can_msg_t *sonarMsg ;
+
+        SemaphoreHandle_t left_sem   = xSemaphoreCreateMutex();   //**can't use the same semaphor for more than 2 tasks!
+        SemaphoreHandle_t middle_sem = xSemaphoreCreateMutex();   //give to middle
+        SemaphoreHandle_t right_sem  = xSemaphoreCreateMutex();   //give to right
+        SemaphoreHandle_t rear_sem   = xSemaphoreCreateMutex();   //give it to rear
+
 
 
         //interrupt enabled GPIO ports Falling Edge
@@ -53,9 +60,7 @@ public:
         //void print(void);
 
 private:
-        sensor() {
-
-        }
+        sensor();
      //   ~sensor();
 
         friend class SingletonTemplate<sensor>;  ///< Friend class used for Singleton Template
