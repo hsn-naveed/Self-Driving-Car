@@ -36,9 +36,10 @@
 #include "CAN_structs.h"
 #include "iCAN.hpp"
 #include "can.h"
-#include "Motor_LCD/MotorControl.hpp"s
+#include "Motor_LCD/MotorControl.hpp"
 
 can_fullcan_msg_t *message_struct;
+mast_mot_msg_t *motor_control_struct;
 
 
 /// This is the stack size used for each of the period tasks
@@ -83,9 +84,11 @@ void period_10Hz(void)
 
 
     LE.toggle(2);
-if(iCAN_rx(  , 0x704)){
+    if(iCAN_rx(message_struct, 0x704)){
+        motorObj.getData(message_struct, motor_control_struct);
 
-}
+
+    }
 }
 
 void period_100Hz(void)

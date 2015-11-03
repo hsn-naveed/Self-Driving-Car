@@ -7,8 +7,6 @@
  */
 
 #include "MotorControl.hpp"
-#include "savedMotorData.cpp"
-#include "CAN_structs.h"
 // Just for regioning code
 #define Private_Functions 1
 #define Public_Functions 1
@@ -99,16 +97,10 @@ void MotorControl::steerRight(float amountToSteer){
 #endif // Public Functions
 
 
-void MotorControl::getData(can_fullcan_msg_t *fc1)
+void MotorControl::getData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct)
 {
-
-    CAN_motor_data_struct *p;
-    mast_mot_msg_t *dataStruct;
-
-        p->motor_direction = dataStruct->FRS;
-        p->servo_direction = dataStruct->LR;
-        p->motor_speed = dataStruct->SPD;
-
-
+    motorControlStruct->FRS = fc1->data.bytes[0];
+    motorControlStruct->LR =  fc1->data.bytes[1];
+    motorControlStruct->SPD = fc1->data.bytes[2];
 }
 
