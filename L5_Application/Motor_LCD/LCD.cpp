@@ -62,4 +62,4 @@
 //{
 //
 //}
->>>>>>> branch 'Motor-LCD_DEV' of https://gitlab.com/jhongpananon/lpc1758_freertos_cmpe243.git
+

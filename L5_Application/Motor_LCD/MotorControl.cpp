@@ -99,12 +99,11 @@ void MotorControl::steerRight(float amountToSteer){
 #endif // Public Functions
 
 
-void getData(can_fullcan_msg_t *fc1)
+void MotorControl::getData(can_fullcan_msg_t *fc1)
 {
 
     CAN_motor_data_struct *p;
     mast_mot_msg_t *dataStruct;
-
 
         p->motor_direction = dataStruct->FRS;
         p->servo_direction = dataStruct->LR;

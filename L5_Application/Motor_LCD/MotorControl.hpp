@@ -64,7 +64,7 @@ class MotorControl{
         void forward(float speedToSet);
         void back(float speedToSet);
 
-        void getData(can_fullcan_msg_t *fc1, int m_ID);
+        void getData(can_fullcan_msg_t *fc1);
         #endif
 
         #if 1   // Servo Steering Functions
