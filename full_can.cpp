@@ -5,12 +5,12 @@
  *      Author: Hassan
  */
 
+#include <iCAN.hpp>
 #include "tasks.hpp"
 #include "stdio.h"
 #include "can.h"
 #include "shared_handles.h"
 
-#include "iCAN.hpp"
 
 
 class can_receive : public scheduler_task

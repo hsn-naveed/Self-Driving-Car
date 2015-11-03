@@ -1,5 +1,5 @@
-#ifndef L5_APPLICATION_CAN_STRUCTS_H_
-#define L5_APPLICATION_CAN_STRUCTS_H_
+#ifndef CAN_STRUCTS_H_
+#define CAN_STRUCTS_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -60,4 +60,4 @@ typedef struct  {
 } __attribute__((__packed__)) mast_mot_msg_t ;
 
 
-#endif /* L5_APPLICATION_CAN_STRUCTS_H_ */
+#endif /* CAN_STRUCTS_H_ */

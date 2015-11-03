@@ -54,6 +54,8 @@ class PWM
          */
         PWM(pwmType pwm, unsigned int frequencyHz=50);
 
+        PWM();                          ///< Disallow default constructor
+
         /// Destructor that will destroy PWM configuration
         ~PWM();
 
@@ -70,8 +72,8 @@ class PWM
         bool set(float percent);
 
     private:
-        PWM();                          ///< Disallow default constructor
-        const pwmType mPwm;             ///< The PWM channel number set by constructor
+
+        pwmType mPwm;             ///< The PWM channel number set by constructor
         static unsigned int msTcMax;    ///< PWM TC max (this controls the frequency)
 };
 

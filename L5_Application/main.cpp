@@ -23,6 +23,9 @@
  * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
  *
  */
+#include <iCAN.hpp>
+#include <full_can.cpp>
+#include <CAN_structs.h>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 //#include "MotorControl.hpp"
@@ -31,11 +34,7 @@
 #include "utilities.h"
 #include "stdio.h"
 #include "Motor_LCD/MotorControl.hpp"
-#include <utilities.h>
 
-#include "full_can.cpp"
-#include "CAN_structs.h"
-#include "iCAN.hpp"
 
 
 /**

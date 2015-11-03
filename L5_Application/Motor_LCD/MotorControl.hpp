@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include "can.h"
 #include "utilities.h"
+#include "CAN_structs.h"
 #define INIT_HZ 500
 #define MOTOR_INIT_NEEDED 0
 
@@ -64,7 +65,7 @@ class MotorControl{
         void forward(float speedToSet);
         void back(float speedToSet);
 
-        void getData(can_fullcan_msg_t *fc1, int m_ID);
+        void getData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct);
         #endif
 
         #if 1   // Servo Steering Functions

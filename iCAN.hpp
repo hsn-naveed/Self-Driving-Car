@@ -5,8 +5,8 @@
  *      Author: Marvin
  */
 
-#ifndef L5_APPLICATION_ICAN_HPP_
-#define L5_APPLICATION_ICAN_HPP_
+#ifndef ICAN_HPP_
+#define ICAN_HPP_
 
 #include "can.h"
 
@@ -27,4 +27,4 @@ bool iCAN_rx(can_fullcan_msg_t *fc1, uint16_t msg_id);
 bool iCAN_tx(can_msg_t *msg, uint32_t msg_id);
 
 
-#endif /* L5_APPLICATION_ICAN_HPP_ */
+#endif /* ICAN_HPP_ */
