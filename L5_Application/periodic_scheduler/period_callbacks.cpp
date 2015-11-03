@@ -69,7 +69,7 @@ mast_mot_msg_t motor_commands = { 0 };
 can_msg_t msg_rx = { 0 };
 can_msg_t msg_tx = { 0 };
 
-
+can_data_t periodic_sensor_data = { 0 };
 
 
 void period_1Hz(void)
@@ -96,7 +96,7 @@ void period_10Hz(void)
 
 
     CAN_ST.motor_data = (mast_mot_msg_t*) & msg_tx.data.bytes[0];
-
+   // CAN_ST.sensor_data = (sen_msg_t*) & periodic_sensor_data.bytes[0];
        // if (current_mode == FREERUN_MODE)   {
             //state machine for free run
            // while( current_state_free_run != 12) {
@@ -107,7 +107,7 @@ void period_10Hz(void)
                     case 0:
                         prev_state_free_run = current_state_free_run;
                         if (CAN_ST.sensor_data->L >= (int) MINIMUM_SENSOR_VALUE &&
-                                CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_VALUE &&
+                                CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_BLOCKED_VALUE &&
                                 CAN_ST.sensor_data->R >= (int) MINIMUM_SENSOR_VALUE)    {
 
 
@@ -121,6 +121,7 @@ void period_10Hz(void)
                         }
 
 
+                       // printf("SENSOR VALUES IN PERIODIC: %d %d %d %d", periodic_sensor_data.bytes[3], periodic_sensor_data.bytes[2], periodic_sensor_data.bytes[1], periodic_sensor_data.bytes[0] );
                         break;
 
                     // state where GPS and heading values are respected
@@ -138,12 +139,12 @@ void period_10Hz(void)
                     case 2:
                         prev_state_free_run = current_state_free_run;
                         //if middle is blocked
-                       if ( CAN_ST.sensor_data->M < (int) MINIMUM_SENSOR_VALUE )    {
+                       if ( CAN_ST.sensor_data->M < (int) MINIMUM_SENSOR_BLOCKED_VALUE )    {
 
                            //Command motor to stop
                            CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_STOP;
-                           CAN_ST.motor_data->LR = (uint8_t) 0x80; //turn straight
-                           CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_MEDIUM; //no use
+                           CAN_ST.motor_data->LR = (uint8_t) COMMAND_MOTOR_STRAIGHT; //turn straight
+                           CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW; //no use, because we told it to STOP
                            msg_tx.msg_id = (uint32_t) MASTER_COMMANDS_MOTOR;
                            xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_tx, 0);
 
@@ -153,12 +154,12 @@ void period_10Hz(void)
                        }
                         //if only left sensor is blocked
                        else if (CAN_ST.sensor_data->L < (int) MINIMUM_SENSOR_VALUE &&
-                            CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_VALUE &&
+                            CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_BLOCKED_VALUE &&
                             CAN_ST.sensor_data->R >= (int) MINIMUM_SENSOR_VALUE)    {
 
 
                            CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_FORWARD;
-                           CAN_ST.motor_data->LR = (uint8_t) 0xFF; //turn right
+                           CAN_ST.motor_data->LR = (uint8_t) COMMAND_MOTOR_RIGHT; //turn right
                            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_MEDIUM;
 
                             current_state_free_run = 3;
@@ -167,12 +168,12 @@ void period_10Hz(void)
 
                         //if only right sensor is blocked
                         else if (CAN_ST.sensor_data->L >= (int) MINIMUM_SENSOR_VALUE &&
-                               CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_VALUE &&
+                               CAN_ST.sensor_data->M >= (int) MINIMUM_SENSOR_BLOCKED_VALUE &&
                                CAN_ST.sensor_data->R < (int) MINIMUM_SENSOR_VALUE)    {
 
                              //  mast_mot_msg_t *p = (sen_msg_t*) & msg_tx.data.bytes[0];
                             CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_FORWARD;
-                            CAN_ST.motor_data->LR = (uint8_t) 0x00; //turn left
+                            CAN_ST.motor_data->LR = (uint8_t) COMMAND_MOTOR_LEFT; //turn left
                             CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_MEDIUM;
 
                                current_state_free_run = 3;
@@ -196,23 +197,25 @@ void period_10Hz(void)
                         prev_state_free_run = current_state_free_run;
 
                         //check if we can back up
-                        if(CAN_ST.sensor_data->B >= (int) MINIMUM_SENSOR_VALUE)    {
+                        if(CAN_ST.sensor_data->B >= (int) MINIMUM_SENSOR_BLOCKED_VALUE)    {
+
                             //if both middle and left sensors are blocked
-                            // reverse while turning right
+                            // reverse while turning left
                             if (CAN_ST.sensor_data->L < (int) MINIMUM_SENSOR_VALUE) {
                                 CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_REVERSE;
-                                CAN_ST.motor_data->LR = (uint8_t) 0xFF; //turn right
+                                CAN_ST.motor_data->LR = (uint8_t) COMMAND_MOTOR_LEFT; //turn LEFT
                                 CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW;
                             }
+                            //reverse while turning right
                             else if (CAN_ST.sensor_data->R < (int) MINIMUM_SENSOR_VALUE)  {
                                 CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_REVERSE;
-                                CAN_ST.motor_data->LR = (uint8_t) 0x00; //turn LEFT
+                                CAN_ST.motor_data->LR = (uint8_t) COMMAND_MOTOR_RIGHT; //turn RIGHT
                                 CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW;
                             }
                             else {
                                 //default, reverse while turning left
                                 CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_REVERSE;
-                                CAN_ST.motor_data->LR = (uint8_t) 0x00; //turn LEFT
+                                CAN_ST.motor_data->LR = (uint8_t) COMMAND_MOTOR_LEFT; //turn LEFT
                                 CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW;
                             }
                         }
@@ -221,7 +224,7 @@ void period_10Hz(void)
                         else {
 
                             CAN_ST.motor_data->FRS = (uint8_t) COMMAND_MOTOR_REVERSE;
-                            CAN_ST.motor_data->LR = (uint8_t) 0x00; //turn LEFT
+                            CAN_ST.motor_data->LR = (uint8_t) COMMAND_MOTOR_LEFT; //turn LEFT
                             CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MOTOR_SLOW;
 
                         }
@@ -260,7 +263,7 @@ void period_100Hz(void)
       //Handle if no message is received
        else    {
            msg_rx.msg_id = 0xFFF; //this one should be removed
-           xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
+          // xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
        }
 
    // LE.toggle(3);

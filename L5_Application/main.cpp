@@ -35,6 +35,7 @@
 //This is a test - MARVIN
 
 #include "master_control.hpp"
+#include "iCAN.hpp"
 
 
 /*

@@ -78,9 +78,13 @@ bool control_handler_task::run(void *p) {
     //depending of the message, a function that handles the states will be called
    // printf("control handler running\n");
    // uint8_t tempSensorValues[SIZE_OF_SENSOR_ARRAY] = { 0 };
+    int B =  CAN_ST.sensor_data->B;
+    int R =  CAN_ST.sensor_data->R;
+    int M =  CAN_ST.sensor_data->M;
+    int L =  CAN_ST.sensor_data->L;
 
     if(xQueueReceive(mCANMessage_QueueHandler, &mCAN_MSG_Rx, 0)) {
-           // printf("Handler Received ID: 0x%03" PRIx32 "\n", mCAN_MSG_Rx.msg_id);
+            printf("Handler Received ID: 0x%03" PRIx32 "\n", mCAN_MSG_Rx.msg_id);
 
         //if Android sends a new command, stateCounters will be reset,
 
@@ -132,8 +136,14 @@ bool control_handler_task::run(void *p) {
                     printf("SENSOR_MASTER_REG: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
 
                     //store our received data to our sensor_message
-                    CAN_ST.sensor_data = (sen_msg_t*) & mCAN_MSG_Rx.data.bytes[0];
+                    //CAN_ST.sensor_data = (sen_msg_t*) & mCAN_MSG_Rx.data.bytes[0];
+                    CAN_ST.sensor_data->L = mCAN_MSG_Rx.data.bytes[0];
+                    CAN_ST.sensor_data->M = mCAN_MSG_Rx.data.bytes[1];
+                    CAN_ST.sensor_data->R = mCAN_MSG_Rx.data.bytes[2];
+                    CAN_ST.sensor_data->B = mCAN_MSG_Rx.data.bytes[3];
 
+
+                    printf("SENSOR VALUES MASTER CONTROL: %d %d %d %d", B, R, M, L);
 //                    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++)     {
 //                        tempSensorValues[i] = mCAN_MSG_Rx.data.bytes[i];
 //                           // global_sensor_value[i] = mSensorValue[i];
@@ -146,6 +156,7 @@ bool control_handler_task::run(void *p) {
                     printf("MASTER_COMMANDS_MOTOR: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
                     //copy the message to our tx frame
                     mCAN_MSG_Tx = mCAN_MSG_Rx;
+                    printf("SEND TO MOTOR: %2x %2x %2x\n", mCAN_MSG_Tx.data.bytes[2], mCAN_MSG_Tx.data.bytes[1], mCAN_MSG_Tx.data.bytes[0] );
                     xQueueSend(mCANMessage_QueueHandler_Transmit, &mCAN_MSG_Tx, 0);
                     break;
 
