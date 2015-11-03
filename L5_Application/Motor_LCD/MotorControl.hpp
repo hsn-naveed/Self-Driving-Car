@@ -15,18 +15,20 @@
 #include "io.hpp"
 #include "file_logger.h"
 #include <stdio.h>
+#include "can.h"
 
+#define INIT_HZ 500
 #define MOTOR_INIT_NEEDED 0
 
 
 struct{
-        float SLOW_SPEED = 76.7;
-        float MEDIUM_SPEED = 77.9;
-        float FAST_SPEED = 79.3;
-        float NO_CHANGE = 1;
-        float BACK_SPEED = 70;
+        float SLOW_SPEED = 57.0;
+        float MEDIUM_SPEED = 70.0;
+        float FAST_SPEED = 90.0;
+        float NO_CHANGE = 1.0;
+        float BACK_SPEED = 57.0;
         float MAX_SPEED = 96;
-        float STOP = 71.3;
+        float STOP = 0;
 } speedSetting_t;
 
 struct{
@@ -37,7 +39,7 @@ struct{
 
 class MotorControl{
     private:
-        int frequency = 480;
+        int frequency = INIT_HZ;
         float currentMotorValue;
         float currentServoValue;
 
@@ -61,6 +63,8 @@ class MotorControl{
         // Parameters are subject to change
         void forward(float speedToSet);
         void back(float speedToSet);
+
+        void getData(can_fullcan_msg_t *fc1, int m_ID);
         #endif
 
         #if 1   // Servo Steering Functions

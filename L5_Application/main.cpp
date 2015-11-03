@@ -25,7 +25,15 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+//#include "MotorControl.hpp"
+#include "lpc_pwm.hpp"
+#include "io.hpp"
+#include "utilities.h"
+#include "stdio.h"
 
+#include "full_can.cpp"
+#include "CAN_structs.h"
+#include "iCAN.hpp"
 
 
 /**
@@ -42,6 +50,7 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
+
 int main(void)
 {
     /**
@@ -54,6 +63,23 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
+PWM servo(PWM::pwm2 , 50);
+PWM motor(PWM::pwm1, 500);
+    delay_ms(100);
+    //for (float i = 0; i < 2; i += 0.1)
+  // {
+    float i = 0.08;
+        servo.set(i);
+        printf("Servo set to: %f\n", i);
+        motor.set(57.0);
+        delay_ms(10000);
+   // }
+
+
+//scheduler_add_task(new can_receive(PRIORITY_HIGH)); //CAN Bus task
+
+
+#if 0
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
@@ -124,7 +150,8 @@ int main(void)
     u3.init(WIFI_BAUD_RATE, WIFI_RXQ_SIZE, WIFI_TXQ_SIZE);
     scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
 #endif
-
+#endif
     scheduler_start(); ///< This shouldn't return
+
     return -1;
 }

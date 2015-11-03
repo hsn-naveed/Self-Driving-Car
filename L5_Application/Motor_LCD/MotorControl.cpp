@@ -7,11 +7,15 @@
  */
 
 #include "MotorControl.hpp"
+#include "savedMotorData.cpp"
+#include "CAN_structs.h"
 // Just for regioning code
 #define Private_Functions 1
 #define Public_Functions 1
 #define Motor_Control_Functions 1
 #define Servo_Steering_Functions 1
+
+#define Motor_LCD_controller_ID 0x3F2 //1010
 
 #if Private_Functions
 void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet){
@@ -85,3 +89,19 @@ void MotorControl::steerRight(float amountToSteer){
 }
 #endif // Servo Steering Functions
 #endif // Public Functions
+
+
+void getData(can_fullcan_msg_t *fc1)
+{
+
+    CAN_motor_data_struct *p;
+    mast_mot_msg_t *dataStruct;
+
+
+        p->motor_direction = dataStruct->FRS;
+        p->servo_direction = dataStruct->LR;
+        p->motor_speed = dataStruct->SPD;
+
+
+}
+

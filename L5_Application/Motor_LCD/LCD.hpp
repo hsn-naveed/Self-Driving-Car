@@ -45,7 +45,8 @@ using namespace std;
 class LCD: public scheduler_task
 {
     public:
-        LCD(uint8_t priorityToUse);bool run(void *p);
+        LCD(uint8_t priorityToUse);
+
         void writetoLCD(string datatoDisplay); //takes data and displays on the LCD
         void clearLCD(); //clears the entire LCD
         void moveCursor(int row, int column); //moves the cursor to a desired point

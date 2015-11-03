@@ -33,7 +33,11 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
+#include "CAN_structs.h"
+#include "iCAN.hpp"
+#include "can.h"
 
+can_fullcan_msg_t *message_struct;
 
 
 /// This is the stack size used for each of the period tasks
@@ -48,6 +52,9 @@ void period_1Hz(void)
 void period_10Hz(void)
 {
     LE.toggle(2);
+if(iCAN_rx(  , 0x704)){
+
+}
 }
 
 void period_100Hz(void)
