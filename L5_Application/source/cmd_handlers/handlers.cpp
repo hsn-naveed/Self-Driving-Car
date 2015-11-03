@@ -832,6 +832,8 @@ CMD_HANDLER_FUNC(masterHandler) {
     //uint32_t message_id;
     can_msg_t msg_rx = { 0 };
 
+
+
     if(cmdParams.beginsWithIgnoreCase("test"))  {
         /* Get length and message id */
            if (cmdParams.scanf("%*s %*s %x", &msg_rx.msg_id)) {
@@ -858,6 +860,7 @@ CMD_HANDLER_FUNC(masterHandler) {
            msg_rx.data.dwords[1] = temp_data_word_upper;
            msg_rx.data.dwords[0] = temp_data_word_lower;
 
+<<<<<<< HEAD
             output.printf("Message ID: %x \n", msg_rx.msg_id);
             output.printf("Message DATA: %" PRIx64 " \n", msg_rx.data.qword);
             for (int i = 7; i>=0; i--){
@@ -869,6 +872,96 @@ CMD_HANDLER_FUNC(masterHandler) {
 
         }
     }
+=======
+            output.printf("Message ID: %x \n", term_msg.msg_id);
+            output.printf("Message DATA: %" PRIx64 " \n", term_msg.data.qword);
+            for (int i = 7; i>=0; i--)  {
+                output.printf("|%2x| ", term_msg.data.bytes[i]);
+
+            }
+
+            if (term_msg.msg_id == (uint32_t) SENSOR_MASTER_REG)    {
+
+               can_msg_t sensor_msg_data = { 0 };
+
+               sensor_msg_data.msg_id = term_msg.msg_id;
+
+               mySensor = (sen_msg_t*) & sensor_msg_data.data.bytes[0];
+
+               mySensor->B =  (uint8_t) term_msg.data.bytes[3];
+               mySensor->R =  (uint8_t) term_msg.data.bytes[2];
+               mySensor->M =  (uint8_t) term_msg.data.bytes[1];
+               mySensor->L =  (uint8_t) term_msg.data.bytes[0];
+
+
+              // output.printf("SENSOR READINGS: %d %d %d %d\n",mySensor->B, mySensor->R ,mySensor->M, mySensor->L );
+               output.printf("SENSOR READINGS: %d %d %d %d\n",sensor_msg_data.data.bytes[3], sensor_msg_data.data.bytes[2] ,sensor_msg_data.data.bytes[1], sensor_msg_data.data.bytes[0] );
+               xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &sensor_msg_data, 0);
+            }
+            else {
+                //send queue to periodic_tasks
+                xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &term_msg, 0);
+            }
+
+
+
+
+        }
+    }
+    else if(cmdParams.beginsWithIgnoreCase("sensor"))  {
+
+        int b = 0;
+        int r = 0;
+        int m = 0;
+        int l = 0;
+
+        output.printf("SENSOR!!!!!!!!!!\n");
+        if (cmdParams.scanf("%*s %d %d %d %d", &b, &r, &m, &l))    {
+            term_msg.msg_id = (uint32_t) SENSOR_MASTER_REG;
+
+
+            mySensor->B = (uint8_t) b;
+            mySensor->R = (uint8_t) r;
+            mySensor->M = (uint8_t) m;
+            mySensor->L = (uint8_t) l;
+        }
+        output.printf("Message ID: %x \n", term_msg.msg_id);
+       output.printf("SENSOR READINGS: %d %d %d %d\n",mySensor->B, mySensor->R ,mySensor->M, mySensor->L );
+
+      }
+//
+//    else if(cmdParams.beginsWithIgnoreCase("sensor")) {
+//
+//        //sen_msg_t* mySensor;
+//       // mySensor = new sen_msg_t;
+//
+//        uint32_t sensorBR = 0;
+//        uint32_t sensorML = 0;
+//
+//       // if (cmdParams.scanf("%*s %x %x %x %x", &backSensor, &rightSensor, &middleSensor, &leftSensor))   {
+//        if (cmdParams.scanf("%*s %x %x", &sensorBR, &sensorML))   {
+//                   term_msg.msg_id = (uint32_t) SENSOR_MASTER_REG;
+//
+//
+//                  // mySensor->B = (uint8_t) backSensor;
+//                 //  mySensor->R = (uint8_t) rightSensor;
+//                 // mySensor->M = (uint8_t) middleSensor;
+//                  // mySensor->L = (uint8_t) leftSensor;
+//
+//
+//
+//                   output.printf("Message ID: %x \n", term_msg.msg_id);
+//                    output.printf("SENSOR READINGS: %x %x\n", &sensorBR, &sensorML);
+//                  // output.printf("DATA: %x %x %x %x\n", &backSensor, &rightSensor, &middleSensor, &leftSensor);
+//                        //send queue to periodic_tasks
+//                        xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &term_msg, 0);
+//
+//                }
+//
+//
+//    }
+
+>>>>>>> fixed sensor receive issue
 
     return true;
 

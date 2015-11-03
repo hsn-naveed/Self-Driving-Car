@@ -80,14 +80,23 @@ bool control_handler_task::run(void *p) {
     //read message_id_queue
     //depending of the message, a function that handles the states will be called
    // printf("control handler running\n");
+<<<<<<< HEAD
     uint8_t tempSensorValues[SIZE_OF_SENSOR_ARRAY] = { 0 };
+=======
+   // uint8_t tempSensorValues[SIZE_OF_SENSOR_ARRAY] = { 0 };
+    int B =  CAN_ST.sensor_data->B;
+    int R =  CAN_ST.sensor_data->R;
+    int M =  CAN_ST.sensor_data->M;
+    int L =  CAN_ST.sensor_data->L;
+>>>>>>> fixed sensor receive issue
 
     if(xQueueReceive(mCANMessage_QueueHandler, &mCAN_MSG_Rx, 0)) {
-           // printf("Handler Received ID: 0x%03" PRIx32 "\n", mCAN_MSG_Rx.msg_id);
+            printf("Handler Received ID: 0x%03" PRIx32 "\n", mCAN_MSG_Rx.msg_id);
 
         //if Android sends a new command, stateCounters will be reset,
 
         switch (mCAN_MSG_Rx.msg_id) {
+<<<<<<< HEAD
             case (uint32_t) ANDROID_COMMANDS_MASTER:
                     printf("ANDROID_COMMANDS_MASTER: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
                     if(mCAN_MSG_Rx.data.bytes[0] != (uint8_t) VALUE_NO_CHANGE) {
@@ -119,13 +128,80 @@ bool control_handler_task::run(void *p) {
                     break;
             case (uint32_t) RC_PARAMS:
                     printf("RC_PARAMS: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
+=======
+//            case (uint32_t) ANDROID_COMMANDS_MASTER:
+//                    printf("ANDROID_COMMANDS_MASTER: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
+//                    if(mCAN_MSG_Rx.data.bytes[0] != (uint8_t) VALUE_NO_CHANGE) {
+//                        //set mManualControlValue
+//                        CAN_ST.setManualControlValue(mCAN_MSG_Rx.data.bytes[0]);
+//                            if((uint8_t)MANUAL_CONTROL_ENABLED == CAN_ST.getManualControlValue())   {
+//                                printf("Manual Control Enabled.\n");
+//                                LOG_INFO("Manual Control Enabled");
+//                            }
+//                            else if(MANUAL_CONTROL_DISABLED == CAN_ST.getManualControlValue()) {
+//                               printf("Manual Control Enabled.\n");
+//                               LOG_DEBUG("Manual Control Enabled");
+//                            }
+//                    }
+//                    else if (mCAN_MSG_Rx.data.bytes[1] != (uint8_t) VALUE_NO_CHANGE)   {
+//                        //set Go Signal
+//                        CAN_ST.setGoSignalValue(mCAN_MSG_Rx.data.bytes[1]);
+//                            if(VALUE_TRUE == CAN_ST.getGoSignalValue()) {
+//                                printf("GO signal set to TRUE\n");
+//                                LOG_DEBUG("GO signal set to TRUE\n");
+//                            }
+//                            else if(VALUE_FALSE == CAN_ST.getGoSignalValue())   {
+//                                printf("Go signal set to FALSE\n");
+//                                LOG_DEBUG("Go signal set to FALSE\n");
+//                            }
+//                    }
+//                    //else if read DATA
+//                    //not yet implemented
+//                    break;
+//            case (uint32_t) RC_PARAMS:
+//                    printf("RC_PARAMS: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
+//                    break;
+//            //sends a request to sensor to read sensor data
+//            case (uint32_t) MASTER_COMMANDS_SENSOR:
+//                    printf("MASTER_COMMANDS_SENSOR: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
+//
+//                    mCAN_MSG_Tx.data.bytes[0] = (uint8_t) READ_SENSOR_DATA;
+//                    xQueueSend(mCANMessage_QueueHandler_Transmit, &mCAN_MSG_Tx, 0);
+//                    break;
+
+            //  0x702                Sensor          [   7   ][  6   ]   5   ][  4   ][ back ][right ][ mid  ][ left ]
+            case (uint32_t) SENSOR_MASTER_REG:
+
+                    //sen_msg_t *p = (sen_msg_t*) & mCAN_MSG_Rx.data.bytes[0];
+                    printf("SENSOR_MASTER_REG: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
+
+                    //store our received data to our sensor_message
+                    //CAN_ST.sensor_data = (sen_msg_t*) & mCAN_MSG_Rx.data.bytes[0];
+                    CAN_ST.sensor_data->L = mCAN_MSG_Rx.data.bytes[0];
+                    CAN_ST.sensor_data->M = mCAN_MSG_Rx.data.bytes[1];
+                    CAN_ST.sensor_data->R = mCAN_MSG_Rx.data.bytes[2];
+                    CAN_ST.sensor_data->B = mCAN_MSG_Rx.data.bytes[3];
+
+
+                    printf("SENSOR VALUES MASTER CONTROL: %d %d %d %d", B, R, M, L);
+//                    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++)     {
+//                        tempSensorValues[i] = mCAN_MSG_Rx.data.bytes[i];
+//                           // global_sensor_value[i] = mSensorValue[i];
+//
+//                        }
+//                    CAN_ST.setSensorValues(tempSensorValues, (int) SIZE_OF_SENSOR_ARRAY);
+>>>>>>> fixed sensor receive issue
                     break;
             //sends a request to sensor to read sensor data
             case (uint32_t) MASTER_COMMANDS_SENSOR:
                     printf("MASTER_COMMANDS_SENSOR: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
                     //copy the message to our tx frame
                     mCAN_MSG_Tx = mCAN_MSG_Rx;
+<<<<<<< HEAD
                     mCAN_MSG_Tx.data.bytes[0] = (uint8_t) READ_SENSOR_DATA;
+=======
+                    printf("SEND TO MOTOR: %2x %2x %2x\n", mCAN_MSG_Tx.data.bytes[2], mCAN_MSG_Tx.data.bytes[1], mCAN_MSG_Tx.data.bytes[0] );
+>>>>>>> fixed sensor receive issue
                     xQueueSend(mCANMessage_QueueHandler_Transmit, &mCAN_MSG_Tx, 0);
                     break;
 

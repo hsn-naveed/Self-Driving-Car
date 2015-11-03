@@ -10,6 +10,8 @@
 #include "can.h"
 #include "shared_handles.h"
 
+#include "iCAN.hpp"
+#include "L4_IO/can_definitions.hpp"
 
 class can_receive : public scheduler_task
 {
@@ -60,13 +62,29 @@ class can_receive : public scheduler_task
                         can_t bus = can1;
                         //uint32_t timeout_ms = portMAX_DELAY;
                         can_fullcan_msg_t msg;
-                        can_fullcan_msg_t* msgPtr = CAN_fullcan_get_entry_ptr(CAN_gen_sid(bus, 0x123));
+                        can_fullcan_msg_t* msgPtr = CAN_fullcan_get_entry_ptr(CAN_gen_sid(bus, (uint16_t)SENSOR_MASTER_REG));
 
+                        can_msg_t raw_msg_tx = { 0 };
+
+                        can_msg_t raw_msg_rx = { 0 };
+//
+//                        if(iCAN_rx(msg, (uint16_t) 0x702)) {
+//                            printf("message received from SENSOR!!!\n");
+//                        }
+
+
+<<<<<<< HEAD
                         //can_msg_t msg_tx = { 0 };
+=======
+>>>>>>> fixed sensor receive issue
 
                          if(CAN_fullcan_read_msg_copy(msgPtr,&msg)){
                              puts("\nReceived!");
+                             raw_msg_rx.msg_id = msg.msg_id;
+                             raw_msg_rx.data = msg.data;
+
                              //pass the received message to the period_callback functions
+<<<<<<< HEAD
                              //xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &msg, 0);
                              vTaskDelay(5000);
                              return true;
@@ -74,14 +92,33 @@ class can_receive : public scheduler_task
                         // else if(xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_transmit), &msg_tx, 0)) {
                                //send data
                          //}
+=======
+                             xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &raw_msg_rx, 0);
+                            // vTaskDelay(5000);
+                             //return true;
+                             }
+>>>>>>> fixed sensor receive issue
 
-                         else{
-                             puts ("\nNo message received!");
-                             return false;
+                             else{
+                                      puts ("\nNo message received!");
+                                      //return false;
+                                  }
+
+                         if(xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_transmit), &raw_msg_tx, 0)) {
+                               //send data
+                             if(iCAN_tx(&raw_msg_tx, (uint32_t) MASTER_COMMANDS_MOTOR))  {
+                                 printf("message sent to motor!\n");
+                             }
                          }
 
 
+<<<<<<< HEAD
+=======
+
+                       //  vTaskDelay(10);
+>>>>>>> fixed sensor receive issue
                 }
 };
+
 
 
