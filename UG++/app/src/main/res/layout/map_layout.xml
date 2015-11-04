@@ -53,5 +53,17 @@
         android:id="@+id/reset_button"
         android:clickable="true"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_toLeftOf="@+id/stop_button"
+        android:layout_toStartOf="@+id/stop_button" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SET"
+        android:id="@+id/set_button"
+        android:clickable="true"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/go_button"
+        android:layout_toEndOf="@+id/go_button" />
+
 </RelativeLayout>
