@@ -3,6 +3,15 @@
 #include "can.h"
 
 
+
+/**
+ * Initializes the CAN bus with FullCAN
+ * @param [in] std_list_arr     Pointer to the array of the standard group id list
+ * @param [in] std_grp_arr      Pointer to the array of the group id list
+ * @returns true if the CAN bus is initialized
+ */
+bool iCAN_init_FULLCAN(const char * std_list_arr, const char * std_grp_arr);
+
 /**
  * Reads a CAN msg located in RAM using Full CAN
  * @param [in] fc1      Pointer to the can_fullcan_msg_t pointer
