@@ -119,6 +119,8 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         RESET.setOnClickListener(this);
         Button GO = (Button) v.findViewById(R.id.go_button);
         GO.setOnClickListener(this);
+        Button SET = (Button) v.findViewById(R.id.set_button);
+        SET.setOnClickListener(this);
 
 
         return v;
@@ -162,6 +164,17 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
                 break;
 
             case R.id.go_button:
+
+                Log.d("SIZE", "" + dirPoints.size());
+
+                for (int i = 0; i < dirPoints.size(); i++)
+                {
+                    Log.d("DIR POINTS:", "LATITUDE: " + dirPoints.get(i).latitude
+                            + ", LONGITUDE" + dirPoints.get(i).longitude);
+                }
+                break;
+
+            case R.id.set_button:
                 LatLng start = new LatLng(cLat, cLong);
                 LatLng end = new LatLng(eLat, eLong);
                 Log.d("GO_BUTTON", "START: " + start.longitude + ", " + start.latitude);
