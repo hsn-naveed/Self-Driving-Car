@@ -37,45 +37,40 @@
 #include "iCAN.hpp"
 #include "can.h"
 #include "Motor_LCD/MotorControl.hpp"
+#include "full_can_api.h"
 
-can_fullcan_msg_t *message_struct;
-mast_mot_msg_t *motor_control_struct;
+#define PWM_FREQ 100
+can_msg_t *message_struct = { 0 };
+//mast_mot_msg_t *motor_control_struct;
 
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
+uint16_t motorMsgId = 0x704;
 
-MotorControl motorObj;
-bool motorInit = false;
+extern MotorControl motorObj;
 
-PWM pwmMotorObj = PWM(PWM::pwm1, 480);
-float counter = 71.3;
-bool motorHasBeenSet = false;
 
 void period_1Hz(void)
 {
-//    if (counter < 100){
-//            //if (!motorHasBeenSet){
-//                pwmMotorObj.set(counter);
-//                motorHasBeenSet = true;
-//            //}
-//
-//            //        counter += 1;
-//            printf("Sent forward speed to motor: %.2f\n", counter);
-//        }
-//        else{
-//            puts("No servo values worked");
-//        }
-//
-//    #if 0
-//        if (!motorInit){
-//            motorObj.initCarMotor();
-//            motorInit = true;
-//            puts("motor has been initialized");
-//        }
-//        motorObj.forward(speedSetting_t.SLOW_SPEED);
-//    #endif
+    if (CAN_is_bus_off(can1)){
+        puts("bus off\n");
+    }
+    //if(iCAN_rx(message_struct, (uint16_t)0x704)){
+//    if(full_can_api ::can_rec(motorMsgId)){
+    if (CAN_rx(can1, message_struct, 0)){
+            motorObj.getCANMessageData(message_struct, motorObj.motor_control_struct);
+            motorObj.convertHexToDutyCycle(motorObj.motor_control_struct);
+        }
+    else{
+        puts("Nothing received from CAN BUS\n");
+    }
+
+
+//    puts("before convertHexFunc\n");
+//    motorObj.convertHexToDutyCycle(motorObj.motor_control_struct);
+//    puts("after convertHexFunc\n");
     LE.toggle(1);
 }
 
@@ -84,16 +79,13 @@ void period_10Hz(void)
 
 
     LE.toggle(2);
-    if(iCAN_rx(message_struct, 0x704)){
-        motorObj.getData(message_struct, motor_control_struct);
 
 
-    }
+
 }
 
 void period_100Hz(void)
 {
-    pwmMotorObj.set(counter);
     LE.toggle(3);
 }
 

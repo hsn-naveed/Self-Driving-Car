@@ -17,37 +17,172 @@
 
 #if Private_Functions
 void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet){
+    int pwmSetDelay = 30;
     currentServoValue = steeringDirectionToSet;
     currentMotorValue = speedToSet;
 
     motorPwm.set(currentMotorValue);
     servoPwm.set(currentServoValue);
+    delay_ms(pwmSetDelay);
 }
 #endif // Private Functions
 
 #if Public_Functions
-MotorControl::MotorControl():
-    motorPwm(PWM(PWM::pwm1, frequency)),
-    servoPwm(PWM(PWM::pwm2, frequency)){
+MotorControl::MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet){
+    puts("Before setting pwm\n");
+
+    motorPwm = motorPwmToSet;
+    servoPwm = servoPwmToSet;
+    puts("after setting pwm\n");
+
     currentMotorValue = speedSetting_t.STOP;
     currentServoValue = steeringDirection_t.STRAIGHT;
 
+    puts("before setting up motor struc\n");
+//    *motor_control_struct = {0};
+//    motor_control_struct->FRS = 0xFF;
+//    motor_control_struct->LR = 0x80;
+//    motor_control_struct->SPD = 0x11;
+
+    puts("before setting up motor struc\n");
+
 #if MOTOR_INIT_NEEDED
-    motorHasBeenInitialized = false;
+    escHasBeenInitialized = false;
 #endif
+}
+
+MotorControl::MotorControl(){
+
 }
 
 #if MOTOR_INIT_NEEDED
 void MotorControl::initCarMotor(){
-    if (motorHasBeenInitialized == false){
-            float startingSpeed = speedSetting_t.SLOW_SPEED - 1.3;
+    puts("Set throttle to neutral\n");
+    motorPwm.set(15);
+    delay_ms(2000);
 
-            for (int i = 0; i < 3; i++){
-                MotorControl::forward(startingSpeed);
-                MotorControl::forward(startingSpeed);
-                delay_ms(100);
-            }
+    puts("------Initializing PWM/ESC-------");
+    puts("Will begin count down for programming ESC!\n");
+
+    // Delay for 3 seconds to decide on setting up the ESC
+    int countDown = 3;
+    while (countDown > 0){
+        puts("Ready to program ESC\n\n");
+
+        if (escHasBeenInitialized == false && SW.getSwitch(4) == true){
+            puts("----ESC PROGRAMMING MODE-----\n\n");
+            LE.on(4);
+            do {
+                puts("Checking for programming switches\n");
+                if (SW.getSwitch(1) == 1)
+                {
+                    puts("\nSwitch 1 pressed, setting forward throttle\n");
+                    LE.on(1);
+//                    delay_ms(500);
+
+                    motorPwm.set(15);
+                    delay_ms(500);
+                    motorPwm.set(16);
+                    delay_ms(500);
+                    motorPwm.set(17);
+                    delay_ms(500);
+                    motorPwm.set(18);
+                    delay_ms(500);
+                    motorPwm.set(19);
+                    delay_ms(500);
+                    motorPwm.set(20);
+                    delay_ms(500);
+
+
+                    LE.off(1);
+                }
+
+                //delay_ms(2000);
+
+                if (SW.getSwitch(2) == 1)
+                {
+                    puts("\nSwitch 2 pressed, setting reverse throttle\n");
+                    LE.on(2);
+//                    delay_ms(500);
+
+                    motorPwm.set(15);
+                    delay_ms(500);
+                    motorPwm.set(14);
+                    delay_ms(500);
+                    motorPwm.set(13);
+                    delay_ms(500);
+                    motorPwm.set(12);
+                    delay_ms(500);
+                    motorPwm.set(11);
+                    delay_ms(500);
+                    motorPwm.set(10);
+                    delay_ms(500);
+
+                    motorPwm.set(15);
+                    delay_ms(2000);
+                    LE.off(2);
+
+                    puts("\nESC has been programmed\n!");
+                    escHasBeenInitialized = true;
+                }
+            } while(escHasBeenInitialized == false);
+            puts("---------EXITING ESC PROGRAMMING MODE------\nn");
+            LE.off(4);  // End programming ESC mode
+
+//            if(escHasBeenInitialized){
+//                            while (1)
+//                                {
+//                                delay_ms(1000);
+//                                motorPwm.set(15);
+//                                    delay_ms(500);
+//
+//                                    motorPwm.set(15.5);
+//                                    delay_ms(1000);
+//
+//                                    motorPwm.set(16);
+//                                    delay_ms(1500);
+//
+//                                    motorPwm.set(16.5);
+//                                    delay_ms(1500);
+//
+//                                    motorPwm.set(16);
+//                                    delay_ms(1500);
+//
+//                                    motorPwm.set(15.5);
+//                                    delay_ms(1000);
+//
+//                                    delay_ms(500);
+//
+//                                    motorPwm.set(14.8);
+//                                    delay_ms(500);
+//
+//                                    motorPwm.set(14.5);
+//                                    delay_ms(1000);
+//
+//                                    motorPwm.set(14);
+//                                    delay_ms(1500);
+//
+//                                    motorPwm.set(13.5);
+//                                    delay_ms(1500);
+//
+//                                    motorPwm.set(14);
+//                                    delay_ms(1500);
+//
+//                                    motorPwm.set(14.5);
+//                                    delay_ms(1000);
+//
+//                                    motorPwm.set(14.8);
+//                                    delay_ms(500);
+//
+//                                    delay_ms(500);
+//                                }
+//            }
+        }
+        countDown--;
+        delay_ms(1000);
     }
+
+    puts("ESC assumed to be working!\n");
 }
 #endif
 
@@ -67,7 +202,7 @@ void MotorControl::back(float speedToSet){
     printf("----Moving Backward-------\n");
 
     if (speedToSet != speedSetting_t.BACK_SPEED){
-     // Should never get here
+        // Should never get here
         while(1){
             printf("BACK SPEED NOT SET CORRECTLY");
             LE.on(1);
@@ -97,10 +232,21 @@ void MotorControl::steerRight(float amountToSteer){
 #endif // Public Functions
 
 
-void MotorControl::getData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct)
+void MotorControl::getCANMessageData(can_msg_t *fc1, mast_mot_msg_t *motorControlStruct)
 {
-    motorControlStruct->FRS = fc1->data.bytes[0];
-    motorControlStruct->LR =  fc1->data.bytes[1];
-    motorControlStruct->SPD = fc1->data.bytes[2];
+    if (fc1 != NULL){
+        motorControlStruct->FRS = fc1->data.bytes[0];
+        motorControlStruct->LR =  fc1->data.bytes[1];
+        motorControlStruct->SPD = fc1->data.bytes[2];
+        puts("--------Received data from CAN Message--------------\n");
+    }
 }
 
+void MotorControl::convertHexToDutyCycle(mast_mot_msg_t *hexMotorControl){
+
+    if (hexMotorControl->FRS == 0xFF){
+        puts("In the convertHexToDutyCycle sending forward at slow speed\n");
+        forward(speedSetting_t.SLOW_SPEED);
+        currentMotorValue = speedSetting_t.SLOW_SPEED;
+    }
+}

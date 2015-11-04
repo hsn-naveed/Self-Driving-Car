@@ -25,17 +25,17 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
-//#include "MotorControl.hpp"
 #include "lpc_pwm.hpp"
 #include "io.hpp"
-#include "utilities.h"
 #include "stdio.h"
 #include "Motor_LCD/MotorControl.hpp"
 #include <utilities.h>
-
 #include "full_can.cpp"
 #include "CAN_structs.h"
 #include "iCAN.hpp"
+#include "periodic_scheduler/periodic_callback.h"
+#include "full_can_api.h"
+
 
 
 /**
@@ -53,29 +53,21 @@
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
 
+
+MotorControl motorObj;
 int main(void)
 {
-    int frequency = 480;
-    PWM carMotor = PWM(PWM::pwm1, frequency);
+    PWM motorPWM = PWM(PWM::pwm2, MOTOR_PWM_FREQ);
+    PWM servoPWM = PWM(PWM::pwm1, SERVO_PWM_FREQ);
 
-      float motorDutyCycle = 76.7;
-      while(1){
-          carMotor.set(motorDutyCycle);
-              delay_ms(100);
-              printf("----MOVING FORWARD-------\n");
-              printf("Set to %.2f\n", motorDutyCycle);
-          }
+    full_can_api :: bus_init();
 
-#if 0
-    int frequency = 480;
-    PWM pwmMotorObj = PWM(PWM::pwm1, frequency);
-    float dutyCycle = 76.7;
-    while(1){
-        pwmMotorObj.set(dutyCycle);
-        delay_ms(1000);
-        printf("Set to %.2f\n", dutyCycle);
-    }
-#endif
+    motorObj = new MotorControl(motorPWM, servoPWM);
+//    MotorControl *tempMotorObj = new MotorControl(motorPWM, servoPWM);
+//
+//    motorObj = tempMotorObj;
+
+    motorObj.initCarMotor();
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
@@ -86,20 +78,9 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
-PWM servo(PWM::pwm2 , 50);
-PWM motor(PWM::pwm1, 500);
-    delay_ms(100);
-    //for (float i = 0; i < 2; i += 0.1)
-  // {
-    float i = 0.08;
-        servo.set(i);
-        printf("Servo set to: %f\n", i);
-        motor.set(57.0);
-        delay_ms(10000);
-   // }
 
 
-//scheduler_add_task(new can_receive(PRIORITY_HIGH)); //CAN Bus task
+    //scheduler_add_task(new can_receive(PRIORITY_HIGH)); //CAN Bus task
 
 
 #if 0
@@ -107,9 +88,10 @@ PWM motor(PWM::pwm1, 500);
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+#endif
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-#if 0
+#if 1
     scheduler_add_task(new periodicSchedulerTask());
 #endif
 
@@ -173,8 +155,8 @@ PWM motor(PWM::pwm1, 500);
     u3.init(WIFI_BAUD_RATE, WIFI_RXQ_SIZE, WIFI_TXQ_SIZE);
     scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
 #endif
-#endif
-    scheduler_start(); ///< This shouldn't return
+
+        scheduler_start(); ///< This shouldn't return
 
     return -1;
 }

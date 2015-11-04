@@ -18,18 +18,19 @@
 #include "can.h"
 #include "utilities.h"
 #include "CAN_structs.h"
-#define INIT_HZ 500
-#define MOTOR_INIT_NEEDED 0
+#define MOTOR_PWM_FREQ 100
+#define SERVO_PWM_FREQ 50
+#define MOTOR_INIT_NEEDED 1
 
 
 struct{
-        float SLOW_SPEED = 57.0;
-        float MEDIUM_SPEED = 70.0;
-        float FAST_SPEED = 90.0;
+        float SLOW_SPEED = 16;
+        float MEDIUM_SPEED = 16.5;
+        float FAST_SPEED = 18;
         float NO_CHANGE = 1.0;
-        float BACK_SPEED = 57.0;
-        float MAX_SPEED = 96;
-        float STOP = 0;
+        float BACK_SPEED = 14;
+        float MAX_SPEED = 20;
+        float STOP = 15;
 } speedSetting_t;
 
 struct{
@@ -40,20 +41,31 @@ struct{
 
 class MotorControl{
     private:
-        int frequency = INIT_HZ;
+        PWM motorPwm;
+        PWM servoPwm;
+
         float currentMotorValue;
         float currentServoValue;
 
         void setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet);
 
         #if MOTOR_INIT_NEEDED
-        bool motorHasBeenInitialized;
+        bool escHasBeenInitialized;
         #endif
     public:
-        PWM motorPwm;
-        PWM servoPwm;
+        mast_mot_msg_t *motor_control_struct;
 
+        MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet);
         MotorControl();
+
+        MotorControl operator=( MotorControl *obj){
+            this->motorPwm = obj->motorPwm;
+            this->servoPwm = obj->servoPwm;
+            this->currentMotorValue = obj->currentMotorValue;
+            this->currentServoValue = obj->currentServoValue;
+            this->motor_control_struct = obj->motor_control_struct;
+            this->escHasBeenInitialized = obj->escHasBeenInitialized;
+        }
 
         #if MOTOR_INIT_NEEDED
         // In case motor needs to be pulsed to get going prior to starting
@@ -65,7 +77,8 @@ class MotorControl{
         void forward(float speedToSet);
         void back(float speedToSet);
 
-        void getData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct);
+        void getCANMessageData(can_msg_t *fc1, mast_mot_msg_t *motorControlStruct);
+        void convertHexToDutyCycle(mast_mot_msg_t *hexMotorControl);
         #endif
 
         #if 1   // Servo Steering Functions
