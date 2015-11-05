@@ -67,8 +67,8 @@ typedef struct {
 
 // MSG ID: 0x###
 typedef struct {
-    uint64_t x_coordinate : 8;
-    uint64_t y_coordinate : 8;
+    uint64_t x_coordinate : 32;
+    uint64_t y_coordinate : 32;
 } gps_coordinate_msg_t;
 
 #endif /* L5_APPLICATION_CAN_STRUCTS_H_ */
