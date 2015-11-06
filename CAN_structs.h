@@ -42,6 +42,9 @@
  *
  */
 
+#define baudRate 100;
+#define queueSize 16;
+
 //sensor values
 typedef struct  {
         uint64_t L : 8;
@@ -70,5 +73,9 @@ typedef struct {
     uint64_t x_coordinate : 32;
     uint64_t y_coordinate : 32;
 } gps_coordinate_msg_t;
+
+typedef enum{
+    GPSqueue
+}sharedQueue;
 
 #endif /* L5_APPLICATION_CAN_STRUCTS_H_ */
