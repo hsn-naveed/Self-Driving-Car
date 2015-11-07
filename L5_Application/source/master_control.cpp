@@ -137,6 +137,29 @@ bool control_handler_task::run(void *p) {
 
                     //store our received data to our sensor_message
                     //CAN_ST.sensor_data = (sen_msg_t*) & mCAN_MSG_Rx.data.bytes[0];
+
+                    /**
+                     * pARSING TASK
+                     *      can_msg_t   sensor_msg;
+                     *      can_msg_t   geo_msg;
+                     *
+                     *     This task will just copy the incoming message into appropriate can_msg_t
+                     *
+                     *     portDISABLE_INTERRUPTS();
+                     *     sensor_msg = mCAN_MSG_Rx;
+                     *     portENABLE_INTERRPTS();
+                     *
+                     * On the reader side:
+                     *      disable_ints();
+                     *      can_msg_t sensor_msg = THIS_CLASS::sensor_msg;
+                     *      enable_ints();
+                     *
+                     *      sensor_msg_ptr = (sensor_msg_ptr) * sensor_msg;
+                     *
+                     *      If a message never arrives, you can basically do this:
+                     *      sensor_msg = sensor_msg_safe_copy;
+                     *
+                     */
                     CAN_ST.sensor_data->L = mCAN_MSG_Rx.data.bytes[0];
                     CAN_ST.sensor_data->M = mCAN_MSG_Rx.data.bytes[1];
                     CAN_ST.sensor_data->R = mCAN_MSG_Rx.data.bytes[2];

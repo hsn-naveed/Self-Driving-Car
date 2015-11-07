@@ -14,13 +14,14 @@
 #include <243_can/iCAN.hpp>
 #include "L4_IO/can_definitions.hpp"
 
-class can_receive : public scheduler_task
+
+/*class can_receive : public scheduler_task
 {
     public:
         can_receive(uint8_t priority) :
             scheduler_task("canBUS", 2048, priority)
         {
-            /* Nothing to init */
+           //  Nothing to init
         }
         bool init(){
             can_t bus = can1;
@@ -65,8 +66,8 @@ class can_receive : public scheduler_task
                         can_t bus = can1;
                         //uint32_t timeout_ms = portMAX_DELAY;
                         can_fullcan_msg_t msg;
-                        can_fullcan_msg_t* msgPtr = CAN_fullcan_get_entry_ptr(CAN_gen_sid(bus, (uint16_t)SENSOR_MASTER_REG));
-
+                       // can_fullcan_msg_t* msgPtr = CAN_fullcan_get_entry_ptr(CAN_gen_sid(bus, (uint16_t)SENSOR_MASTER_REG));
+                        can_fullcan_msg_t* msgPtr = CAN_fullcan_get_entry_ptr(CAN_gen_sid(bus, (uint16_t)MASTER_COMMANDS_MOTOR));
                         can_msg_t raw_msg_tx = { 0 };
 
                         can_msg_t raw_msg_rx = { 0 };
@@ -81,7 +82,9 @@ class can_receive : public scheduler_task
                              puts("\nReceived!");
                              raw_msg_rx.msg_id = msg.msg_id;
                              raw_msg_rx.data = msg.data;
-
+                             if(raw_msg_rx.msg_id == (uint32_t) 0x704)  {
+                                 printf("HEEEELLLLOOOO!!!!!!!\n");
+                             }
                              //pass the received message to the period_callback functions
                              xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &raw_msg_rx, 0);
                             // vTaskDelay(5000);
@@ -95,16 +98,94 @@ class can_receive : public scheduler_task
 
                          if(xQueueReceive(scheduler_task::getSharedObject(shared_CAN_message_queue_transmit), &raw_msg_tx, 0)) {
                                //send data
-                             if(iCAN_tx(&raw_msg_tx, (uint32_t) MASTER_COMMANDS_MOTOR))  {
-                                 printf("message sent to motor!\n");
-                             }
+                            // if(iCAN_tx(&raw_msg_tx, (uint32_t) MASTER_COMMANDS_MOTOR))  {
+                            //     printf("message sent to motor!\n");
+                            // }
                          }
 
 
 
                        //  vTaskDelay(10);
                 }
+};*/
+
+
+
+
+
+///////////////////////////////////////////////////////////
+
+
+class CAN_Handler_Rx : public scheduler_task {
+    private:
+        SemaphoreHandle_t mCAN_SemaphoreSignal_Rx =  xSemaphoreCreateBinary();
+        can_msg_t mMessageReceive;
+
+        uint32_t sourceId = 0x422;
+
+    public:
+        CAN_Handler_Rx(uint8_t priority) : scheduler_task("CAN_Handler_Rx", 2048, priority)   {
+
+            addSharedObject(shared_CAN_Semaphore_Rx, mCAN_SemaphoreSignal_Rx);
+
+        }
+
+        bool init(void) {
+
+            //initialize CAN interface
+            CAN_init(can_t::can1, 100, 16, 16, NULL, NULL);
+
+           CAN_bypass_filter_accept_all_msgs();
+
+           //needs to be reset before we can use the CAN bus
+            CAN_reset_bus(can_t::can1);
+
+            return true;
+        }
+
+        bool run(void* p)   {
+            mMessageReceive.msg_id = 0;
+
+           // if(xSemaphoreTake(mCAN_SemaphoreSignal_Rx, 1))   {
+
+                if(CAN_is_bus_off(can_t::can1)) {
+                                  CAN_reset_bus(can_t::can1);
+                                  printf("NOT CONNECTED IN THE CAN BUS! RESETTING...\n");
+                             }
+                else    {
+
+                    CAN_rx(can_t::can1, &mMessageReceive, 1);
+                   // printf("message_id: %" PRIu32 "\n", mMessageReceive.msg_id);
+                    if((uint32_t) 0x704 == mMessageReceive.msg_id){
+                        printf("HHHEEEEEEEELLLLOOOO!!!!!\n");
+                    }
+                    printf("received: %i\n", (uint8_t)mMessageReceive.data.qword);
+                   // LE.setAll((uint8_t)mMessageReceive.data.qword);
+
+                }
+
+
+
+          //  }
+
+
+
+            vTaskDelay(100);
+            printf("Rx scheduler called.\n");
+
+            return true;
+       }
+
+
 };
+
+
+////////////////////////////////////////////////////////////////
+
+
+
+
+
 
 
 
