@@ -24,7 +24,7 @@
  *
  */
 #include <full_can.cpp>
-#include <iCAN-temp.hpp>
+#include <243_can/iCAN.hpp>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "io.hpp"
@@ -41,109 +41,112 @@
 #include "master_control.hpp"
 
 
-/*
-
-class CAN_Handler_Tx : public scheduler_task {
-    private:
-
-        QueueHandle_t mCAN_QueueHandler = xQueueCreate(1, sizeof(int));
-
-    public:
-        CAN_Handler_Tx(uint8_t priority) : scheduler_task("CAN_Handler_Tx", 2048, priority)   {
-
-        }
-
-        bool init(void) {
 
 
-            addSharedObject(shared_LEDSignalForCAN, mCAN_QueueHandler);
-            mCAN_QueueHandler = getSharedObject(shared_LEDSignalForCAN);
+//class CAN_Handler_Tx : public scheduler_task {
+//    private:
+//
+//        QueueHandle_t mCAN_QueueHandler = xQueueCreate(1, sizeof(int));
+//
+//    public:
+//        CAN_Handler_Tx(uint8_t priority) : scheduler_task("CAN_Handler_Tx", 2048, priority)   {
+//
+//        }
+//
+//        bool init(void) {
+//
+//
+//            addSharedObject(shared_LEDSignalForCAN, mCAN_QueueHandler);
+//            mCAN_QueueHandler = getSharedObject(shared_LEDSignalForCAN);
+//
+//           // SW.init();
+//
+//
+//            return true;
+//        }
+//
+//        bool run(void* p)   {
+//
+//           // char msg_sw;
+//            int msg_sw;
+//            can_msg_t msg;
+//            msg.msg_id = 0x414;
+//            msg.frame_fields.is_29bit = 1;
+//            msg.frame_fields.data_len = 8;       // Send 8 bytes
+//
+//            if (xQueueReceive(mCAN_QueueHandler, &msg_sw, 1))  {
+//                msg.data.qword =  msg_sw;
+//                CAN_tx(can_t::can1, &msg, 1);
+//               // printf("CAN message sent: %i!!!\n", msg_sw);
+//            }
+//            //printf("exited tx\n");
+//
+//           return true;
+//        }
+//
+//};
+//
+//
+//class CAN_Handler_Rx : public scheduler_task {
+//    private:
+//        SemaphoreHandle_t mCAN_SemaphoreSignal_Rx =  xSemaphoreCreateBinary();
+//        can_msg_t mMessageReceive;
+//
+//        uint32_t sourceId = 0x422;
+//
+//    public:
+//        CAN_Handler_Rx(uint8_t priority) : scheduler_task("CAN_Handler_Rx", 2048, priority)   {
+//
+//            addSharedObject(shared_CAN_Semaphore_Rx, mCAN_SemaphoreSignal_Rx);
+//
+//        }
+//
+//        bool init(void) {
+//
+//            //initialize CAN interface
+//            CAN_init(can_t::can1, 100, 16, 16, NULL, NULL);
+//
+//           CAN_bypass_filter_accept_all_msgs();
+//
+//           //needs to be reset before we can use the CAN bus
+//            CAN_reset_bus(can_t::can1);
+//
+//            return true;
+//        }
+//
+//        bool run(void* p)   {
+//
+//
+//            if(xSemaphoreTake(mCAN_SemaphoreSignal_Rx, 1))   {
+//
+//                if(CAN_is_bus_off(can_t::can1)) {
+//                                  CAN_reset_bus(can_t::can1);
+//                                  printf("NOT CONNECTED IN THE CAN BUS! RESETTING...\n");
+//                             }
+//                else    {
+//
+//                    CAN_rx(can_t::can1, &mMessageReceive, 1);
+//                    printf("message_id: %" PRIu32 "\n", mMessageReceive.msg_id);
+//                    if((uint32_t) 0x704 == mMessageReceive.msg_id){
+//                        printf("HHHEEEEEEEELLLLOOOO!!!!!\n");
+//                    }
+//                    printf("received: %i\n", (uint8_t)mMessageReceive.data.qword);
+//                    LE.setAll((uint8_t)mMessageReceive.data.qword);
+//
+//                }
+//
+//
+//
+//            }
+//            vTaskDelay(100);
+//            printf("Rx scheduler called.\n");
+//
+//            return true;
+//        }
+//
+//
+//};
 
-            SW.init();
-
-
-            return true;
-        }
-
-        bool run(void* p)   {
-
-           // char msg_sw;
-            int msg_sw;
-            can_msg_t msg;
-            msg.msg_id = 0x414;
-            msg.frame_fields.is_29bit = 1;
-            msg.frame_fields.data_len = 8;       // Send 8 bytes
-
-            if (xQueueReceive(mCAN_QueueHandler, &msg_sw, 1))  {
-                msg.data.qword =  msg_sw;
-                CAN_tx(can_t::can1, &msg, 1);
-                printf("CAN message sent: %i!!!\n", msg_sw);
-            }
-            printf("exited tx\n");
-
-           return true;
-        }
-
-};
-
-
-class CAN_Handler_Rx : public scheduler_task {
-    private:
-        SemaphoreHandle_t mCAN_SemaphoreSignal_Rx =  xSemaphoreCreateBinary();
-        can_msg_t mMessageReceive;
-
-        uint32_t sourceId = 0x422;
-
-    public:
-        CAN_Handler_Rx(uint8_t priority) : scheduler_task("CAN_Handler_Rx", 2048, priority)   {
-
-            addSharedObject(shared_CAN_Semaphore_Rx, mCAN_SemaphoreSignal_Rx);
-
-        }
-
-        bool init(void) {
-
-            //initialize CAN interface
-            CAN_init(can_t::can1, 100, 16, 16, NULL, NULL);
-
-           CAN_bypass_filter_accept_all_msgs();
-
-           //needs to be reset before we can use the CAN bus
-            CAN_reset_bus(can_t::can1);
-
-            return true;
-        }
-
-        bool run(void* p)   {
-
-
-            if(xSemaphoreTake(mCAN_SemaphoreSignal_Rx, 1))   {
-
-                if(CAN_is_bus_off(can_t::can1)) {
-                                  CAN_reset_bus(can_t::can1);
-                                  printf("NOT CONNECTED IN THE CAN BUS! RESETTING...\n");
-                             }
-                else    {
-
-                    CAN_rx(can_t::can1, &mMessageReceive, 1);
-                    printf("message_id: %" PRIu32 "\n", mMessageReceive.msg_id);
-
-                    printf("received: %i\n", (uint8_t)mMessageReceive.data.qword);
-                    LE.setAll((uint8_t)mMessageReceive.data.qword);
-
-                }
-
-
-
-            }
-            printf("Rx scheduler called.\n");
-
-            return true;
-        }
-
-
-};
-*/
 
 
 
@@ -188,7 +191,7 @@ int main(void)
 
     /*Add scheduler for our CAN task */
     //scheduler_add_task(new CAN_Handler_Tx(5));
-    //scheduler_add_task(new CAN_Handler_Rx(5));
+    scheduler_add_task(new CAN_Handler_Rx(5));
 
     //master control task
    // scheduler_add_task(new control_handler_task(5));
@@ -259,7 +262,7 @@ int main(void)
     u3.init(WIFI_BAUD_RATE, WIFI_RXQ_SIZE, WIFI_TXQ_SIZE);
     scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
 #endif
-    scheduler_add_task(new can_receive(PRIORITY_MEDIUM));
+   // scheduler_add_task(new can_receive(PRIORITY_MEDIUM));
     scheduler_start(); ///< This shouldn't return
     return -1;
 }
