@@ -11,13 +11,9 @@
 #include <stdio.h>
 #include"io.hpp"
 #include "lpc_sys.h"
-
-
 #include"gpio.hpp"
 #include "243_can/CAN_structs.h"
-//#include"iCAN.hpp"
 #include"utilities.h" //delay lib
-
 #include <L3_Utils/singleton_template.hpp>
 #include <243_can/CAN_structs.h>
 #include "can.h"
@@ -27,6 +23,7 @@
 class sensor : public SingletonTemplate <sensor>
 {
 public:
+        //define the cariables here as static then in sensor.cpp
         static int Left_trig_time,Middle_trig_time,Right_trig_time,Rear_trig_time;
 
         static int left_dist,
@@ -59,9 +56,14 @@ public:
 
         //void print(void);
 
-private:
+    private:
         sensor();
-     //   ~sensor();
+        ~sensor();
+//declare the GPIO here, define the port values in the sensor .cpp
+        static GPIO Left_en;   // left
+        static GPIO Middle_en; // Middle
+        static GPIO Right_en; // Right
+        static GPIO Rear_en;
 
         friend class SingletonTemplate<sensor>;  ///< Friend class used for Singleton Template
 
@@ -69,10 +71,6 @@ private:
 
 
 //Sonar enable pins init , pull up for >20uS to start ranging
-GPIO Left_en(P2_7);   // left
-GPIO Middle_en(P2_6); // Middle
-GPIO Right_en(P0_30); // Right
-GPIO Rear_en(P0_29);  // Rear
 
 
 #endif /* SENSOR_HPP_ */

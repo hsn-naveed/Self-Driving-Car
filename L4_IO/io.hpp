@@ -36,7 +36,7 @@
 #include "light_sensor.hpp"
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
-
+#include "L5_Application/sensor.hpp"
 
 /**
  * @{ Short-hand notation of getting to the on-board IO Devices
@@ -51,6 +51,6 @@
 #define SW      Switches::getInstance()            ///< 4 On-board Switches
 /** @} */
 
-
+#define SonarSensor sensor::getInstance()
 
 #endif /* IO_SHORTCUTS_HPP_ */

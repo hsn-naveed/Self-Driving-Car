@@ -17,7 +17,6 @@ class can_receive : public scheduler_task
 {
     private :
 
-
         QueueHandle_t canMessage =xQueueCreate(1,sizeof(can_msg_t));//added
 
     public:

@@ -7,9 +7,6 @@
 #include"sensor.hpp"
 #include "shared_handles.h"
 
-
-
-
 /// This is the stack size used for each of the period tasks
 
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -30,10 +27,10 @@ void period_10Hz(void)
 
     SonarSensor.Range_left();
 
-      xSemaphoreTake(SonarSensor.middle_sem, portMAX_DELAY);
+    xSemaphoreTake(SonarSensor.middle_sem, portMAX_DELAY);
     SonarSensor.Range_middle();
 
-     xSemaphoreTake(SonarSensor.right_sem, portMAX_DELAY);
+    xSemaphoreTake(SonarSensor.right_sem, portMAX_DELAY);
 
       SonarSensor.Range_right();
 
@@ -45,7 +42,6 @@ void period_10Hz(void)
       delay_ms(100);
 
   //  LE.toggle(2);
-
 
 
 #if hw4LightSensor
