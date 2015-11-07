@@ -41,7 +41,7 @@ bool iCAN_init_FULLCAN(const char * std_list_arr, const char * std_grp_arr, uint
         return true;
     }
     else {
-        puts("\nFailed to Initialize");
+      //  puts("\nFailed to Initialize");
         return false;
     }
 }
