@@ -39,58 +39,27 @@
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
-
-// Homework 4 Filtered Light Sensor
-#define hw4LightSensor 1
-int filteredLightSensorValue = 0;
-int sumOfLightSensorValues = 0;
-int counterOfLightSensorValues = 0;
-
-
-void averageOfLightSensor(){
-    sumOfLightSensorValues += LS.getPercentValue();
-
-    counterOfLightSensorValues++;
-
-    if (counterOfLightSensorValues == 10){
-        filteredLightSensorValue = sumOfLightSensorValues/counterOfLightSensorValues;
-
-        LOG_INFO("\nCounter has reached 10!\n\n");
-    }
-    else{
-        LOG_INFO("Counter not at 10 yet\n");
-        filteredLightSensorValue = -1;
-    }
+/// Called once before the RTOS is started, this is a good place to initialize things once
+bool period_init(void)
+{
+    return true; // Must return true upon success
 }
 
-void printFilteredLightSensorValue(){
-    if (counterOfLightSensorValues == 10){
-        printf("Filtered Light Sensor value = %i\n", filteredLightSensorValue);
-
-        sumOfLightSensorValues = 0;
-        counterOfLightSensorValues = 0;
-    }
-    else{
-        LOG_INFO("Counter is not equal to 10 after 10 cycles of 10Hz func calls\n");
-    }
+/// Register any telemetry variables
+bool period_reg_tlm(void)
+{
+    // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+    return true; // Must return true upon success
 }
 
 void period_1Hz(void)
 {
     LE.toggle(1);
-
-#if hw4LightSensor
-    printFilteredLightSensorValue();
-#endif
 }
 
 void period_10Hz(void)
 {
     LE.toggle(2);
-
-#if hw4LightSensor
-    averageOfLightSensor();
-#endif
 }
 
 void period_100Hz(void)
