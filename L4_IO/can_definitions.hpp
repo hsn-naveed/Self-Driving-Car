@@ -52,47 +52,5 @@
 //#define HEARBEAT_VALUES 0x4D0
 
 
-//Sensor
-#define SENSOR_MASTER_REG 0x702
-
-//for left and right sensors
-#define MINIMUM_SENSOR_VALUE 15
-
-//fot middle and back sensors
-#define MINIMUM_SENSOR_BLOCKED_VALUE 10
-
-//Motor
-#define MASTER_COMMANDS_MOTOR 0x704
-
-#define COMMAND_MOTOR_FORWARD 0xFF
-#define COMMAND_MOTOR_REVERSE 0x55
-#define COMMAND_MOTOR_STOP 0x11
- //0xFF = FAST, 0x80 = MEDIUM, 0x11 = SLOW
-#define COMMAND_MOTOR_FAST 0xFF
-#define COMMAND_MOTOR_MEDIUM 0x80
-#define COMMAND_MOTOR_SLOW 0x11
-
-#define COMMAND_MOTOR_LEFT 0x00
-#define COMMAND_MOTOR_RIGHT 0xFF
-#define COMMAND_MOTOR_STRAIGHT 0x80
-
-#define VALUE_TRUE 0xFF
-#define VALUE_FALSE 0x11
-#define VALUE_NO_CHANGE 0x00
-
-
-//Android
-#define MANUAL_CONTROL_ENABLED 0xFF
-#define MANUAL_CONTROL_DISABLED 0x11
-
-#define SIZE_OF_SENSOR_ARRAY 4
-#define READ_SENSOR_DATA 0x01
-
-
-//Sensor
-#define LEFT_SENSOR 0
-#define MIDDLE_SENSOR 1
-#define RIGHT_SENSOR 2
-#define BACK_SENSOR 3
 
 #endif /* L4_IO_CAN_DEFINITIONS_HPP_ */

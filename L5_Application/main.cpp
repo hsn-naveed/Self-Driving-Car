@@ -169,6 +169,32 @@
  */
 int main(void)
 {
+
+    /**
+     * Initializes the CAN bus with FullCAN
+     * Assumes you are using can1
+     * @param [in] std_list_arr     Pointer to the array of the standard group id list
+     *                              array should be of type uint16_t
+     * @param [in] arraySize        Size of array. Use (sizeof(std_list_arr) / sizeof(*std_list_arr))
+     * @returns true if the CAN bus is initialized
+     * @code
+     *     uint16_t accepted_msg_ids[] = {0x100, 0x102, 0x104, 0x200};
+     *     iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids) / sizeof(*accepted_msg_ids);
+     * @endcode
+     */
+
+    uint16_t accepted_msg_ids[] = {SENSOR_MASTER_REG, MASTER_COMMANDS_MOTOR};
+    iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids) / sizeof(*accepted_msg_ids));
+
+    //initialize our switches, LE, and CAN_ST
+    //initialize switches
+        SW.init();
+
+        //initialize LD display
+        LD.init();
+
+        CAN_ST.init();
+
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
@@ -186,10 +212,10 @@ int main(void)
 
     /*Add scheduler for our CAN task */
     //scheduler_add_task(new CAN_Handler_Tx(5));
-    scheduler_add_task(new CAN_Handler_Rx(5));
+   // scheduler_add_task(new CAN_Handler_Rx(5));
 
     //master control task
-    scheduler_add_task(new control_handler_task(5));
+    //scheduler_add_task(new control_handler_task(5));
 
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
