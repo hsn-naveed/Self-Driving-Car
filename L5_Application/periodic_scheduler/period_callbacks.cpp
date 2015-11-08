@@ -85,8 +85,9 @@ void period_1Hz(void)
 
     Range_left();
 
+    Range_middle();
 
-    delay_ms(100);
+  //  delay_ms(100);
 
 
 //    LE.toggle(1);
