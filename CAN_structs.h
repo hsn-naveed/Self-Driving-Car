@@ -42,9 +42,68 @@
  *
  */
 
-#define baudRate 100;
-#define queueSize 16;
 
+//****************MESSAGE IDS*****************//
+#define SENSOR_MASTER_REG 0x702
+#define MASTER_COMMANDS_MOTOR 0x704
+
+//****************end MESSAGE IDS*****************//
+
+//**************MOTOR COMMANDS****************//
+//FRS
+#define COMMAND_FORWARD 0xFF
+#define COMMAND_REVERSE 0x55
+#define COMMAND_STOP 0x11
+
+//SPD
+#define COMMAND_FAST 0xFF
+#define COMMAND_MEDIUM 0x80
+#define COMMAND_SLOW 0x11
+
+//LR
+#define COMMAND_LEFT 0x00
+#define COMMAND_RIGHT 0xFF
+#define COMMAND_STRAIGHT 0x80
+//************end MOTOR COMMANDS********//
+
+//MISC
+#define VALUE_TRUE 0xFF
+#define VALUE_FALSE 0x11
+#define VALUE_NO_CHANGE 0x00
+
+
+
+//************Android******************//
+
+//************end Android**************//
+
+
+//************Sensor******************//
+#define LEFT_SENSOR 0
+#define MIDDLE_SENSOR 1
+#define RIGHT_SENSOR 2
+#define BACK_SENSOR 3
+
+
+
+//for left and right sensors
+#define MINIMUM_SENSOR_VALUE 15
+
+//for middle and back sensors
+#define MINIMUM_SENSOR_BLOCKED_VALUE 10
+//************end Sensor******************//
+
+
+
+#define BAUD_RATE 100
+#define QUEUE_SIZE 16
+
+
+
+
+
+
+//*********************TYPEDEF STRUCTS*********************//
 //sensor values
 typedef struct  {
         uint64_t L : 8;
@@ -77,5 +136,7 @@ typedef struct {
 typedef enum{
     GPSqueue
 }sharedQueue;
+
+//*********************end TYPEDEF STRUCTS*********************//
 
 #endif /* L5_APPLICATION_CAN_STRUCTS_H_ */

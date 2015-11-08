@@ -46,16 +46,16 @@ bool iCAN_init_FULLCAN(uint16_t * std_list_arr, size_t arraySize)
     uint16_t txq_size = 50;
     uint16_t blank = 0xFFFF;
     can_std_id_t slist[arraySize] = {0};
-    for(int i = 0; i < arraySize; i++){
+    for(int i = 0; i <(int) arraySize; i++){
         printf("std_list_arr[%i]: %x\n", i,  std_list_arr[i]);
         slist[i] = CAN_gen_sid(can1, std_list_arr[i]);
     }
     printf("size of list: %u\n", arraySize);
     if (CAN_init(can1, baudrate_kbps, rxq_size, txq_size, NULL, NULL))
     {
-        for (int i = 0; i < arraySize; i+=2) {
+        for (int i = 0; i < (int) arraySize; i+=2) {
             printf("adding entry#: %i", i);
-            if(i == (arraySize - 1)){
+            if(i == ((int) arraySize - 1)){
                 CAN_fullcan_add_entry(can1, slist[i], CAN_gen_sid(can1, blank));
             }
             else if(CAN_fullcan_add_entry(can1, slist[i], slist[i+1]));
@@ -83,7 +83,7 @@ bool iCAN_rx(can_fullcan_msg_t *msg, uint16_t msg_id)
 {
     can_fullcan_msg_t fc_temp;
     can_fullcan_msg_t *fc1 = CAN_fullcan_get_entry_ptr(CAN_gen_sid(can1, msg_id));
-    printf("Received the following from can2:\n");
+   // printf("Received the following from can2:\n");
     return (CAN_fullcan_read_msg_copy(fc1, msg) && fc1->msg_id == msg_id);
 }
 
