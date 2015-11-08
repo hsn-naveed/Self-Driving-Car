@@ -42,10 +42,10 @@ void CAN_STORAGE::setSensorValues(uint8_t arr[], int size)  {
 
 
 void CAN_STORAGE::setSafeSensorValues(){
-    sensor_data->L = (uint8_t) 0xff;
-  sensor_data->M = (uint8_t) 0xff;
-  sensor_data->R = (uint8_t) 0xff;
-  sensor_data->B = (uint8_t) 0xff;
+    sensor_data->L = (uint8_t) 0x00;
+  sensor_data->M = (uint8_t) 0x00;
+  sensor_data->R = (uint8_t) 0x00;
+  sensor_data->B = (uint8_t) 0x00;
 }
 
 //void CAN_STORAGE::setSensorValues(uint8_t arr[], int size)  {
