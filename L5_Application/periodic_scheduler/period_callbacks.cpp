@@ -47,7 +47,8 @@
 #include "243_can/CAN_structs.h"
 #include "243_can/iCAN.hpp"
 
-#define DEBUG_NO_CAN 1
+// set to 1 if you want to enable motor_control with switches
+#define DEBUG_NO_CAN 0
 
 
 /// This is the stack size used for each of the period tasks
@@ -236,23 +237,17 @@ int g_sensor_receive_counter = 0;
 
 void period_10Hz(void)
 {
-
-    //local sensor values
-   //sen_msg_t *l_sensor_values = new sen_msg_t{0};
     portDISABLE_INTERRUPTS();
     //copy our global values to local values
-    //sen_msg_t *l_sensor_values = (sen_msg_t*) &CAN_ST.sensor_data;
     sen_msg_t *l_sensor_values = CAN_ST.sensor_data;
     portENABLE_INTERRUPTS();
 
-
+    //for testing
     uint8_t temp[4];
 
-    // LE.toggle(2);
 
     CAN_ST.motor_data = (mast_mot_msg_t*) & msg_tx.data.bytes[0];
-  // printf("%d %d %d %d\n", g_default_sensor_values->L,g_default_sensor_values->M, g_default_sensor_values->R, g_default_sensor_values->B);
-    //printf("%d %d %d %d\n", temp[0], temp[1], temp[2], temp[3]);
+
 
     switch(g_current_state){
 
@@ -277,50 +272,43 @@ void period_10Hz(void)
             // only left is blocked
            if (LEFT_BLOCKED && !RIGHT_BLOCKED && !MIDDLE_BLOCKED)  {
                   generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn right
+                  LD.clear();
            }
            // only right is blocked
            else if(RIGHT_BLOCKED && !LEFT_BLOCKED && !MIDDLE_BLOCKED)   {
                generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
+               LD.clear();
            }
            //only middle is blocked
            else if(MIDDLE_BLOCKED && !LEFT_BLOCKED && !RIGHT_BLOCKED)    {
                generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn right
+               LD.clear();
            }
            //if left and middle is blocked
            else if (LEFT_BLOCKED && MIDDLE_BLOCKED && !RIGHT_BLOCKED)   {
                generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT);  //turn right
+               LD.clear();
            }
            //if right and middle is blocked
            else if (RIGHT_BLOCKED && MIDDLE_BLOCKED && !LEFT_BLOCKED)   {
                generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
+               LD.clear();
            }
            //if all front sensors are blocked
            else if (!FRONT_CLEAR)   {
                //if back sensor is also blocked
                if (BACK_BLOCKED)    {
-                   generateMotorCommands(COMMAND_STOP);
+                   generateMotorCommands(COMMAND_MOTOR_STOP);
+                   LD.clear();
                    LD.setLeftDigit('E');
                    LD.setRightDigit('R');
                }
                //if back is clear, reverse-left
                else {
                    generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
+                   LD.clear();
                }
            }
-            //    if (forward_blocked) {
-            //        if (no_clearance) {
-            //            motor_cmd = reverse;
-            //        }
-            //        else {
-            //            steer_cmd = left OR right;
-            //        }
-            //    }
-            //    else if (left_blocked) {
-            //        steer_cmd = steer_right;
-            //    }
-            //    else if (right_blocked) {
-            //        steer_cmd = steer_left;
-            //    }
 
             g_current_state = SEND_CONTROL_TO_MOTOR;
             break;
@@ -329,20 +317,22 @@ void period_10Hz(void)
             g_prev_state = g_current_state;
 
             //this is where we command based on the heading
+            //TO DO: GPS IMPLEMENTATION
 
             // now we're testing without GPS
             // so we go straight
             generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT);
 
+            //send our commands
             g_current_state = SEND_CONTROL_TO_MOTOR;
-
-
-            //g_current_state = SEND_CONTROL_TO_MOTOR;
             break;
 
         case SEND_CONTROL_TO_MOTOR:
             g_prev_state = g_current_state;
+
+            //for debugging
             printf("SENDING FRS:%2x LR:%2x SPD:%2x\n", msg_tx.data.bytes[0],  msg_tx.data.bytes[1],  msg_tx.data.bytes[2] );
+
             //prepare our message id
             msg_tx.msg_id = (uint32_t) MASTER_COMMANDS_MOTOR;
             //send our message
@@ -350,6 +340,7 @@ void period_10Hz(void)
                 printf("Message sent to motor!\n");
             }
 
+            //reset our state
             g_current_state = CHECK_SENSOR_VALUES;
             break;
 
@@ -368,49 +359,17 @@ void period_10Hz(void)
 void period_100Hz(void)
 {
 
-    //can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t;
     can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t{0};
-        /**
-        * pARSING TASK
-        *      can_msg_t   sensor_msg;
-        *      can_msg_t   geo_msg;
-        *
-        *     This task will just copy the incoming message into appropriate can_msg_t
-        *
-        *     portDISABLE_INTERRUPTS();
-        *     sensor_msg = mCAN_MSG_Rx;
-        *     portENABLE_INTERRPTS();
-        *
-        * On the reader side:
-        *      disable_ints();
-        *      can_msg_t sensor_msg = THIS_CLASS::sensor_msg;
-        *      enable_ints();
-        *
-        *      sensor_msg_ptr = (sensor_msg_ptr) * sensor_msg;
-        *
-        *      If a message never arrives, you can basically do this:
-        *      sensor_msg = sensor_msg_safe_copy;
-        *
-        */
-
-//        can_fullcan_msg_t *default_sensor_msg = new can_fullcan_msg_t{0};
-//        default_sensor_msg->data.bytes[0] = (uint8_t) 1;
-//        default_sensor_msg->data.bytes[1] = (uint8_t) 2;
-//        default_sensor_msg->data.bytes[2] = (uint8_t) 3;
-//        default_sensor_msg->data.bytes[3] = (uint8_t) 4;
 
         //RECEIVE AND SAVE FULL_CAN MESSAGES
         if(iCAN_rx(temp_rx, (uint16_t) SENSOR_MASTER_REG))    {
+
             portDISABLE_INTERRUPTS();
-           // g_sensor_msg = &temp_rx;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
-//            CAN_ST.sensor_data->L = temp_rx.data.bytes[0];
-//            CAN_ST.sensor_data->M = temp_rx.data.bytes[1];
-//            CAN_ST.sensor_data->R = temp_rx.data.bytes[2];
-//            CAN_ST.sensor_data->B = temp_rx.data.bytes[3];
+                CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
             portENABLE_INTERRUPTS();
 
             printf("SENSOR VAL READ!\n");
+
             //g_reset counter because we received a message
             g_sensor_receive_counter = g_reset;
         }
@@ -419,17 +378,11 @@ void period_100Hz(void)
         else if (g_sensor_receive_counter > g_max_count_timer)  {
 
                 portDISABLE_INTERRUPTS();
-                CAN_ST.setSafeSensorValues();
-                //CAN_ST.sensor_data = (sen_msg_t*) & default_sensor_msg->data.bytes[0];
-                //g_sensor_msg = &default_sensor_msg;
-//                CAN_ST.sensor_data->L = 2;
-//                CAN_ST.sensor_data->M = 3;
-//                CAN_ST.sensor_data->R = 4;
-//                CAN_ST.sensor_data->B = 5;
+                    CAN_ST.setSafeSensorValues();
                 portENABLE_INTERRUPTS();
 
+                //reset our counter because we fill-in safe values
                 g_sensor_receive_counter = g_reset;
-           // printf("SENSOR VAL RESET! %d\n", g_sensor_receive_counter);
         }
 #endif
 
