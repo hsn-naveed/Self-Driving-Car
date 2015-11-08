@@ -47,7 +47,8 @@
 #include "243_can/CAN_structs.h"
 #include "243_can/iCAN.hpp"
 
-// set to 1 if you want to enable motor_control with switches
+// set to 2 if you want to enable motor_control with switches
+// set to 0 if you want to use CAN
 #define DEBUG_NO_CAN 0
 
 
@@ -264,6 +265,7 @@ void period_10Hz(void)
                 parseSensorReading(l_sensor_values);
                 if(FRONT_CLEAR) g_current_state = CONTROL_BASED_ON_HEADING;
                 else g_current_state = CONTROL_BASED_ON_SENSOR;
+                LD.clear();
             break;
 
         case CONTROL_BASED_ON_SENSOR:
@@ -294,6 +296,11 @@ void period_10Hz(void)
                generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
                LD.clear();
            }
+           //if left and right are blocked
+           else if(LEFT_BLOCKED && RIGHT_BLOCKED && !MIDDLE_BLOCKED){
+               generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT); //keep going straight
+               LD.clear();
+           }
            //if all front sensors are blocked
            else if (!FRONT_CLEAR)   {
                //if back sensor is also blocked
@@ -301,7 +308,7 @@ void period_10Hz(void)
                    generateMotorCommands(COMMAND_MOTOR_STOP);
                    LD.clear();
                    LD.setLeftDigit('E');
-                   LD.setRightDigit('R');
+                   LD.setRightDigit('E');
                }
                //if back is clear, reverse-left
                else {
@@ -311,6 +318,7 @@ void period_10Hz(void)
            }
 
             g_current_state = SEND_CONTROL_TO_MOTOR;
+
             break;
 
         case CONTROL_BASED_ON_HEADING:
@@ -325,6 +333,7 @@ void period_10Hz(void)
 
             //send our commands
             g_current_state = SEND_CONTROL_TO_MOTOR;
+            LD.clear();
             break;
 
         case SEND_CONTROL_TO_MOTOR:
@@ -342,10 +351,12 @@ void period_10Hz(void)
 
             //reset our state
             g_current_state = CHECK_SENSOR_VALUES;
+            LD.clear();
             break;
 
         default:
             g_current_state = CHECK_SENSOR_VALUES;
+            LD.clear();
             break;
 
 
@@ -365,7 +376,14 @@ void period_100Hz(void)
         if(iCAN_rx(temp_rx, (uint16_t) SENSOR_MASTER_REG))    {
 
             portDISABLE_INTERRUPTS();
-                CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            //if this ^ does not work try to uncomment these:
+                    /*CAN_ST.sensor_data->L temp_rx->data.bytes[0];
+                    CAN_ST.sensor_data->M temp_rx->data.bytes[1];
+                    CAN_ST.sensor_data->R temp_rx->data.bytes[2];
+                    CAN_ST.sensor_data->B temp_rx->data.bytes[3];    */
+
             portENABLE_INTERRUPTS();
 
             printf("SENSOR VAL READ!\n");
@@ -373,6 +391,15 @@ void period_100Hz(void)
             //g_reset counter because we received a message
             g_sensor_receive_counter = g_reset;
         }
+//#if 1
+//        else if(true)  {
+//        CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+//        temp_rx->data.bytes[0] = 1;
+//        temp_rx->data.bytes[1] = 2;
+//        temp_rx->data.bytes[2] = 3;
+//        temp_rx->data.bytes[3] = 4;
+//        }
+//#endif
         //if no message arrives
 #if !DEBUG_NO_CAN
         else if (g_sensor_receive_counter > g_max_count_timer)  {
@@ -392,7 +419,7 @@ void period_100Hz(void)
     delete temp_rx;
     //delete default_sensor_msg;
 
-#if DEBUG_NO_CAN
+#if DEBUG_NO_CAN == 1
     // LE.toggle(3);
     int sw_value = SW.getSwitchValues();
     switch(sw_value)    {
@@ -472,6 +499,122 @@ void period_100Hz(void)
             break;
 
         default:
+            break;
+    }
+#endif
+
+
+
+#if DEBUG_NO_CAN == 2
+    // LE.toggle(3);
+    int sw_value = SW.getSwitchValues();
+    switch(sw_value)    {
+        case 0:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0xff;
+            temp_rx->data.bytes[1] = (uint8_t) 0xff;
+            temp_rx->data.bytes[2] = (uint8_t) 0xff;
+            temp_rx->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            break;
+        case 1:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0x00;
+            temp_rx->data.bytes[1] = (uint8_t) 0xff;
+            temp_rx->data.bytes[2] = (uint8_t) 0xff;
+            temp_rx->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            portENABLE_INTERRUPTS();
+            break;
+        case 2:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0xff;
+            temp_rx->data.bytes[1] = (uint8_t) 0x00;
+            temp_rx->data.bytes[2] = (uint8_t) 0xff;
+            temp_rx->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            portENABLE_INTERRUPTS();
+            break;
+        case 3:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0x00;
+            temp_rx->data.bytes[1] = (uint8_t) 0x00;
+            temp_rx->data.bytes[2] = (uint8_t) 0xff;
+            temp_rx->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            portENABLE_INTERRUPTS();
+            break;
+        case 4:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0xff;
+            temp_rx->data.bytes[1] = (uint8_t) 0xff;
+            temp_rx->data.bytes[2] = (uint8_t) 0x00;
+            temp_rx->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            portENABLE_INTERRUPTS();
+            break;
+        case 5:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0x00;
+            temp_rx->data.bytes[1] = (uint8_t) 0xff;
+            temp_rx->data.bytes[2] = (uint8_t) 0x00;
+            temp_rx->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            portENABLE_INTERRUPTS();
+            break;
+        case 6:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0xff;
+            temp_rx->data.bytes[1] = (uint8_t) 0x00;
+            temp_rx->data.bytes[2] = (uint8_t) 0x00;
+            temp_rx->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            portENABLE_INTERRUPTS();
+            break;
+        case 7:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0x00;
+            temp_rx->data.bytes[1] = (uint8_t) 0x00;
+            temp_rx->data.bytes[2] = (uint8_t) 0x00;
+            temp_rx->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            portENABLE_INTERRUPTS();
+            break;
+        case 8:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0xff;
+            temp_rx->data.bytes[1] = (uint8_t) 0xff;
+            temp_rx->data.bytes[2] = (uint8_t) 0xff;
+            temp_rx->data.bytes[3] = (uint8_t) 0x00;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            portENABLE_INTERRUPTS();
+            break;
+
+        case 15:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0x00;
+            temp_rx->data.bytes[1] = (uint8_t) 0x00;
+            temp_rx->data.bytes[2] = (uint8_t) 0x00;
+            temp_rx->data.bytes[3] = (uint8_t) 0x00;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+
+            break;
+
+        default:
+            portDISABLE_INTERRUPTS();
+            temp_rx->data.bytes[0] = (uint8_t) 0x00;
+            temp_rx->data.bytes[1] = (uint8_t) 0x00;
+            temp_rx->data.bytes[2] = (uint8_t) 0x00;
+            temp_rx->data.bytes[3] = (uint8_t) 0x00;
+            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
             break;
     }
 #endif
