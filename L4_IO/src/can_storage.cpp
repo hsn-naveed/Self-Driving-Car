@@ -39,3 +39,20 @@ void CAN_STORAGE::setSensorValues(uint8_t arr[], int size)  {
                //global_sensor_value[i] = mSensorValue[i];
            }
 }
+
+
+void CAN_STORAGE::setSafeSensorValues(){
+    sensor_data->L = (uint8_t) 0xff;
+  sensor_data->M = (uint8_t) 0xff;
+  sensor_data->R = (uint8_t) 0xff;
+  sensor_data->B = (uint8_t) 0xff;
+}
+
+//void CAN_STORAGE::setSensorValues(uint8_t arr[], int size)  {
+//    if(size > (int) SIZE_OF_SENSOR_ARRAY) { size = (int) SIZE_OF_SENSOR_ARRAY ; }
+//    for (int i = 0; i < size; i++){
+//               mSensorValues[i] = 0;
+//               //global_sensor_value[i] = mSensorValue[i];
+//           }
+//}
+

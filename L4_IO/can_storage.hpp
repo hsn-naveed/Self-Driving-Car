@@ -11,7 +11,7 @@
 #include <can_definitions.hpp>
 #include <stdint.h>
 #include <L3_Utils/singleton_template.hpp>
-
+#include "243_can/CAN_structs.h"
 
 /**
  * LED class used to control the Board's 8 output LEDs
@@ -36,9 +36,20 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
         void setMotorSpeed(uint8_t speed) { mMotorSpeed = speed;}
 
         //Sensor
-        uint8_t* getSensorValues() {return mSensorValues;}
+
+
         void setSensorValues(uint8_t arr[], int size);
 
+
+
+        void setSafeSensorValues();
+
+
+        //Sensor
+        sen_msg_t* sensor_data;
+
+        //Motor
+        mast_mot_msg_t* motor_data;
 
     private:
 
@@ -62,7 +73,7 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
                uint16_t mAngleValue; //angle value with respect to the current checkpoint
 
                //Sensor
-               uint8_t mSensorValues[(int)SIZE_OF_SENSOR_ARRAY]; //current sensor values; 4 total sensors
+              // uint8_t mSensorValues[(int)SIZE_OF_SENSOR_ARRAY]; //current sensor values; 4 total sensors
 
         //Motor
         int mMotorSpeed;

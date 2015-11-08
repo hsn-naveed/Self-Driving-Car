@@ -52,6 +52,7 @@
 //#define HEARBEAT_VALUES 0x4D0
 
 
+
 //Sensor
 #define SENSOR_MASTER_REG 0x702
 
@@ -95,5 +96,6 @@
 #define MIDDLE_SENSOR 1
 #define RIGHT_SENSOR 2
 #define BACK_SENSOR 3
+
 
 #endif /* L4_IO_CAN_DEFINITIONS_HPP_ */
