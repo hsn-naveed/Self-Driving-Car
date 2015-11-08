@@ -25,6 +25,7 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+#include "sensor.hpp"
 
 
 
@@ -44,6 +45,27 @@
  */
 int main(void)
 {
+
+    eint3_enable_port2(0,eint_falling_edge, calc_dist_left); //Left Sonar
+    eint3_enable_port2(1, eint_falling_edge, calc_dist_middle); //Middle Sonar
+    eint3_enable_port2(2, eint_falling_edge, calc_dist_right); //Right Sonar
+    eint3_enable_port2(3, eint_falling_edge, calc_dist_rear); //Rear Sonar*/
+
+
+
+    Left_en.setAsOutput(); // set p0.0 as an output pin to enable or disable Left Sonar
+    Middle_en.setAsOutput();
+    Right_en.setAsOutput();
+    Rear_en.setAsOutput();
+
+    delay_ms(251); //250ms after powerup sensor is ready to receive commands
+
+/*    while(1){
+
+        Range_left();
+        delay_ms(1000);
+    }*/
+
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.

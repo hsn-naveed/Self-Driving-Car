@@ -33,13 +33,15 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
-
+#include "sensor.hpp"
+#include <tasks.hpp>
 
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 
+/*
 // Homework 4 Filtered Light Sensor
 #define hw4LightSensor 1
 int filteredLightSensorValue = 0;
@@ -74,23 +76,28 @@ void printFilteredLightSensorValue(){
         LOG_INFO("Counter is not equal to 10 after 10 cycles of 10Hz func calls\n");
     }
 }
+*/
+
 
 void period_1Hz(void)
 {
-    LE.toggle(1);
+    delay_ms(50);
 
-#if hw4LightSensor
-    printFilteredLightSensorValue();
-#endif
+    Range_left();
+
+
+    delay_ms(100);
+
+
+//    LE.toggle(1);
+
+
 }
 
 void period_10Hz(void)
 {
     LE.toggle(2);
 
-#if hw4LightSensor
-    averageOfLightSensor();
-#endif
 }
 
 void period_100Hz(void)
