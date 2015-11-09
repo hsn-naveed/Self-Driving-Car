@@ -49,7 +49,7 @@ uint16_t motorMsgId = 0x704;
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void flashLed(int ledNum, int numTimeToFlash = 4, int delaySpeedBetweenFlashes = 100){
-    if (numTimeToFlash > 4 || numTimeToFlash < 0){
+    if (numTimeToFlash > 4 || numTimeToFlash < 0 || numTimeToFlash == 4){
         numTimeToFlash = 4;
         for (int i = 0; i < numTimeToFlash; i++){
             LE.on(ledNum);
@@ -79,15 +79,15 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-    LE.toggle(2);
+    //LE.toggle(2);
 }
 
 void period_100Hz(void)
 {
-    LE.toggle(3);
+    //LE.toggle(3);
 }
 
 void period_1000Hz(void)
 {
-    LE.toggle(4);
+    //LE.toggle(4);
 }
