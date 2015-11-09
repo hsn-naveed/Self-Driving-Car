@@ -50,15 +50,17 @@
 //****************end MESSAGE IDS*****************//
 
 //**************MOTOR COMMANDS****************//
-//FRS
-#define COMMAND_FORWARD 0xFF
-#define COMMAND_REVERSE 0x55
-#define COMMAND_STOP 0x11
+////FRS
+//#define COMMAND_FORWARD 0xFF
+//#define COMMAND_REVERSE 0x55
+//#define COMMAND_STOP 0x11
 
 //SPD
 #define COMMAND_FAST 0xFF
 #define COMMAND_MEDIUM 0x80
 #define COMMAND_SLOW 0x11
+#define COMMAND_REVERSE 0x02
+#define COMMAND_STOP 0x00
 
 //LR
 #define COMMAND_LEFT 0x00
