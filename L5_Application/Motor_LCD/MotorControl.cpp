@@ -8,43 +8,16 @@
 
 #include "MotorControl.hpp"
 // Just for regioning code
-#define Private_Functions 1
-#define Public_Functions 1
-#define Motor_Control_Functions 1
-#define Servo_Steering_Functions 1
+#define Motor_Control_Functions 0
+#define Servo_Steering_Functions 0
 
-#define Motor_LCD_controller_ID 0x3F2 //1010
-
-#if Private_Functions
-void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet){
-    int pwmSetDelay = 30;
-    currentServoValue = steeringDirectionToSet;
-    currentMotorValue = speedToSet;
-
-    motorPwm.set(currentMotorValue);
-    servoPwm.set(currentServoValue);
-    delay_ms(pwmSetDelay);
-}
-#endif // Private Functions
-
-#if Public_Functions
+#if 1 // Public Functions
 MotorControl::MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet){
-    puts("Before setting pwm\n");
+    MotorPwm = motorPwmToSet;
+    ServoPwm = servoPwmToSet;
 
-    motorPwm = motorPwmToSet;
-    servoPwm = servoPwmToSet;
-    puts("after setting pwm\n");
-
-    currentMotorValue = speedSetting_t.STOP;
-    currentServoValue = steeringDirection_t.STRAIGHT;
-
-    puts("before setting up motor struc\n");
-//    *motor_control_struct = {0};
-//    motor_control_struct->FRS = 0xFF;
-//    motor_control_struct->LR = 0x80;
-//    motor_control_struct->SPD = 0x11;
-
-    puts("before setting up motor struc\n");
+    CurrentMotorValue = speedSetting_t.STOP;
+    CurrentServoValue = steeringDirection_t.STRAIGHT;
 
 #if MOTOR_INIT_NEEDED
     escHasBeenInitialized = false;
@@ -58,7 +31,7 @@ MotorControl::MotorControl(){
 #if MOTOR_INIT_NEEDED
 void MotorControl::initCarMotor(){
     puts("Set throttle to neutral\n");
-    motorPwm.set(15);
+    MotorPwm.set(15);
     delay_ms(2000);
 
     puts("------Initializing PWM/ESC-------");
@@ -79,17 +52,17 @@ void MotorControl::initCarMotor(){
                     puts("\nSwitch 1 pressed, setting forward throttle\n");
                     LE.on(led1);
 
-                    motorPwm.set(15);
+                    MotorPwm.set(15);
                     delay_ms(500);
-                    motorPwm.set(16);
+                    MotorPwm.set(16);
                     delay_ms(500);
-                    motorPwm.set(17);
+                    MotorPwm.set(17);
                     delay_ms(500);
-                    motorPwm.set(18);
+                    MotorPwm.set(18);
                     delay_ms(500);
-                    motorPwm.set(19);
+                    MotorPwm.set(19);
                     delay_ms(500);
-                    motorPwm.set(20);
+                    MotorPwm.set(20);
                     delay_ms(500);
 
                     LE.off(led1);
@@ -102,20 +75,20 @@ void MotorControl::initCarMotor(){
                     puts("\nSwitch 2 pressed, setting reverse throttle\n");
                     LE.on(led2);
 
-                    motorPwm.set(15);
+                    MotorPwm.set(15);
                     delay_ms(500);
-                    motorPwm.set(14);
+                    MotorPwm.set(14);
                     delay_ms(500);
-                    motorPwm.set(13);
+                    MotorPwm.set(13);
                     delay_ms(500);
-                    motorPwm.set(12);
+                    MotorPwm.set(12);
                     delay_ms(500);
-                    motorPwm.set(11);
+                    MotorPwm.set(11);
                     delay_ms(500);
-                    motorPwm.set(10);
+                    MotorPwm.set(10);
                     delay_ms(500);
 
-                    motorPwm.set(15);
+                    MotorPwm.set(15);
                     delay_ms(2000);
 
                     LE.off(led2);
@@ -184,12 +157,44 @@ void MotorControl::initCarMotor(){
 }
 #endif
 
+void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet){
+    int pwmSetDelay = 30;
+
+    // Set steering prior to changing motor speed
+    CurrentServoValue = steeringDirectionToSet;
+    ServoPwm.set(CurrentServoValue);
+
+    if (speedToSet == speedSetting_t.BACK_SPEED){
+        changeMotorDirection(speedToSet);
+    }
+    else{
+        // If previously was moving going reverse, change speed to move forward
+        if (CurrentMotorValue == speedSetting_t.BACK_SPEED){
+            changeMotorDirection(speedToSet);
+        }
+        else{       // Normal operation
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(CurrentMotorValue);
+            delay_ms(pwmSetDelay);
+        }
+    }
+}
+
+void MotorControl::changeMotorDirection(float speedToSet){
+    // This is necessary in order for motor to be able to change from
+    // forward to reverse, or reverse to forward
+    MotorPwm.set(speedSetting_t.STOP);
+    delay_ms(30);
+    CurrentMotorValue = speedToSet;
+    MotorPwm.set(CurrentMotorValue);
+}
+
 #if Motor_Control_Functions
 void MotorControl::forward(float speedToSet){
     printf("-----Moving Forward--------\n");
 
     if (speedToSet == speedSetting_t.NO_CHANGE){
-        setSteeringDirectionAndSpeed(steeringDirection_t.STRAIGHT, currentMotorValue);
+        setSteeringDirectionAndSpeed(steeringDirection_t.STRAIGHT, CurrentMotorValue);
     }
     else{
         setSteeringDirectionAndSpeed(steeringDirection_t.STRAIGHT, speedToSet);
@@ -230,36 +235,75 @@ void MotorControl::steerRight(float amountToSteer){
 #endif // Public Functions
 
 
-void MotorControl::getCANMessageData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct){
-    if (fc1 != NULL){
-        motorControlStruct->FRS = fc1->data.bytes[0];
-        motorControlStruct->LR =  fc1->data.bytes[1];
-        motorControlStruct->SPD = fc1->data.bytes[2];
+void MotorControl::getCANMessageData(can_fullcan_msg_t *fullCanMessage, mast_mot_msg_t *motorControlStructToUse){
+    if (fullCanMessage != NULL){
+        //motorControlStruct->FRS = fc1->data.bytes[0];
+        motorControlStructToUse->LR =  fullCanMessage->data.bytes[0];
+        motorControlStructToUse->SPD = fullCanMessage->data.bytes[1];
         puts("--------Received data from CAN Message--------------\n");
     }
 }
 
-void MotorControl::convertHexToDutyCycle(mast_mot_msg_t *hexMotorControl){
+void MotorControl::convertFromHexAndApplyMotorAndServoSettings(mast_mot_msg_t *hexMotorControl){
+    setSteeringDirectionAndSpeed(convertHexToFloatSteer(hexMotorControl->LR), convertHexToFloatSpeed(hexMotorControl->SPD));
+#if 0
     if (hexMotorControl->FRS == 0x11){
         puts("====STOPPING MOTORS====\n");
-        currentMotorValue = speedSetting_t.STOP;
-        forward(current);
+        CurrentMotorValue = speedSetting_t.STOP;
+        CurrentServoValue = steeringDirection_t.STRAIGHT;
+        setSteeringDirectionAndSpeed(CurrentServoValue,CurrentMotorValue);
     }
     else if (hexMotorControl->FRS == 0xFF){
         if (hexMotorControl->SPD == 0x11){
-            puts("In the convertHexToDutyCycle sending forward at slow speed\n");
-            currentMotorValue = speedSetting_t.SLOW_SPEED;
-            forward(currentMotorValue);
+            puts("Sending slow speed\n");
+            CurrentMotorValue = speedSetting_t.SLOW_SPEED;
+            if (hexMotorControl->LR == 0x00)
         }
         else if (hexMotorControl->SPD == 0x80){
-            puts("In the convertHexToDutyCycle sending forward at medium speed\n");
-            currentMotorValue = speedSetting_t.MEDIUM_SPEED;
-            forward(currentMotorValue);
+            puts("Sending medium speed\n");
+            CurrentMotorValue = speedSetting_t.MEDIUM_SPEED;
+            forward(CurrentMotorValue);
         }
         else if (hexMotorControl->SPD == 0xFF){
-            puts("In the convertHexToDutyCycle sending forward at fast speed\n");
-            currentMotorValue = speedSetting_t.FAST_SPEED;
-            forward(currentMotorValue);
+            puts("Sending fast speed\n");
+            CurrentMotorValue = speedSetting_t.FAST_SPEED;
+            forward(CurrentMotorValue);
+        }
+        else{
+            puts("Setting default speed to slow\n");
+            CurrentMotorValue = speedSetting_t.SLOW_SPEED;
+            forward(CurrentMotorValue);
         }
     }
+#endif
+}
+
+float MotorControl::convertHexToFloatSpeed(uint16_t hexSpeedValue){
+    float convertedHexToFloat = 0;
+    
+    if (hexSpeedValue == 0xFF)
+        convertedHexToFloat = speedSetting_t.FAST_SPEED;
+    if (hexSpeedValue == 0x80)
+        convertedHexToFloat = speedSetting_t.MEDIUM_SPEED;
+    if (hexSpeedValue == 0x11)
+        convertedHexToFloat = speedSetting_t.SLOW_SPEED;
+    if (hexSpeedValue == 0x02)
+        convertedHexToFloat = speedSetting_t.BACK_SPEED;
+    if (hexSpeedValue == 0x00)
+        convertedHexToFloat = speedSetting_t.STOP;
+
+    return convertedHexToFloat;
+}
+
+float MotorControl::convertHexToFloatSteer(uint16_t hexSteerValue){
+    float convertedHexToFloat = 0;
+
+    if (hexSteerValue == 0x80)
+        convertedHexToFloat = steeringDirection_t.STRAIGHT;
+    if (hexSteerValue == 0x00)
+        convertedHexToFloat = steeringDirection_t.FULL_LEFT;
+    if (hexSteerValue == 0xFF)
+        convertedHexToFloat = steeringDirection_t.FULL_RIGHT;
+
+    return convertedHexToFloat;
 }

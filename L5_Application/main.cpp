@@ -34,8 +34,6 @@
 #include "iCAN.hpp"
 #include "periodic_scheduler/periodic_callback.h"
 
-
-
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
  * for details.  There is a very simple example towards the beginning of this class's declaration.
@@ -50,22 +48,20 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
-#define CAN_BUS_INIT 1
-#define MOTOR_SERVO_PWM_INIT 1
 
 MotorControl motorObj;
 int main(void)
 {
-    #if CAN_BUS_INIT
+    #if 1 // CAN bus initialization
     uint16_t std_list_arr[] = { 0x704};
     size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
 
     iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
     #endif
 
-    #if MOTOR_SERVO_PWM_INIT
-    PWM motorPWM = PWM(PWM::pwm2, MOTOR_PWM_FREQ);
-    PWM servoPWM = PWM(PWM::pwm1, SERVO_PWM_FREQ);
+    #if 1 // Motor/Servo PWM initialization
+    PWM motorPWM = PWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
+    PWM servoPWM = PWM(PWM::pwm1, MOTOR_SERVO_PWM_FREQ);
 
     motorObj = new MotorControl(motorPWM, servoPWM);
     motorObj.initCarMotor();

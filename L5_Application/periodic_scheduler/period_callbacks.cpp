@@ -35,7 +35,6 @@
 #include "file_logger.h"
 #include "CAN_structs.h"
 #include "iCAN.hpp"
-#include "can.h"
 #include "Motor_LCD/MotorControl.hpp"
 
 #define PWM_FREQ 100
@@ -49,14 +48,6 @@ uint16_t motorMsgId = 0x704;
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
-#if LED_FLASH
-enum{
-    led1 = 1,
-    led2 = 2,
-    led3 = 3,
-    led4 = 4
-}led_num_t;
-
 void flashLed(int ledNum, int numTimeToFlash = 4, int delaySpeedBetweenFlashes = 100){
     if (numTimeToFlash > 4 || numTimeToFlash < 0){
         numTimeToFlash = 4;
@@ -68,7 +59,6 @@ void flashLed(int ledNum, int numTimeToFlash = 4, int delaySpeedBetweenFlashes =
         }
     }
 }
-#endif
 
 void period_1Hz(void)
 {
@@ -78,7 +68,7 @@ void period_1Hz(void)
     }
     else if (iCAN_rx(canMsgForMotor, motorMsgId)){
         motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
-        motorObj.convertHexToDutyCycle(motorObj.motorControlStruct);
+        motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
         LE.off(led1);
     }
     else{

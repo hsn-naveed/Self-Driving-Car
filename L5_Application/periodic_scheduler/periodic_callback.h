@@ -26,7 +26,12 @@
 extern "C" {
 #endif
 
-
+enum{
+    led1 = 1,
+    led2 = 2,
+    led3 = 3,
+    led4 = 4
+};
 
 extern const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES;
 void period_1Hz(void);
