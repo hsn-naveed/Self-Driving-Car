@@ -37,7 +37,6 @@
 #include "iCAN.hpp"
 #include "can.h"
 #include "Motor_LCD/MotorControl.hpp"
-#include "full_can_api.h"
 
 #define PWM_FREQ 100
 can_msg_t *message_struct = { 0 };

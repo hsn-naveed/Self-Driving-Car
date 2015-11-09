@@ -30,11 +30,9 @@
 #include "stdio.h"
 #include "Motor_LCD/MotorControl.hpp"
 #include <utilities.h>
-#include "full_can.cpp"
 #include "CAN_structs.h"
 #include "iCAN.hpp"
 #include "periodic_scheduler/periodic_callback.h"
-#include "full_can_api.h"
 
 
 
@@ -60,12 +58,7 @@ int main(void)
     PWM motorPWM = PWM(PWM::pwm2, MOTOR_PWM_FREQ);
     PWM servoPWM = PWM(PWM::pwm1, SERVO_PWM_FREQ);
 
-    full_can_api :: bus_init();
-
     motorObj = new MotorControl(motorPWM, servoPWM);
-//    MotorControl *tempMotorObj = new MotorControl(motorPWM, servoPWM);
-//
-//    motorObj = tempMotorObj;
 
     motorObj.initCarMotor();
     /**
