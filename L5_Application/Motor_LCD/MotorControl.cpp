@@ -71,14 +71,13 @@ void MotorControl::initCarMotor(){
 
         if (escHasBeenInitialized == false && SW.getSwitch(4) == true){
             puts("----ESC PROGRAMMING MODE-----\n\n");
-            LE.on(4);
+            LE.on(led4);
             do {
                 puts("Checking for programming switches\n");
                 if (SW.getSwitch(1) == 1)
                 {
                     puts("\nSwitch 1 pressed, setting forward throttle\n");
-                    LE.on(1);
-//                    delay_ms(500);
+                    LE.on(led1);
 
                     motorPwm.set(15);
                     delay_ms(500);
@@ -93,8 +92,7 @@ void MotorControl::initCarMotor(){
                     motorPwm.set(20);
                     delay_ms(500);
 
-
-                    LE.off(1);
+                    LE.off(led1);
                 }
 
                 //delay_ms(2000);
@@ -102,8 +100,7 @@ void MotorControl::initCarMotor(){
                 if (SW.getSwitch(2) == 1)
                 {
                     puts("\nSwitch 2 pressed, setting reverse throttle\n");
-                    LE.on(2);
-//                    delay_ms(500);
+                    LE.on(led2);
 
                     motorPwm.set(15);
                     delay_ms(500);
@@ -120,14 +117,15 @@ void MotorControl::initCarMotor(){
 
                     motorPwm.set(15);
                     delay_ms(2000);
-                    LE.off(2);
+
+                    LE.off(led2);
 
                     puts("\nESC has been programmed\n!");
                     escHasBeenInitialized = true;
                 }
             } while(escHasBeenInitialized == false);
             puts("---------EXITING ESC PROGRAMMING MODE------\nn");
-            LE.off(4);  // End programming ESC mode
+            LE.off(led4);  // End programming ESC mode
 
 //            if(escHasBeenInitialized){
 //                            while (1)
@@ -205,7 +203,7 @@ void MotorControl::back(float speedToSet){
         // Should never get here
         while(1){
             printf("BACK SPEED NOT SET CORRECTLY");
-            LE.on(1);
+            LE.on(led4);
             setSteeringDirectionAndSpeed(steeringDirection_t.STRAIGHT, speedSetting_t.STOP);
             LOG_INFO("Back speed not set correctly!");
         }
@@ -232,8 +230,7 @@ void MotorControl::steerRight(float amountToSteer){
 #endif // Public Functions
 
 
-void MotorControl::getCANMessageData(can_msg_t *fc1, mast_mot_msg_t *motorControlStruct)
-{
+void MotorControl::getCANMessageData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct){
     if (fc1 != NULL){
         motorControlStruct->FRS = fc1->data.bytes[0];
         motorControlStruct->LR =  fc1->data.bytes[1];
@@ -243,10 +240,26 @@ void MotorControl::getCANMessageData(can_msg_t *fc1, mast_mot_msg_t *motorContro
 }
 
 void MotorControl::convertHexToDutyCycle(mast_mot_msg_t *hexMotorControl){
-
-    if (hexMotorControl->FRS == 0xFF){
-        puts("In the convertHexToDutyCycle sending forward at slow speed\n");
-        forward(speedSetting_t.SLOW_SPEED);
-        currentMotorValue = speedSetting_t.SLOW_SPEED;
+    if (hexMotorControl->FRS == 0x11){
+        puts("====STOPPING MOTORS====\n");
+        currentMotorValue = speedSetting_t.STOP;
+        forward(current);
+    }
+    else if (hexMotorControl->FRS == 0xFF){
+        if (hexMotorControl->SPD == 0x11){
+            puts("In the convertHexToDutyCycle sending forward at slow speed\n");
+            currentMotorValue = speedSetting_t.SLOW_SPEED;
+            forward(currentMotorValue);
+        }
+        else if (hexMotorControl->SPD == 0x80){
+            puts("In the convertHexToDutyCycle sending forward at medium speed\n");
+            currentMotorValue = speedSetting_t.MEDIUM_SPEED;
+            forward(currentMotorValue);
+        }
+        else if (hexMotorControl->SPD == 0xFF){
+            puts("In the convertHexToDutyCycle sending forward at fast speed\n");
+            currentMotorValue = speedSetting_t.FAST_SPEED;
+            forward(currentMotorValue);
+        }
     }
 }

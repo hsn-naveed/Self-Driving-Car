@@ -53,7 +53,7 @@ class MotorControl{
         bool escHasBeenInitialized;
         #endif
     public:
-        mast_mot_msg_t *motor_control_struct;
+        mast_mot_msg_t *motorControlStruct;
 
         MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet);
         MotorControl();
@@ -63,7 +63,7 @@ class MotorControl{
             this->servoPwm = obj->servoPwm;
             this->currentMotorValue = obj->currentMotorValue;
             this->currentServoValue = obj->currentServoValue;
-            this->motor_control_struct = obj->motor_control_struct;
+            this->motorControlStruct = obj->motorControlStruct;
             this->escHasBeenInitialized = obj->escHasBeenInitialized;
         }
 
@@ -77,7 +77,7 @@ class MotorControl{
         void forward(float speedToSet);
         void back(float speedToSet);
 
-        void getCANMessageData(can_msg_t *fc1, mast_mot_msg_t *motorControlStruct);
+        void getCANMessageData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct);
         void convertHexToDutyCycle(mast_mot_msg_t *hexMotorControl);
         #endif
 

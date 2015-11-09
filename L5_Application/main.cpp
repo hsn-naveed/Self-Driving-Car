@@ -50,17 +50,26 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
-
+#define CAN_BUS_INIT 1
+#define MOTOR_SERVO_PWM_INIT 1
 
 MotorControl motorObj;
 int main(void)
 {
+    #if CAN_BUS_INIT
+    uint16_t std_list_arr[] = { 0x704};
+    size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
+
+    iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
+    #endif
+
+    #if MOTOR_SERVO_PWM_INIT
     PWM motorPWM = PWM(PWM::pwm2, MOTOR_PWM_FREQ);
     PWM servoPWM = PWM(PWM::pwm1, SERVO_PWM_FREQ);
 
     motorObj = new MotorControl(motorPWM, servoPWM);
-
     motorObj.initCarMotor();
+    #endif
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
