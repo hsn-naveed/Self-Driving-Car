@@ -115,7 +115,7 @@ typedef struct  {
 
 
 typedef struct  {
-        uint64_t FRS : 8; //0xFF = Forward, 0x55 = Reverse, 0x11 = Stop
+        uint64_t FRS : 8; //0x0F = Forward, 0x02 = Reverse, 0x00 = Stop
         uint64_t LR : 8; //range 0x00 to 0xFF ; LEFT to RIGHT, 0x80 = straight
         uint64_t SPD : 8; //0xFF = FAST, 0x80 = MEDIUM, 0x11 = SLOW
 
