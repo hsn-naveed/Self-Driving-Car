@@ -36,9 +36,13 @@
 #include "light_sensor.hpp"
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
+<<<<<<< HEAD
 
 #include "can_storage.hpp"
 
+=======
+#include "L5_Application/sensor.hpp"
+>>>>>>> 89e575a84a94b67be5599bb2db3c8e9a88529312
 
 /**
  * @{ Short-hand notation of getting to the on-board IO Devices
@@ -53,7 +57,11 @@
 #define SW      Switches::getInstance()            ///< 4 On-board Switches
 /** @} */
 
+<<<<<<< HEAD
 #define CAN_ST  CAN_STORAGE::getInstance()  //can data storage
 
+=======
+#define SonarSensor sensor::getInstance()
+>>>>>>> 89e575a84a94b67be5599bb2db3c8e9a88529312
 
 #endif /* IO_SHORTCUTS_HPP_ */

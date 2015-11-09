@@ -1,42 +1,13 @@
-/*
- *     SocialLedge.com - Copyright (C) 2013
- *
- *     This file is part of free software framework for embedded processors.
- *     You can use it and/or distribute it as long as this copyright header
- *     remains unmodified.  The code is free for personal use and requires
- *     permission to use in a commercial product.
- *
- *      THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
- *      OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
- *      MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
- *      I SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR
- *      CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- *
- *     You can reach the author of this software at :
- *          p r e e t . w i k i @ g m a i l . c o m
- */
-
-/**
- * @file
- * This contains the period callback functions for the periodic scheduler
- *
- * @warning
- * These callbacks should be used for hard real-time system, and the priority of these
- * tasks are above everything else in the system (above the PRIORITY_CRITICAL).
- * The period functions SHOULD NEVER block and SHOULD NEVER run over their time slot.
- * For example, the 1000Hz take slot runs periodically every 1ms, and whatever you
- * do must be completed within 1ms.  Running over the time slot will reset the system.
- */
-
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdint.h>
-#include "io.hpp"
+//#include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
 #include "shared_handles.h"
 #include "tasks.hpp"
 #include <inttypes.h>
 
+<<<<<<< HEAD
 
 #include "master_control.hpp"
 #include "can.h"
@@ -51,13 +22,20 @@
 // set to 0 if you want to use CAN
 #define DEBUG_NO_CAN 0
 
+=======
+#include"sensor.hpp"
+#include "shared_handles.h"
+>>>>>>> 89e575a84a94b67be5599bb2db3c8e9a88529312
 
 /// This is the stack size used for each of the period tasks
+
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+QueueHandle_t canMessage =xQueueCreate(1,sizeof(can_msg_t));//added
 
 const int g_reset = 0;
 const int g_max_count_timer = 10; // we're running in 100Hz and we expect messages within 10Hz.
 
+<<<<<<< HEAD
 //currently not used
 uint8_t current_mode = 0;
 
@@ -242,6 +220,38 @@ void period_10Hz(void)
     //copy our global values to local values
     sen_msg_t *l_sensor_values = CAN_ST.sensor_data;
     portENABLE_INTERRUPTS();
+=======
+
+void period_1Hz(void)
+{
+   // LE.toggle(1);
+
+}
+
+void period_10Hz(void)
+{
+
+    //SonarSensor.print();
+
+    SonarSensor.Range_left();
+
+    xSemaphoreTake(SonarSensor.middle_sem, portMAX_DELAY);
+    SonarSensor.Range_middle();
+
+    xSemaphoreTake(SonarSensor.right_sem, portMAX_DELAY);
+
+      SonarSensor.Range_right();
+
+      xSemaphoreTake(SonarSensor.rear_sem, portMAX_DELAY);
+      SonarSensor.Range_rear();
+
+      SonarSensor.CAN_send();
+
+      delay_ms(100);
+
+  //  LE.toggle(2);
+
+>>>>>>> 89e575a84a94b67be5599bb2db3c8e9a88529312
 
     //for testing
     uint8_t temp[4];
@@ -369,6 +379,7 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
+<<<<<<< HEAD
 
     can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t{0};
 
@@ -618,13 +629,20 @@ void period_100Hz(void)
             break;
     }
 #endif
+=======
+    //LE.toggle(3);
+>>>>>>> 89e575a84a94b67be5599bb2db3c8e9a88529312
 }
 
 void period_1000Hz(void)
 {
+<<<<<<< HEAD
 
     //LE.toggle(4);
 
+=======
+   // LE.toggle(4);
+>>>>>>> 89e575a84a94b67be5599bb2db3c8e9a88529312
 }
 
 void handleMessage()
