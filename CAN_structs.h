@@ -46,6 +46,8 @@
 //****************MESSAGE IDS*****************//
 #define SENSOR_MASTER_REG 0x702
 #define MASTER_COMMANDS_MOTOR 0x704
+#define GPS_MASTER_HEADING 0x708
+#define GPS_MASTER_COORDS 0x706
 
 //****************end MESSAGE IDS*****************//
 
