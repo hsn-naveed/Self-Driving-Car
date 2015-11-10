@@ -24,8 +24,8 @@
 #define MOTOR_INIT_NEEDED 1
 
 struct{
-        float SLOW_SPEED = 16;
-        float MEDIUM_SPEED = 16.5;
+        float SLOW_SPEED = 15.4205;
+        float MEDIUM_SPEED = 15.45;
         float FAST_SPEED = 18;
         float NO_CHANGE = 1.0;
         float BACK_SPEED = 14;
@@ -34,9 +34,9 @@ struct{
 } speedSetting_t;
 
 struct{
-        float FULL_LEFT = 96;
-        float FULL_RIGHT = 48;
-        float STRAIGHT = 72;
+        float FULL_LEFT = 10;
+        float FULL_RIGHT = 20;
+        float STRAIGHT = 15;
 } steeringDirection_t;
 
 class MotorControl{
@@ -51,8 +51,8 @@ class MotorControl{
 
         // Sets the currentMotorValue, and currentServo value to
         //appropriate settings based on HEX values received
-        float convertHexToFloatSpeed(uint16_t hexSpeedValue);
-        float convertHexToFloatSteer(uint16_t hexSteerValue);
+        float convertHexToFloatSpeed(uint8_t hexSpeedValue);
+        float convertHexToFloatSteer(uint8_t hexSteerValue);
 
         // Used for changing between forward and reverse direction
         void changeMotorDirection(float speedToSet);
@@ -62,7 +62,7 @@ class MotorControl{
         #endif
     public:
         // Message structure from master_controller to motor
-        mast_mot_msg_t *motorControlStruct;
+        mast_mot_msg_t *motorControlStruct = new mast_mot_msg_t {0};
 
         // Constructor to deal with scope issues
         // Pwm must be initialized outside (globally; e.g. in main.cpp) and passed in

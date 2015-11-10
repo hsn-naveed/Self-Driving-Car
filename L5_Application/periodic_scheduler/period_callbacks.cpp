@@ -39,10 +39,9 @@
 
 #define PWM_FREQ 100
 
-#define LED_FLASH 1
-
 extern MotorControl motorObj;
-can_fullcan_msg_t *canMsgForMotor = { 0 };
+can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t {0};
+
 uint16_t motorMsgId = 0x704;
 
 /// This is the stack size used for each of the period tasks
@@ -62,6 +61,16 @@ void flashLed(int ledNum, int numTimeToFlash = 4, int delaySpeedBetweenFlashes =
 
 void period_1Hz(void)
 {
+
+}
+
+void period_10Hz(void)
+{
+
+}
+
+void period_100Hz(void)
+{
     if (CAN_is_bus_off(can1)){
         puts("====CAN BUS is off====\n");
         LE.on(led1);
@@ -72,19 +81,18 @@ void period_1Hz(void)
         LE.off(led1);
     }
     else{
-        puts("Nothing received from CAN BUS\n");
-        flashLed(led1);
+        //puts("Nothing received from CAN BUS\n");
+        //flashLed(led1, 4, 1);
     }
-}
 
-void period_10Hz(void)
-{
-    //LE.toggle(2);
-}
-
-void period_100Hz(void)
-{
-    //LE.toggle(3);
+//    if(iCAN_rx(canMsgForSensor, (uint16_t)0x702)){
+//        puts("Received sensor message!\n");
+//        printf("msg id = %x\n", canMsgForSensor->msg_id);
+//    }
+//    else{
+//        puts("Nothing received from CAN BUS\n");
+//                flashLed(led1, 1);
+//    }
 }
 
 void period_1000Hz(void)
