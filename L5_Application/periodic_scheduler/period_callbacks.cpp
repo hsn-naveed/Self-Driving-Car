@@ -46,8 +46,6 @@
 
 
 
-int current_mode = 0;
-
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -65,8 +63,6 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 const int g_reset = 0;
 const int g_max_count_timer = 10; // we're running in 100Hz and we expect messages within 10Hz.
 
-//currently not used
-uint8_t current_mode = 0;
 
 //motor command values
 mast_mot_msg_t motor_commands = { 0 };
@@ -689,6 +685,14 @@ void period_100Hz(void)
             printf("SENSOR VAL READ!\n");
 
             //g_reset counter because we received a message
+            g_sensor_receive_counter = g_reset;
+        }
+
+        else if(iCAN_rx(temp_rx, (uint16_t) GPS_MASTER_HEADING)){
+            portDISABLE_INTERRUPTS();
+            CAN_ST.gps_coords_curr = (gps_coordinate_msg_t*) &temp_rx->data.qword;
+            portENABLE_INTERRUPTS();
+            printf("GPS VAL READ!\n");
             g_sensor_receive_counter = g_reset;
         }
 //#if 1
