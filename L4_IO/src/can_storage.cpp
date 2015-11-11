@@ -39,12 +39,17 @@ CAN_STORAGE::CAN_STORAGE()  {
 //           mSensorValues[i] += i ;
 //           //global_sensor_value[i] = mSensorValue[i];
 //       }
+
+    //GPS Coordinate
+    gps_coords_curr = new gps_coordinate_msg_t;
+    gps_coords_dest = new gps_coordinate_msg_t;
 }
 
 CAN_STORAGE::~CAN_STORAGE() {
 
     delete sensor_data;
     delete motor_data;
+    delete gps_coords_curr;
 }
 
 void CAN_STORAGE::setSafeSensorValues(){
