@@ -1,7 +1,7 @@
 #ifndef L5_APPLICATION_GPS_CAR_HPP_
 #define L5_APPLICATION_GPS_CAR_HPP_
 #include "can.h"
-
+#include "GPS.hpp"
 
 
 /// Initializes the can bus with FullCAN
