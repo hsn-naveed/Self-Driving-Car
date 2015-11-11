@@ -51,7 +51,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 // set to 1 if you want to enable motor_control with switches
 // set to 0 if you want to use CAN
-#define DEBUG_NO_CAN 0
+#define DEBUG_NO_CAN 1
 
 
 
@@ -198,30 +198,30 @@ void printMotorCommand(int print_command)    {
 
     switch(print_command) {
            case COMMAND_MOTOR_STOP:
-              printf("COMMAND_MOTOR_STOP\n");
+             // printf("COMMAND_MOTOR_STOP\n");
                break;
 
            case COMMAND_MOTOR_FORWARD_STRAIGHT:
-               printf("COMMAND_MOTOR_FORWARD_STRAIGHT\n");
+               //printf("COMMAND_MOTOR_FORWARD_STRAIGHT\n");
                break;
 
            case COMMAND_MOTOR_FORWARD_LEFT:
-               printf("COMMAND_MOTOR_FORWARD_LEFT\n");
+              // printf("COMMAND_MOTOR_FORWARD_LEFT\n");
                break;
 
            case COMMAND_MOTOR_FORWARD_RIGHT:
-               printf("COMMAND_MOTOR_FORWARD_RIGHT\n");
+              // printf("COMMAND_MOTOR_FORWARD_RIGHT\n");
                break;
 
            case COMMAND_MOTOR_REVERSE_LEFT:
-               printf("COMMAND_MOTOR_REVERSE_LEFT\n");
+              // printf("COMMAND_MOTOR_REVERSE_LEFT\n");
                break;
 
            case COMMAND_MOTOR_REVERSE_RIGHT:
-               printf("COMMAND_MOTOR_REVERSE_RIGHT\n");
+               //printf("COMMAND_MOTOR_REVERSE_RIGHT\n");
                break;
            default:
-               printf("COMMAND_MOTOR_REVERSE_RIGHT\n");
+              // printf("COMMAND_MOTOR_REVERSE_RIGHT\n");
                break;
        }
 }
@@ -319,151 +319,7 @@ int g_sensor_receive_counter = 0;
 
 void period_10Hz(void)
 {
-    sen_msg_t *l_sensor_values;
 
-    portDISABLE_INTERRUPTS();
-    //copy our global values to local values
-    //sen_msg_t *l_sensor_values = CAN_ST.sensor_data;
-
-    l_sensor_values = CAN_ST.sensor_data;
-    //printf("COPY TOOK PLACE %d %d %d %d\n", (int) CAN_ST.sensor_data->L, (int) CAN_ST.sensor_data->M, (int) CAN_ST.sensor_data->R, (int) CAN_ST.sensor_data->B );
-    portENABLE_INTERRUPTS();
-
-    //for testing
-    uint8_t temp[4];
-
-
-    CAN_ST.motor_data = (mast_mot_msg_t*) & msg_tx.data.bytes[0];
-
-    g_current_state = 0;
-
-    while(g_current_state != STATE_MACHINE_END) {
-
-
-        switch(g_current_state){
-
-            case CHECK_SENSOR_VALUES:
-                g_prev_state = g_current_state;
-
-                //testing
-                temp[0] = (uint8_t) l_sensor_values->L;
-                temp[1] = (uint8_t) l_sensor_values->M;
-                temp[2] = (uint8_t) l_sensor_values->R;
-                temp[3] = (uint8_t) l_sensor_values->B;
-                printf("            L: %d   M: %d   R: %d   B: %d\n", temp[0], temp[1], temp[2], temp[3]);
-
-                //we parse the sensor values
-                parseSensorReading(l_sensor_values);
-
-                // if all are clear, we follow the heading
-                // else we act based on sensor values
-                if(FRONT_CLEAR) g_current_state = CONTROL_BASED_ON_HEADING;
-                else g_current_state = CONTROL_BASED_ON_SENSOR;
-
-                break;
-
-            case CONTROL_BASED_ON_SENSOR:
-                g_prev_state = g_current_state;
-
-                // only left is blocked         !l m r = -->
-                if (LEFT_BLOCKED && !RIGHT_BLOCKED && !MIDDLE_BLOCKED)  {
-                      generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn right
-
-               }
-               // only right is blocked
-               else if(RIGHT_BLOCKED && !LEFT_BLOCKED && !MIDDLE_BLOCKED)   {
-                   generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
-
-               }
-               //only middle is blocked
-               else if(MIDDLE_BLOCKED && !LEFT_BLOCKED && !RIGHT_BLOCKED)    {
-                 //  generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn right
-                   generateMotorCommands(COMMAND_MOTOR_STOP);
-
-               }
-               //if left and middle is blocked
-               else if (LEFT_BLOCKED && MIDDLE_BLOCKED && !RIGHT_BLOCKED)   {
-                   //generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT);  //turn right
-                   generateMotorCommands(COMMAND_MOTOR_STOP);
-
-               }
-               //if right and middle is blocked
-               else if (RIGHT_BLOCKED && MIDDLE_BLOCKED && !LEFT_BLOCKED)   {
-                   //generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
-                   generateMotorCommands(COMMAND_MOTOR_STOP);
-
-               }
-               //if left and right are blocked
-               else if(LEFT_BLOCKED && RIGHT_BLOCKED && !MIDDLE_BLOCKED){
-                   //generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT); //keep going straight
-                   generateMotorCommands(COMMAND_MOTOR_STOP);
-
-               }
-               //if all front sensors are blocked
-               else if (!FRONT_CLEAR)   {
-                   //if back sensor is also blocked
-                   if (BACK_BLOCKED)    {
-                       generateMotorCommands(COMMAND_MOTOR_STOP);
-                       disp_7LED(DISPLAY_ERROR);
-                   }
-                   //if back is clear, reverse-left
-                   else {
-                       generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
-
-                   }
-               }
-               else {
-                   generateMotorCommands(COMMAND_MOTOR_STOP);
-
-               }
-
-                g_current_state = SEND_CONTROL_TO_MOTOR;
-
-               break;
-
-            case CONTROL_BASED_ON_HEADING:
-                g_prev_state = g_current_state;
-
-                //this is where we command based on the heading
-                //TO DO: GPS IMPLEMENTATION
-
-                // now we're testing without GPS
-                // so we go straight
-                generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT);
-
-                //send our commands
-                g_current_state = SEND_CONTROL_TO_MOTOR;
-
-                break;
-
-            case SEND_CONTROL_TO_MOTOR:
-                g_prev_state = g_current_state;
-
-                //for debugging
-               // printf("SENDING FRS:%2x LR:%2x SPD:%2x\n", msg_tx.data.bytes[0],  msg_tx.data.bytes[1],  msg_tx.data.bytes[2] );
-
-                //prepare our message id
-                msg_tx.msg_id = (uint32_t) MASTER_COMMANDS_MOTOR;
-                //send our message
-                if(iCAN_tx(&msg_tx, (uint16_t) MASTER_COMMANDS_MOTOR))   {
-                   printf("Message sent to motor!\n");
-                   LE.toggle(3);
-                }
-
-                //reset our state
-                g_current_state = STATE_MACHINE_END;
-
-                break;
-
-            default:
-                g_current_state = STATE_MACHINE_END;
-
-                break;
-
-
-        } //end switch(g_current_state)
-
-    }//end while
    // delete l_sensor_values;
 
 } // end 10Hz task
@@ -478,6 +334,7 @@ void period_100Hz(void)
 
 
     can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t{0};
+
    // can_fullcan_msg_t *temp_rx;
         //RECEIVE AND SAVE FULL_CAN MESSAGES
         if(iCAN_rx(temp_rx, (uint16_t) SENSOR_MASTER_REG))    {
@@ -525,9 +382,8 @@ void period_100Hz(void)
         //we increment counter
         g_sensor_receive_counter++;
 
-    delete temp_rx;
-    //delete default_sensor_msg;
 
+        ///////////////////////////////////////////////////////////////
 
 #if DEBUG_NO_CAN == 1
     // LE.toggle(3);
@@ -644,6 +500,161 @@ void period_100Hz(void)
             break;
     }
 #endif
+
+        ///////////////////////////////////////////////////////////////
+        sen_msg_t *l_sensor_values;
+
+           portDISABLE_INTERRUPTS();
+           //copy our global values to local values
+           //sen_msg_t *l_sensor_values = CAN_ST.sensor_data;
+
+           l_sensor_values = CAN_ST.sensor_data;
+           //printf("COPY TOOK PLACE %d %d %d %d\n", (int) CAN_ST.sensor_data->L, (int) CAN_ST.sensor_data->M, (int) CAN_ST.sensor_data->R, (int) CAN_ST.sensor_data->B );
+           portENABLE_INTERRUPTS();
+
+           //for testing
+           uint8_t temp[4];
+
+
+           CAN_ST.motor_data = (mast_mot_msg_t*) & msg_tx.data.bytes[0];
+
+           g_current_state = 0;
+
+           while(g_current_state != STATE_MACHINE_END) {
+
+
+               switch(g_current_state){
+
+                   case CHECK_SENSOR_VALUES:
+                       g_prev_state = g_current_state;
+
+                       //testing
+                       temp[0] = (uint8_t) l_sensor_values->L;
+                       temp[1] = (uint8_t) l_sensor_values->M;
+                       temp[2] = (uint8_t) l_sensor_values->R;
+                       temp[3] = (uint8_t) l_sensor_values->B;
+                      // printf("            L: %d   M: %d   R: %d   B: %d\n", temp[0], temp[1], temp[2], temp[3]);
+
+                       //we parse the sensor values
+                       parseSensorReading(l_sensor_values);
+
+                       // if all are clear, we follow the heading
+                       // else we act based on sensor values
+                       if(FRONT_CLEAR) g_current_state = CONTROL_BASED_ON_HEADING;
+                       else g_current_state = CONTROL_BASED_ON_SENSOR;
+
+                       break;
+
+                   case CONTROL_BASED_ON_SENSOR:
+                       g_prev_state = g_current_state;
+
+                       // only left is blocked         !l m r = -->
+                       if (LEFT_BLOCKED && !RIGHT_BLOCKED && !MIDDLE_BLOCKED)  {
+                             generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn right
+
+                      }
+                      // only right is blocked
+                      else if(RIGHT_BLOCKED && !LEFT_BLOCKED && !MIDDLE_BLOCKED)   {
+                          generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
+
+                      }
+                      //only middle is blocked
+                      else if(MIDDLE_BLOCKED && !LEFT_BLOCKED && !RIGHT_BLOCKED)    {
+                        //  generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn right
+                          generateMotorCommands(COMMAND_MOTOR_STOP);
+
+                      }
+                      //if left and middle is blocked
+                      else if (LEFT_BLOCKED && MIDDLE_BLOCKED && !RIGHT_BLOCKED)   {
+                          //generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT);  //turn right
+                          generateMotorCommands(COMMAND_MOTOR_STOP);
+
+                      }
+                      //if right and middle is blocked
+                      else if (RIGHT_BLOCKED && MIDDLE_BLOCKED && !LEFT_BLOCKED)   {
+                          //generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
+                          generateMotorCommands(COMMAND_MOTOR_STOP);
+
+                      }
+                      //if left and right are blocked
+                      else if(LEFT_BLOCKED && RIGHT_BLOCKED && !MIDDLE_BLOCKED){
+                          //generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT); //keep going straight
+                          generateMotorCommands(COMMAND_MOTOR_STOP);
+
+                      }
+                      //if all front sensors are blocked
+                      else if (!FRONT_CLEAR)   {
+                          //if back sensor is also blocked
+                          if (BACK_BLOCKED)    {
+                              generateMotorCommands(COMMAND_MOTOR_STOP);
+                              disp_7LED(DISPLAY_ERROR);
+                          }
+                          //if back is clear, reverse-left
+                          else {
+                              generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
+
+                          }
+                      }
+                      else {
+                          generateMotorCommands(COMMAND_MOTOR_STOP);
+
+                      }
+
+                       g_current_state = SEND_CONTROL_TO_MOTOR;
+
+                      break;
+
+                   case CONTROL_BASED_ON_HEADING:
+                       g_prev_state = g_current_state;
+
+                       //this is where we command based on the heading
+                       //TO DO: GPS IMPLEMENTATION
+
+                       // now we're testing without GPS
+                       // so we go straight
+                       generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT);
+
+                       //send our commands
+                       g_current_state = SEND_CONTROL_TO_MOTOR;
+
+                       break;
+
+                   case SEND_CONTROL_TO_MOTOR:
+                       g_prev_state = g_current_state;
+
+                       //for debugging
+                      // printf("SENDING FRS:%2x LR:%2x SPD:%2x\n", msg_tx.data.bytes[0],  msg_tx.data.bytes[1],  msg_tx.data.bytes[2] );
+
+                       //prepare our message id
+                       msg_tx.msg_id = (uint32_t) MASTER_COMMANDS_MOTOR;
+                       //send our message
+                       if(iCAN_tx(&msg_tx, (uint16_t) MASTER_COMMANDS_MOTOR))   {
+                          printf("Message sent to motor!\n");
+                          LE.toggle(3);
+                       }
+
+                       //reset our state
+                       g_current_state = STATE_MACHINE_END;
+
+                       break;
+
+                   default:
+                       g_current_state = STATE_MACHINE_END;
+
+                       break;
+
+
+               } //end switch(g_current_state)
+
+           }//end while
+        ///////////////////////////////////////////////////////////////
+
+
+
+    delete temp_rx;
+    //delete default_sensor_msg;
+
+
 } //end 100Hz
 
 void period_1000Hz(void)
