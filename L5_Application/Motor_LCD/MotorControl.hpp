@@ -29,6 +29,7 @@ struct{
         float FAST_SPEED = 18;
         float NO_CHANGE = 1.0;
         float BACK_SPEED = 14;
+        float BRAKE = 10;
         float MAX_SPEED = 20;
         float STOP = 15;
 } speedSetting_t;

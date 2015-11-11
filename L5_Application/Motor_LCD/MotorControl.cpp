@@ -7,9 +7,6 @@
  */
 
 #include "MotorControl.hpp"
-// Just for regioning code
-#define Motor_Control_Functions 0
-#define Servo_Steering_Functions 0
 
 #if 1 // Public Functions
 MotorControl::MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet){
@@ -33,7 +30,6 @@ void MotorControl::initCarMotor(){
     puts("Set throttle to neutral\n");
     MotorPwm.set(speedSetting_t.STOP);
     delay_ms(2000);
-
 
     puts("------Initializing PWM/ESC-------");
     puts("Will begin count down for programming ESC!\n");
@@ -181,7 +177,7 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
 void MotorControl::changeMotorDirection(float speedToSet){
     // This is necessary in order for motor to be able to change from
     // forward to reverse, or reverse to forward
-    MotorPwm.set(speedSetting_t.STOP);
+    MotorPwm.set(speedSetting_t.BRAKE);
     CurrentMotorValue = speedToSet;
     MotorPwm.set(CurrentMotorValue);
 }
@@ -246,7 +242,7 @@ float MotorControl::convertHexToFloatSpeed(uint8_t hexSpeedValue){
     if (hexSpeedValue == (uint8_t)COMMAND_REVERSE)
         convertedHexToFloat = speedSetting_t.BACK_SPEED;
     if (hexSpeedValue == (uint8_t)COMMAND_STOP)
-        convertedHexToFloat = speedSetting_t.STOP;
+        convertedHexToFloat = speedSetting_t.BRAKE;
 
     return convertedHexToFloat;
 }
