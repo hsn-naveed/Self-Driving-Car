@@ -81,24 +81,22 @@ void printFilteredLightSensorValue(){
 
 void period_1Hz(void)
 {
-    delay_ms(50);
+    delay_ms(10);
+    Range();
+    delay_ms(10);
+    Range();
+    delay_ms(10);
+    Range();
+    delay_ms(10);
+    Range();
+    delay_ms(10);
 
-    Range_left();
-
-    Range_middle();
-
-  //  delay_ms(100);
-
-
-//    LE.toggle(1);
-
-
+   // CAN_send();
 }
 
 void period_10Hz(void)
 {
     LE.toggle(2);
-
 }
 
 void period_100Hz(void)
