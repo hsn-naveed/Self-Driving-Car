@@ -33,6 +33,8 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
+#include "tlm/c_tlm_comp.h"
+#include "tlm/c_tlm_var.h"
 #include "CAN_structs.h"
 #include "iCAN.hpp"
 #include "Motor_LCD/MotorControl.hpp"
@@ -51,16 +53,15 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 bool period_init(void)
 {
     /// CAN bus initialization
-    uint16_t std_list_arr[] = { 0x704};
+    uint16_t std_list_arr[] = {0x704};
     size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
 
     iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
-    ///
 
 
     /// Motor/Servo PWM initialization
-    PWM motorPWM = PWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
-    PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
+    PWM motorPWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
+    PWM servoPWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
 
     motorObj = new MotorControl(motorPWM, servoPWM);
     if (MOTOR_INIT_NEEDED)
@@ -82,7 +83,6 @@ bool period_init(void)
             printf("motor set to %f\n", testDutyCycle);
         }
     } while(!SW.getSwitch(4));
-    ///
 
     return true; // Must return true upon success
 }
@@ -90,7 +90,7 @@ bool period_init(void)
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
-    // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+//    tlm_component tlm_component_add("")
     return true; // Must return true upon success
 }
 

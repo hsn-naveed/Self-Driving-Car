@@ -31,7 +31,7 @@ struct{
         float BACK_SPEED = 14;
         float BRAKE = 10;
         float MAX_SPEED = 20;
-        float STOP = 15;
+        float NEUTRAL = 15;
 } speedSetting_t;
 
 struct{
@@ -59,6 +59,11 @@ class MotorControl{
         void changeMotorDirection(float speedToSet);
 
         #if MOTOR_INIT_NEEDED
+
+        void triggerForwardOrReverseThrottle(float maxOrMin,
+                                                double incrementAndDecrementSize,
+                                                int pwmDelay);
+
         bool escHasBeenInitialized;
         #endif
     public:

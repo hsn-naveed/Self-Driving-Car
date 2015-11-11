@@ -13,7 +13,7 @@ MotorControl::MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet){
     MotorPwm = motorPwmToSet;
     ServoPwm = servoPwmToSet;
 
-    CurrentMotorValue = speedSetting_t.STOP;
+    CurrentMotorValue = speedSetting_t.NEUTRAL;
     CurrentServoValue = steeringDirection_t.STRAIGHT;
 
 #if MOTOR_INIT_NEEDED
@@ -26,9 +26,23 @@ MotorControl::MotorControl(){
 }
 
 #if MOTOR_INIT_NEEDED
+
+void MotorControl::triggerForwardOrReverseThrottle(float maxOrMin,
+                                                    double incrementAndDecrementSize,
+                                                    int pwmDelay)
+{
+    /// Increment all the way to full throttle
+    for (int i = speedSetting_t.NEUTRAL; i < maxOrMin; i +=
+            incrementAndDecrementSize)
+    {
+        MotorPwm.set(i);
+        delay_ms(pwmDelay);
+    }
+}
+
 void MotorControl::initCarMotor(){
-    puts("Set throttle to neutral\n");
-    MotorPwm.set(speedSetting_t.STOP);
+    puts("Setting throttle to neutral\n");
+    MotorPwm.set(speedSetting_t.NEUTRAL);
     delay_ms(2000);
 
     puts("------Initializing PWM/ESC-------");
@@ -37,37 +51,24 @@ void MotorControl::initCarMotor(){
     // Delay for 3 seconds to decide on setting up the ESC
     int countDown = 3;
     int pwmDelay = 500;
+    double incrementAndDecrementSize = 1;
     while (countDown > 0){
         puts("Ready to program ESC\n\n");
 
         if (escHasBeenInitialized == false && SW.getSwitch(4) == true){
             puts("----ESC PROGRAMMING MODE-----\n\n");
+            puts("Press switch1 for forward throttle\nPress switch2 for reverse throttle\n");
             LE.on(led4);
 
             do {
                 puts("Checking for programming switches\n");
                 if (SW.getSwitch(1) == 1)
                 {
-                    double incrementSize = 1;
-
                     puts("\nSwitch 1 pressed, setting forward throttle\n");
                     LE.on(led1);
 
-                    for (int i = 0; i < speedSetting_t.FAST_SPEED; i += incrementSize){
-
-                    }
-
-                    MotorPwm.set(15);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(16);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(17);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(18);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(19);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(20);
+                    /// Increment all the way to full throttle
+                    triggerForwardOrReverseThrottle(speedSetting_t.FAST_SPEED, incrementAndDecrementSize, pwmDelay);
 
                     LE.off(led1);
                     delay_ms(2000);
@@ -77,23 +78,11 @@ void MotorControl::initCarMotor(){
                 {
                     puts("\nSwitch 2 pressed, setting reverse throttle\n");
                     LE.on(led2);
-                    delay_ms(pwmDelay);
 
-                    MotorPwm.set(15);
-                    delay_ms(1500);
-                    MotorPwm.set(14);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(13);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(12);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(11);
-                    delay_ms(pwmDelay);
-                    MotorPwm.set(10);
-                    delay_ms(pwmDelay);
+                    /// Multiply increment by negative to decrement
+                    triggerForwardOrReverseThrottle(speedSetting_t.SLOW_SPEED,incrementAndDecrementSize*(-1), pwmDelay);
 
                     LE.off(led2);
-
                     delay_ms(2000);
 
                     puts("\nESC has been programmed\n!");
