@@ -64,7 +64,7 @@ extern "C" {
 #define SYS_CFG_CRASH_STARTUP_DELAY_MS  5000        ///< Start-up delay in milliseconds if a crash occurred previously.
 #define SYS_CFG_INITIALIZE_LOGGER       1           ///< If non-zero, the logger is initialized (@see file_logger.h)
 #define SYS_CFG_LOGGER_TASK_PRIORITY    1           ///< The priority of the logger task (do not use 0, logger will run into issues while writing the file)
-#define SYS_CFG_ENABLE_TLM              0           ///< Enable telemetry system. C_FILE_IO forced enabled if enabled
+#define SYS_CFG_ENABLE_TLM              1           ///< Enable telemetry system. C_FILE_IO forced enabled if enabled
 #define SYS_CFG_DISK_TLM_NAME           "disk"      ///< Filename to save "disk" telemetry variables
 #define SYS_CFG_DEBUG_TLM_NAME          "debug"     ///< Name of the debug telemetry component
 #define SYS_CFG_ENABLE_CFILE_IO         0           ///< Allow stdio fopen() fclose() to redirect to ff.h

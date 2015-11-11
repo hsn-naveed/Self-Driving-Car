@@ -16,16 +16,15 @@ MotorControl::MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet){
     CurrentMotorValue = speedSetting_t.NEUTRAL;
     CurrentServoValue = steeringDirection_t.STRAIGHT;
 
-#if MOTOR_INIT_NEEDED
-    escHasBeenInitialized = false;
-#endif
+    if(ESC_INIT_NEEDED)
+        escHasBeenInitialized = false;
 }
 
 MotorControl::MotorControl(){
 
 }
 
-#if MOTOR_INIT_NEEDED
+#if ESC_INIT_NEEDED
 
 void MotorControl::triggerForwardOrReverseThrottle(float maxOrMin,
                                                     double incrementAndDecrementSize,

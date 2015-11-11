@@ -39,6 +39,8 @@
 #include "iCAN.hpp"
 #include "Motor_LCD/MotorControl.hpp"
 
+/// Object that will be used for calling all functions
+   // related to motor and servo
 MotorControl motorObj;
 
 /// These variables are used for CAN bus communication
@@ -64,7 +66,7 @@ bool period_init(void)
     PWM servoPWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
 
     motorObj = new MotorControl(motorPWM, servoPWM);
-    if (MOTOR_INIT_NEEDED)
+    if (ESC_INIT_NEEDED)
         motorObj.initCarMotor();
 
 
