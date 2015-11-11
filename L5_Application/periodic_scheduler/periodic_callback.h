@@ -33,7 +33,12 @@ enum{
     led4 = 4
 };
 
+/// Stack size of each of the period tasks
 extern const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES;
+
+bool period_init(void);
+bool period_reg_tlm(void);
+
 void period_1Hz(void);
 void period_10Hz(void);
 void period_100Hz(void);
