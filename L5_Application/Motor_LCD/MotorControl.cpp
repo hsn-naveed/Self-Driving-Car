@@ -36,30 +36,37 @@ void MotorControl::initCarMotor(){
 
     // Delay for 3 seconds to decide on setting up the ESC
     int countDown = 3;
-    int delay = 500;
+    int pwmDelay = 500;
     while (countDown > 0){
         puts("Ready to program ESC\n\n");
 
         if (escHasBeenInitialized == false && SW.getSwitch(4) == true){
             puts("----ESC PROGRAMMING MODE-----\n\n");
             LE.on(led4);
+
             do {
                 puts("Checking for programming switches\n");
                 if (SW.getSwitch(1) == 1)
                 {
+                    double incrementSize = 1;
+
                     puts("\nSwitch 1 pressed, setting forward throttle\n");
                     LE.on(led1);
 
+                    for (int i = 0; i < speedSetting_t.FAST_SPEED; i += incrementSize){
+
+                    }
+
                     MotorPwm.set(15);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(16);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(17);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(18);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(19);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(20);
 
                     LE.off(led1);
@@ -70,20 +77,20 @@ void MotorControl::initCarMotor(){
                 {
                     puts("\nSwitch 2 pressed, setting reverse throttle\n");
                     LE.on(led2);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
 
                     MotorPwm.set(15);
                     delay_ms(1500);
                     MotorPwm.set(14);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(13);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(12);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(11);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
                     MotorPwm.set(10);
-                    delay_ms(delay);
+                    delay_ms(pwmDelay);
 
                     LE.off(led2);
 
@@ -93,57 +100,12 @@ void MotorControl::initCarMotor(){
                     escHasBeenInitialized = true;
                 }
             } while(escHasBeenInitialized == false);
-            puts("---------EXITING ESC PROGRAMMING MODE------\nn");
+
+            puts("---------EXITING ESC PROGRAMMING MODE------\n");
             LE.off(led4);  // End programming ESC mode
+
+            // Finish off programming of ESC by returning to neutral
             MotorPwm.set(15);
-            /*if(escHasBeenInitialized){
-                            while (1)
-                                {
-                                delay_ms(1000);
-                                MotorPwm.set(15);
-                                    delay_ms(500);
-
-                                    MotorPwm.set(15.5);
-                                    delay_ms(1000);
-
-                                    MotorPwm.set(16);
-                                    delay_ms(1500);
-
-                                    MotorPwm.set(16.5);
-                                    delay_ms(1500);
-
-                                    MotorPwm.set(16);
-                                    delay_ms(1500);
-
-                                    MotorPwm.set(15.5);
-                                    delay_ms(1000);
-
-                                    delay_ms(500);
-
-                                    MotorPwm.set(14.8);
-                                    delay_ms(500);
-
-                                    MotorPwm.set(14.5);
-                                    delay_ms(1000);
-
-                                    MotorPwm.set(14);
-                                    delay_ms(1500);
-
-                                    MotorPwm.set(13.5);
-                                    delay_ms(1500);
-
-                                    MotorPwm.set(14);
-                                    delay_ms(1500);
-
-                                    MotorPwm.set(14.5);
-                                    delay_ms(1000);
-
-                                    MotorPwm.set(14.8);
-                                    delay_ms(500);
-
-                                    delay_ms(500);
-                                }
-            }*/
         }
         countDown--;
         delay_ms(1000);
@@ -169,7 +131,6 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
         else{       // Normal operation
             CurrentMotorValue = speedToSet;
             MotorPwm.set(CurrentMotorValue);
-
         }
     }
 }
@@ -198,41 +159,11 @@ void MotorControl::convertFromHexAndApplyMotorAndServoSettings(mast_mot_msg_t *h
 
         setSteeringDirectionAndSpeed(convertHexToFloatSteer(steeringHexVal), convertHexToFloatSpeed(speedHexVal));
     }
-#if 0
-    if (hexMotorControl->FRS == 0x11){
-        puts("====STOPPING MOTORS====\n");
-        CurrentMotorValue = speedSetting_t.STOP;
-        CurrentServoValue = steeringDirection_t.STRAIGHT;
-        setSteeringDirectionAndSpeed(CurrentServoValue,CurrentMotorValue);
-    }
-    else if (hexMotorControl->FRS == 0xFF){
-        if (hexMotorControl->SPD == 0x11){
-            puts("Sending slow speed\n");
-            CurrentMotorValue = speedSetting_t.SLOW_SPEED;
-            if (hexMotorControl->LR == 0x00)
-        }
-        else if (hexMotorControl->SPD == 0x80){
-            puts("Sending medium speed\n");
-            CurrentMotorValue = speedSetting_t.MEDIUM_SPEED;
-            forward(CurrentMotorValue);
-        }
-        else if (hexMotorControl->SPD == 0xFF){
-            puts("Sending fast speed\n");
-            CurrentMotorValue = speedSetting_t.FAST_SPEED;
-            forward(CurrentMotorValue);
-        }
-        else{
-            puts("Setting default speed to slow\n");
-            CurrentMotorValue = speedSetting_t.SLOW_SPEED;
-            forward(CurrentMotorValue);
-        }
-    }
-#endif
 }
 
 float MotorControl::convertHexToFloatSpeed(uint8_t hexSpeedValue){
     float convertedHexToFloat = 0;
-    
+
     if (hexSpeedValue == (uint8_t)COMMAND_FAST)
         convertedHexToFloat = speedSetting_t.FAST_SPEED;
     if (hexSpeedValue == (uint8_t)COMMAND_MEDIUM)

@@ -62,7 +62,7 @@ class MotorControl{
         bool escHasBeenInitialized;
         #endif
     public:
-        // Message structure from master_controller to motor
+        /// Message structure from master_controller to motor
         mast_mot_msg_t *motorControlStruct = new mast_mot_msg_t {0};
 
         // Constructor to deal with scope issues
@@ -80,24 +80,14 @@ class MotorControl{
         }
 
         #if MOTOR_INIT_NEEDED
-        // Used for programming ESC at each startup
+        /// Used for programming ESC, if needed
         void initCarMotor();
         #endif
 
+
+        /// Functions for using CAN message, and setting appropriate duty cycles and sending those pwm signals
         void getCANMessageData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct);
         void convertFromHexAndApplyMotorAndServoSettings(mast_mot_msg_t *hexMotorControl);
         void setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet);
-
-        #if 0   // Motor Control Functions
-        // Parameters are subject to change
-        void forward(float speedToSet);
-        void back(float speedToSet);
-        #endif
-
-        #if 0   // Servo Steering Functions
-        // Parameters are subject to change
-        void steerLeft(float amountToSteer);
-        void steerRight(float amountToSteer);
-        #endif
 };
 #endif

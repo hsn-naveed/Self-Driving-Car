@@ -49,68 +49,9 @@
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
 
-MotorControl motorObj;
 int main(void)
 {
-    #if 1 // CAN bus initialization
-    uint16_t std_list_arr[] = { 0x704};
-    size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
-
-    iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
-    #endif
-
-    #if 1 // Motor/Servo PWM initialization
-    PWM motorPWM = PWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
-    PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
-
-
-    motorObj = new MotorControl(motorPWM, servoPWM);
-    motorObj.initCarMotor();
-
-    float i = 0;
-    do{
-        if (SW.getSwitch(1)){
-            i = speedSetting_t.MEDIUM_SPEED;
-            motorPWM.set(i);
-            printf("motor set to %f\n", i);
-        }
-
-        if (SW.getSwitch(2)){
-            i = speedSetting_t.BRAKE;
-            motorPWM.set(i);
-            printf("motor set to %f\n", i);
-        }
-    } while(!SW.getSwitch(4));
-
-
-//        do{
-//            if (SW.getSwitch(1)){
-//                i = 10;
-//                servoPWM.set(i);
-//                printf("servo set to %f\n", i);
-//                delay_ms(200);
-//            }
-//
-//            if (SW.getSwitch(2)){
-//                i = 20;
-//                servoPWM.set(i);
-//                printf("servo set to %f\n", i);
-//                delay_ms(200);
-//            }
-//            if (SW.getSwitch(3)){
-//                i = 15;
-//                servoPWM.set(i);
-//                printf("servo set to %f\n", i);
-//                delay_ms(200);
-//            }
-//        } while(!SW.getSwitch(4));
-
-
-    #endif
-
-
-
-    /**
+/**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
      *      2.  Remote task allows you to use remote control to interact with the board.
@@ -125,7 +66,7 @@ int main(void)
     //scheduler_add_task(new can_receive(PRIORITY_HIGH)); //CAN Bus task
 
 
-#if 0
+#if 1
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */

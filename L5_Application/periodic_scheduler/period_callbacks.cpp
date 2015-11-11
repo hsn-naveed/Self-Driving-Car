@@ -37,8 +37,9 @@
 #include "iCAN.hpp"
 #include "Motor_LCD/MotorControl.hpp"
 
-extern MotorControl motorObj;
+MotorControl motorObj;
 
+/// These variables are used for CAN bus communication
 uint16_t motorMsgId = 0x704;
 can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t {0};
 
@@ -49,6 +50,40 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    /// CAN bus initialization
+    uint16_t std_list_arr[] = { 0x704};
+    size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
+
+    iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
+    ///
+
+
+    /// Motor/Servo PWM initialization
+    PWM motorPWM = PWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
+    PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
+
+    motorObj = new MotorControl(motorPWM, servoPWM);
+    if (MOTOR_INIT_NEEDED)
+        motorObj.initCarMotor();
+
+
+    /// For initial testing of the motor and brake functionality prior to starting
+    float testDutyCycle = 0;
+    do{
+        if (SW.getSwitch(1)){
+            testDutyCycle = speedSetting_t.MEDIUM_SPEED;
+            motorPWM.set(testDutyCycle);
+            printf("motor set to %f\n", testDutyCycle);
+        }
+
+        if (SW.getSwitch(2)){
+            testDutyCycle = speedSetting_t.BRAKE;
+            motorPWM.set(testDutyCycle);
+            printf("motor set to %f\n", testDutyCycle);
+        }
+    } while(!SW.getSwitch(4));
+    ///
+
     return true; // Must return true upon success
 }
 
@@ -73,20 +108,20 @@ void period_10Hz(void)
 void period_100Hz(void)
 {
     if (CAN_is_bus_off(can1)){
-                puts("====CAN BUS is off====\n");
-                LE.on(led1);
-            }
-            else if (iCAN_rx(canMsgForMotor, motorMsgId)){
-                motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
-                motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
-                LE.off(led1);
-            }
-            else{
-                LE.on(led1);
-            }
+        puts("====CAN BUS is off====\n");
+        LE.on(led1);
+    }
+    else if (iCAN_rx(canMsgForMotor, motorMsgId)){
+        motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
+        motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
+        LE.off(led1);
+    }
+    else{
+        LE.on(led1);
+    }
 }
 
 void period_1000Hz(void)
 {
-    //LE.toggle(4);
+
 }
