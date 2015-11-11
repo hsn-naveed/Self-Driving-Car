@@ -37,21 +37,34 @@
 #include "tasks.hpp"
 #include <inttypes.h>
 
-
 #include "master_control.hpp"
 #include "can.h"
 
 #include <L4_IO/can_definitions.hpp>
 #include "L4_IO/can_storage.hpp"
 
+#include "243_can/CAN_structs.h"
+#include "243_can/iCAN.hpp"
+
+
+
+// set to 2 if you want to enable motor_control with switches
+// set to 0 if you want to use CAN
+#define DEBUG_NO_CAN 0
 
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
-#include "243_can/CAN_structs.h"
-#include "243_can/iCAN.hpp"
 
+const int g_reset = 0;
+const int g_max_count_timer = 300; // we're running in 100Hz and we expect messages within 3Hz.
+
+//currently not used
+uint8_t current_mode = 0;
+
+//motor command values
+mast_mot_msg_t motor_commands = { 0 };
 
 
 // set to 2 if you want to enable motor_control with switches
@@ -113,11 +126,6 @@ static const int COMMAND_MOTOR_REVERSE_RIGHT = 5;
 sen_msg_t *g_default_sensor_values;
 
 
-
-
-can_msg_t msg_rx = { 0 };
-can_msg_t msg_tx = { 0 };
-
 //current state
 volatile int g_current_state = CHECK_SENSOR_VALUES;
 
@@ -134,18 +142,7 @@ int g_heart_counter = 0;
 bool period_init(void)
 {
     return true; // Must return true upon success
-}
-uint8_t reverse_counter = 0;
 
-bool init_global = false;
-
-
-bool g_read_success = false;
-
-
-//currently not used
-
-can_data_t periodic_sensor_data = { 0 };
 
 /// Register any telemetry variables
 bool period_reg_tlm(void)
@@ -212,8 +209,8 @@ void period_10Hz(void)
     //reset freerun state counter
     // current_state_free_run = 0;
 
-void parseSensorReading(sen_msg_t* data)  {
 
+void parseSensorReading(sen_msg_t* data)  {
 
     if (data->L < CRASH_AVOID_DISTANCE ||
             data->M < CRASH_AVOID_DISTANCE ||
@@ -418,6 +415,13 @@ void parseSensorReading(sen_msg_t* data)  {
         else MIDDLE_BLOCKED = false;
 
 
+    if (data->L < MINIMUM_SENSOR_VALUE ) LEFT_BLOCKED = true;
+        else LEFT_BLOCKED = false;
+
+    if (data->M < MINIMUM_SENSOR_BLOCKED_VALUE ) MIDDLE_BLOCKED = true;
+        else MIDDLE_BLOCKED = false;
+
+
     if (data->R < MINIMUM_SENSOR_VALUE ) RIGHT_BLOCKED = true;
        else RIGHT_BLOCKED = false;
 
@@ -513,6 +517,7 @@ void period_10Hz(void)
     g_current_state = 0;
 
     while(g_current_state != STATE_MACHINE_END) {
+
 
 
     switch(g_current_state){
@@ -674,6 +679,145 @@ void period_10Hz(void)
 
 }
 
+
+
+    switch(g_current_state){
+
+        case CHECK_SENSOR_VALUES:
+            g_prev_state = g_current_state;
+
+                //testing
+                temp[0] = (uint8_t) l_sensor_values->L;
+                temp[1] = (uint8_t) l_sensor_values->M;
+                temp[2] = (uint8_t) l_sensor_values->R;
+                temp[3] = (uint8_t) l_sensor_values->B;
+                printf("            L: %d   M: %d   R: %d   B: %d\n", temp[0], temp[1], temp[2], temp[3]);
+
+                //we parse the sensor values
+                parseSensorReading(l_sensor_values);
+                if(FRONT_CLEAR) g_current_state = CONTROL_BASED_ON_HEADING;
+                else g_current_state = CONTROL_BASED_ON_SENSOR;
+                LD.clear();
+            break;
+
+        case CONTROL_BASED_ON_SENSOR:
+            g_prev_state = g_current_state;
+            //if critical distance is detected
+            if (CRASH_DISTANCE_BLOCKED) {
+                generateMotorCommands(COMMAND_MOTOR_STOP);
+            }
+            //if middle is blocked
+            else if (MIDDLE_BLOCKED) {
+                generateMotorCommands(COMMAND_MOTOR_STOP);
+                LD.clear();
+            }
+            // only left is blocked
+            else if (LEFT_BLOCKED && !RIGHT_BLOCKED && !MIDDLE_BLOCKED)  {
+                  generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn right
+                  LD.clear();
+           }
+           // only right is blocked
+           else if(RIGHT_BLOCKED && !LEFT_BLOCKED && !MIDDLE_BLOCKED)   {
+               generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
+               LD.clear();
+           }
+           //only middle is blocked
+           else if(MIDDLE_BLOCKED && !LEFT_BLOCKED && !RIGHT_BLOCKED)    {
+             //  generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn right
+               generateMotorCommands(COMMAND_MOTOR_STOP);
+               LD.clear();
+           }
+           //if left and middle is blocked
+           else if (LEFT_BLOCKED && MIDDLE_BLOCKED && !RIGHT_BLOCKED)   {
+               //generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT);  //turn right
+               generateMotorCommands(COMMAND_MOTOR_STOP);
+               LD.clear();
+           }
+           //if right and middle is blocked
+           else if (RIGHT_BLOCKED && MIDDLE_BLOCKED && !LEFT_BLOCKED)   {
+               //generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn left
+               generateMotorCommands(COMMAND_MOTOR_STOP);
+               LD.clear();
+           }
+           //if left and right are blocked
+           else if(LEFT_BLOCKED && RIGHT_BLOCKED && !MIDDLE_BLOCKED){
+               //generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT); //keep going straight
+               generateMotorCommands(COMMAND_MOTOR_STOP);
+               LD.clear();
+           }
+           //if all front sensors are blocked
+           else if (!FRONT_CLEAR)   {
+               //if back sensor is also blocked
+               if (BACK_BLOCKED)    {
+                   generateMotorCommands(COMMAND_MOTOR_STOP);
+                   LD.clear();
+                   LD.setLeftDigit('E');
+                   LD.setRightDigit('E');
+               }
+               //if back is clear, reverse-left
+               else {
+                   generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
+                   LD.clear();
+               }
+           }
+           else {
+               generateMotorCommands(COMMAND_MOTOR_STOP);
+               LD.clear();
+           }
+
+            g_current_state = SEND_CONTROL_TO_MOTOR;
+
+            break;
+
+        case CONTROL_BASED_ON_HEADING:
+            g_prev_state = g_current_state;
+
+            //this is where we command based on the heading
+            //TO DO: GPS IMPLEMENTATION
+
+            // now we're testing without GPS
+            // so we go straight
+            generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT);
+
+            //send our commands
+            g_current_state = SEND_CONTROL_TO_MOTOR;
+            LD.clear();
+            break;
+
+        case SEND_CONTROL_TO_MOTOR:
+            g_prev_state = g_current_state;
+
+            //for debugging
+           // printf("SENDING FRS:%2x LR:%2x SPD:%2x\n", msg_tx.data.bytes[0],  msg_tx.data.bytes[1],  msg_tx.data.bytes[2] );
+
+            //prepare our message id
+            msg_tx.msg_id = (uint32_t) MASTER_COMMANDS_MOTOR;
+            //send our message
+            if(iCAN_tx(&msg_tx, (uint16_t) MASTER_COMMANDS_MOTOR))   {
+               printf("Message sent to motor!\n");
+            }
+
+            //reset our state
+           // g_current_state = CHECK_SENSOR_VALUES;
+            g_current_state = STATE_MACHINE_END;
+            LD.clear();
+            break;
+
+        default:
+          //  g_current_state = CHECK_SENSOR_VALUES;
+            g_current_state = STATE_MACHINE_END;
+            LD.clear();
+            break;
+
+
+    } //end switch(g_current_state)
+
+    }//end while
+   // delete l_sensor_values;
+
+} // end 10Hz task
+
+
     } //end switch(g_current_state)
 
     }//end while
@@ -701,6 +845,7 @@ void period_100Hz(void)
     }
 
     //can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t;
+
 
     can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t{0};
    // can_fullcan_msg_t *temp_rx;
@@ -753,7 +898,6 @@ void period_100Hz(void)
                 g_sensor_receive_counter = g_reset;
         }
 #endif
-
 
         //we increment counter
         g_sensor_receive_counter++;
@@ -970,6 +1114,7 @@ void period_1000Hz(void)
 
     //LE.toggle(4);
 
+<<<<<<< HEAD
 }
 
 void handleMessage()
@@ -977,3 +1122,12 @@ void handleMessage()
 
 }
 
+=======
+}
+
+void handleMessage()
+{
+
+}
+
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26

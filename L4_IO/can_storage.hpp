@@ -11,7 +11,9 @@
 #include <can_definitions.hpp>
 #include <stdint.h>
 #include <L3_Utils/singleton_template.hpp>
+
 #include "243_can/CAN_structs.h"
+
 
 /**
  * LED class used to control the Board's 8 output LEDs
@@ -34,11 +36,6 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
         void setMotorSpeed(uint8_t speed) { mMotorSpeed = speed;}
 
         //Sensor
-
-
-        void setSensorValues(uint8_t arr[], int size);
-
-
 
         void setSafeSensorValues();
 
@@ -89,6 +86,8 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
 
             }*/
         CAN_STORAGE();
+        ~CAN_STORAGE();
+
         friend class SingletonTemplate<CAN_STORAGE>;  ///< Friend class used for Singleton Template
 };
 

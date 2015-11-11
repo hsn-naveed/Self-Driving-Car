@@ -48,6 +48,7 @@
 #include <inttypes.h>
 
 
+#include "243_can/CAN_structs.h"
 
 
 CMD_HANDLER_FUNC(taskListHandler)
@@ -830,15 +831,19 @@ CMD_HANDLER_FUNC(canBusHandler)
 CMD_HANDLER_FUNC(masterHandler) {
 
     //uint32_t message_id;
+
     can_msg_t msg_rx = { 0 };
+
 
 
 
     if(cmdParams.beginsWithIgnoreCase("test"))  {
         /* Get length and message id */
+
            if (cmdParams.scanf("%*s %*s %x", &msg_rx.msg_id)) {
                //output.printf("Test %" PRIu32 " \n", message_id);
                output.printf("Message ID: %3x \n", msg_rx.msg_id);
+
               // msg_rx.msg_id = message_id;
 
 
@@ -871,6 +876,7 @@ CMD_HANDLER_FUNC(masterHandler) {
 
         }
     }
+
 
 
     return true;

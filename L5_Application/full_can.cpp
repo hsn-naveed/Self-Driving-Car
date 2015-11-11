@@ -34,7 +34,13 @@
                 if(CAN_fullcan_add_entry(bus, CAN_gen_sid(bus, 0x123), CAN_gen_sid(bus, 0x124))){
                     const can_std_id_t slist[]      = {
                                                         CAN_gen_sid(can1, 0x123), CAN_gen_sid(can1, 0x124),   // 2 entries
+<<<<<<< HEAD
                                                         CAN_gen_sid(can1, 0x140), CAN_gen_sid(can1, 0x141)
+=======
+                                                        CAN_gen_sid(can1, 0x140), CAN_gen_sid(can1, 0x141),
+                                                        CAN_gen_sid(can1, 0x702), //sensor values
+                                                        CAN_gen_sid(can1, 0x704), //master command motor
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
                                                       };
                     const can_std_grp_id_t sglist[] = { {CAN_gen_sid(can1, 0x01), CAN_gen_sid(can1, 0x200)}, // Group 1
                                                         {CAN_gen_sid(can2, 0x201), CAN_gen_sid(can2, 0x500)}  // Group 2
@@ -76,9 +82,12 @@
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
                         //can_msg_t msg_tx = { 0 };
 =======
 >>>>>>> fixed sensor receive issue
+=======
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
 
                          if(CAN_fullcan_read_msg_copy(msgPtr,&msg)){
                              puts("\nReceived!");
@@ -89,6 +98,7 @@
                              }
                              //pass the received message to the period_callback functions
 <<<<<<< HEAD
+<<<<<<< HEAD
                              //xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &msg, 0);
                              vTaskDelay(5000);
                              return true;
@@ -97,11 +107,16 @@
                                //send data
                          //}
 =======
+=======
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
                              xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_receive), &raw_msg_rx, 0);
                             // vTaskDelay(5000);
                              //return true;
                              }
+<<<<<<< HEAD
 >>>>>>> fixed sensor receive issue
+=======
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
 
                              else{
                                       puts ("\nNo message received!");
@@ -117,10 +132,15 @@
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
                        //  vTaskDelay(10);
 >>>>>>> fixed sensor receive issue
+=======
+
+                       //  vTaskDelay(10);
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
                 }
 };*/
 

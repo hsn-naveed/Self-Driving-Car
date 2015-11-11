@@ -22,6 +22,11 @@
 #include "L4_IO/can_definitions.hpp"
 #include "L4_IO/can_storage.hpp"
 
+<<<<<<< HEAD
+=======
+#include "243_can/CAN_structs.h"
+
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
 
 control_handler_task::control_handler_task(uint8_t priority) :
    scheduler_task("control_handler_task", 8*512, priority),
@@ -33,11 +38,14 @@ control_handler_task::control_handler_task(uint8_t priority) :
     mCAN_MSG_Rx = { 0 };
     mCAN_MSG_Tx = { 0 };
 
+<<<<<<< HEAD
 
 
 //addSharedObject(shared_sensor_data, &mSensorValue);
 
     mStateCount = 0;
+=======
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
 }
 
 bool control_handler_task::init() {
@@ -80,20 +88,27 @@ bool control_handler_task::run(void *p) {
     //read message_id_queue
     //depending of the message, a function that handles the states will be called
    // printf("control handler running\n");
+<<<<<<< HEAD
 
+=======
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
    // uint8_t tempSensorValues[SIZE_OF_SENSOR_ARRAY] = { 0 };
     int B =  CAN_ST.sensor_data->B;
     int R =  CAN_ST.sensor_data->R;
     int M =  CAN_ST.sensor_data->M;
     int L =  CAN_ST.sensor_data->L;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
     if(xQueueReceive(mCANMessage_QueueHandler, &mCAN_MSG_Rx, 0)) {
             printf("Handler Received ID: 0x%03" PRIx32 "\n", mCAN_MSG_Rx.msg_id);
 
         //if Android sends a new command, stateCounters will be reset,
 
         switch (mCAN_MSG_Rx.msg_id) {
+<<<<<<< HEAD
 
             case (uint32_t) ANDROID_COMMANDS_MASTER:
                     printf("ANDROID_COMMANDS_MASTER: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
@@ -127,6 +142,8 @@ bool control_handler_task::run(void *p) {
             case (uint32_t) RC_PARAMS:
                     printf("RC_PARAMS: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
 
+=======
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
 //            case (uint32_t) ANDROID_COMMANDS_MASTER:
 //                    printf("ANDROID_COMMANDS_MASTER: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
 //                    if(mCAN_MSG_Rx.data.bytes[0] != (uint8_t) VALUE_NO_CHANGE) {
@@ -205,7 +222,10 @@ bool control_handler_task::run(void *p) {
 
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
                     printf("SENSOR VALUES MASTER CONTROL: %d %d %d %d\n", B, R, M, L);
 //                    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++)     {
 //                        tempSensorValues[i] = mCAN_MSG_Rx.data.bytes[i];
@@ -213,6 +233,7 @@ bool control_handler_task::run(void *p) {
 //
 //                        }
 //                    CAN_ST.setSensorValues(tempSensorValues, (int) SIZE_OF_SENSOR_ARRAY);
+<<<<<<< HEAD
 
                     break;
             //sends a request to sensor to read sensor data
@@ -238,6 +259,18 @@ bool control_handler_task::run(void *p) {
                     CAN_ST.setSensorValues(tempSensorValues, (int) SIZE_OF_SENSOR_ARRAY);
                     break;
 
+=======
+                    break;
+            // 0x704                Master          [   7   ][  6   ][  5   ][  4   ][  3   ][  SPD ][  L/R ][F/R/S ]
+            case (uint32_t) MASTER_COMMANDS_MOTOR:
+                    printf("MASTER_COMMANDS_MOTOR: 0x%03" PRIx32 "\n",mCAN_MSG_Rx.msg_id);
+                    //copy the message to our tx frame
+                    mCAN_MSG_Tx = mCAN_MSG_Rx;
+                    printf("SEND TO MOTOR: %2x %2x %2x\n", mCAN_MSG_Tx.data.bytes[2], mCAN_MSG_Tx.data.bytes[1], mCAN_MSG_Tx.data.bytes[0] );
+                    xQueueSend(mCANMessage_QueueHandler_Transmit, &mCAN_MSG_Tx, 0);
+                    break;
+
+>>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
             default:
               //  printf("No applicable message ID's received.\n");
                // printf ("CAN_STORAGE MOTOR VALUE %d\n", CAN_ST.getMotorSpeed());
