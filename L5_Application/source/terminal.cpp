@@ -114,12 +114,10 @@ bool terminalTask::taskEntry()
 
     //Added for master commands
     cp.addHandler(masterHandler, "master", "'test id' <msg Id>\n"
-<<<<<<< HEAD
-                                           "'message' <msg Id> <upper 4 bytes data> <lower 4 bytes data>");
-=======
+
                                            "'message' <msg Id> <upper 4 bytes data> <lower 4 bytes data>\n"
                                            "'sensor' <back> <right> <middle> <left>\n");
->>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
+
 
     /* Firmware upgrade handlers
      * Please read "netload_readme.txt" at ref_and_datasheets directory.

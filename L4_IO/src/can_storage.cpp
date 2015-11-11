@@ -26,23 +26,7 @@ CAN_STORAGE::CAN_STORAGE()  {
     mMotorSpeed = 0;
 
     //Sensor
-<<<<<<< HEAD
-<<<<<<< HEAD
-    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++){
-           mSensorValues[i] += i ;
-           //global_sensor_value[i] = mSensorValue[i];
-       }
-}
 
-void CAN_STORAGE::setSensorValues(uint8_t arr[], int size)  {
-    if(size > (int) SIZE_OF_SENSOR_ARRAY) { size = (int) SIZE_OF_SENSOR_ARRAY ; }
-    for (int i = 0; i < size; i++){
-               mSensorValues[i] = 0;
-               //global_sensor_value[i] = mSensorValue[i];
-           }
-=======
-=======
->>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
     sensor_data = new sen_msg_t;
     sensor_data->L = (uint8_t) MINIMUM_SENSOR_VALUE;
     sensor_data->M = (uint8_t) MINIMUM_SENSOR_VALUE;
@@ -67,15 +51,10 @@ CAN_STORAGE::~CAN_STORAGE() {
     delete sensor_data;
     delete motor_data;
     delete gps_coords_curr;
-<<<<<<< HEAD
->>>>>>> Adding the heading in gps.cpp
+    delete gps_coords_dest;
 }
 
 
-=======
-}
-
->>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26
 void CAN_STORAGE::setSafeSensorValues(){
     sensor_data->L = (uint8_t) 0x00;
   sensor_data->M = (uint8_t) 0x00;
@@ -83,14 +62,4 @@ void CAN_STORAGE::setSafeSensorValues(){
   sensor_data->B = (uint8_t) 0x00;
 }
 
-//void CAN_STORAGE::setSensorValues(uint8_t arr[], int size)  {
-//    if(size > (int) SIZE_OF_SENSOR_ARRAY) { size = (int) SIZE_OF_SENSOR_ARRAY ; }
-//    for (int i = 0; i < size; i++){
-//               mSensorValues[i] = 0;
-//               //global_sensor_value[i] = mSensorValue[i];
-//           }
-//}
-<<<<<<< HEAD
 
-=======
->>>>>>> 44504a6ae0300853404a64324aa1c412d8e02a26

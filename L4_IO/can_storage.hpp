@@ -46,6 +46,9 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
         //Motor
         mast_mot_msg_t* motor_data;
 
+        gps_coordinate_msg_t* gps_coords_curr;
+
+        gps_coordinate_msg_t* gps_coords_dest;
 
     private:
 
