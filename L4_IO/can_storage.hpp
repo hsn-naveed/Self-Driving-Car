@@ -46,9 +46,14 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
         //Motor
         mast_mot_msg_t* motor_data;
 
+        //current car coordinates sent by gps
         gps_coordinate_msg_t* gps_coords_curr;
 
+        //destination coordinates sent by android
         gps_coordinate_msg_t* gps_coords_dest;
+
+        //car bearing as measured by the compass
+        gps_heading_msg_t* mAngleValue;
 
     private:
 
@@ -69,7 +74,7 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
                //if there's only one checkpoint, mCheckPoint[0] will be equal to mFinalDestination
                uint32_t mFinalDestinationX; //contains X coordinates of the final destination
                uint32_t mFinalDestinationY; //contains Y coordinates of the final destination
-               gps_heading_msg_t mAngleValue; //angle value with respect to the current checkpoint
+
 
                //Sensor
               // uint8_t mSensorValues[(int)SIZE_OF_SENSOR_ARRAY]; //current sensor values; 4 total sensors

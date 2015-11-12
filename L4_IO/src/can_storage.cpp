@@ -44,6 +44,9 @@ CAN_STORAGE::CAN_STORAGE()  {
     //GPS Coordinate
     gps_coords_curr = new gps_coordinate_msg_t;
     gps_coords_dest = new gps_coordinate_msg_t;
+
+    //GPS Compass angle
+    mAngleValue = new gps_heading_msg_t;
 }
 
 CAN_STORAGE::~CAN_STORAGE() {

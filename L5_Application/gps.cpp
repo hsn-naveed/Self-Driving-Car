@@ -11,6 +11,7 @@
 #include "math.h"
 
 #define Pi 3.14159265
+
 uint32_t curr_heading(){
     float degrees = (atan((CAN_ST.gps_coords_dest->y_coordinate-CAN_ST.gps_coords_curr->y_coordinate)/(CAN_ST.gps_coords_dest->x_coordinate-CAN_ST.gps_coords_curr->x_coordinate)) * 180/Pi);
 

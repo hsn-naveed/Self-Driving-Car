@@ -356,14 +356,23 @@ void period_100Hz(void)
             //g_reset counter because we received a message
             g_sensor_receive_counter = g_reset;
         }
-
-        else if(iCAN_rx(temp_rx, (uint16_t) GPS_MASTER_HEADING)){
+        //GPS sends the current coordinates of the car
+        //In the final stage, add the logic that motor does not start until coordinates are received
+        else if(iCAN_rx(temp_rx, (uint16_t) GPS_MASTER_COORDS)){
             portDISABLE_INTERRUPTS();
             CAN_ST.gps_coords_curr = (gps_coordinate_msg_t*) &temp_rx->data.qword;
             portENABLE_INTERRUPTS();
             printf("GPS VAL READ!\n");
             g_sensor_receive_counter = g_reset;
         }
+        //Compass sending current heading
+        else if(iCAN_rx(temp_rx, (uint16_t) GPS_MASTER_HEADING)){
+                    portDISABLE_INTERRUPTS();
+                    CAN_ST.mAngleValue = (gps_heading_msg_t*) &temp_rx->data.qword;
+                    portENABLE_INTERRUPTS();
+                    printf("Heading READ!\n");
+                    g_sensor_receive_counter = g_reset;
+                }
 
 
         //if no message arrives
