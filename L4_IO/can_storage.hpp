@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <L3_Utils/singleton_template.hpp>
 
-#include <243_can/CAN_structs.h>
+#include "243_can/CAN_structs.h"
 
 
 /**
@@ -26,9 +26,7 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
     public:
         bool init(); ///< Initializes this device, @returns true if successful
 
-        //Android
-        uint8_t getManualControlValue() {return mManualControlValue;}
-        void setManualControlValue(uint8_t val) {mManualControlValue = val;}
+
 
         uint8_t getGoSignalValue() {return mGoSignal;}
         void setGoSignalValue(uint8_t val) { mGoSignal = val;}
@@ -38,6 +36,7 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
         void setMotorSpeed(uint8_t speed) { mMotorSpeed = speed;}
 
         //Sensor
+
         void setSafeSensorValues();
 
 
@@ -47,12 +46,11 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
         //Motor
         mast_mot_msg_t* motor_data;
 
-        //GPS Coordinates
         gps_coordinate_msg_t* gps_coords_curr;
+
         gps_coordinate_msg_t* gps_coords_dest;
 
     private:
-
 
 
         //Android
@@ -92,6 +90,7 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
             }*/
         CAN_STORAGE();
         ~CAN_STORAGE();
+
         friend class SingletonTemplate<CAN_STORAGE>;  ///< Friend class used for Singleton Template
 };
 

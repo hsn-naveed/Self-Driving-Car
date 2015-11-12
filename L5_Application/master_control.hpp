@@ -49,7 +49,6 @@ class control_handler_task : public scheduler_task
         can_msg_t mCAN_MSG_Rx; //current Data Received
         can_msg_t mCAN_MSG_Tx; //current Data to Send
 
-
 };
 
 
