@@ -125,7 +125,7 @@ class Signal(object):
                 bits_in_this_byte = remaining
 
             code += ("    bits_from_byte = ((bytes[" + str(byte_num) + "] >> " + str(bit_pos % 8) + ")")
-            code += ("& 0x" + format(2 ** bits_in_this_byte - 1, '02x') + ")")
+            code += (" & 0x" + format(2 ** bits_in_this_byte - 1, '02x') + ")")
             code += ("; ///< " + str(bits_in_this_byte) + " bit(s) from B" + str(bit_pos) + "\n")
             code += ("    raw_signal    |= (bits_from_byte << " + str(bit_count) + ");\n")
             byte_num += 1
@@ -253,11 +253,11 @@ class DBC(object):
 def main(argv):
     dbcfile = '243.dbc'
     self_node = 'DRIVER'
-    gen_all = True
+    gen_all = False
     big_endian = True
 
     try:
-        opts, args = getopt.getopt(argv, "hi:s:a:b", ["ifile=", "self=", "all"])
+        opts, args = getopt.getopt(argv, "hi:s:a:b", ["ifile=", "self=", "all", "big"])
     except getopt.GetoptError:
         print ('dbc_parse.py -i <dbcfile> -s <self_node> <-a> <-b>')
         sys.exit(2)
