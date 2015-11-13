@@ -92,7 +92,13 @@ bool period_init(void)
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
-//    tlm_component tlm_component_add("")
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)ESC_INIT_NEEDED, tlm_float);
+
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)MOTOR_SERVO_PWM_FREQ, tlm_float);
+
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)MEDIUM_SPEED_OFFSET, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)SLOW_SPEED_OFFSET, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)BACK_SPEED_OFFSET, tlm_uint);
     return true; // Must return true upon success
 }
 
