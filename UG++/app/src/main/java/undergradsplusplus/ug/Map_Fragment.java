@@ -1,5 +1,6 @@
 package undergradsplusplus.ug;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.location.Location;
 import android.os.Bundle;
@@ -32,10 +33,21 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
     public static double eLong;
     public static double cLat;
     public static double cLong;
-    List<LatLng> dirPoints = new ArrayList<LatLng>();
+    private static List<LatLng> dirPoints = new ArrayList<>();
 
     private GoogleMap map;
     GoogleDirection gd;
+
+    sendPointsToActivity toActivity;
+
+
+    /*
+    *   This will transmit the List of Latitude and Longitude to Activity
+    *   to be used for Bluetooth transmission.
+     */
+    public interface sendPointsToActivity {
+        void transmitPoints(List<LatLng> dirPoints);
+    }
 
     /*
     *   Allows map click.
@@ -59,7 +71,7 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
             cLat = loc.latitude;
             cLong = loc.longitude;
-            Log.d("LOC", "" + cLong + ", " + cLat);
+            Log.d("CURRENT LOCATION", "" + cLong + ", " + cLat);
         }
     };
 
@@ -170,9 +182,35 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
     }
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+      //  Activity activity = (Activity) context;
+
+
+        try
+        {
+            toActivity = (sendPointsToActivity) activity;
+        }
+
+        catch (ClassCastException e)
+        {
+            throw new ClassCastException(activity.toString() + "must implement senPointsToActivity");
+        }
+
+    }
+
+    @Override
+    public void onDetach() {
+        toActivity = null;
+        super.onDetach();
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId())
         {
+            // Resets all coordinates. Clears markers off map. Clears List of coordinates.
             case R.id.reset_button:
                 map.clear();
                 LatLng latty = new LatLng(0, 0);
@@ -181,17 +219,23 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
                 Log.d("RESET", "RESET");
                 break;
 
+            // After SET is pressed. Press GO to send the coordinates to MainActivity. MainActivity will transmit
+            // coordinates via Bluetooth.
             case R.id.go_button:
 
-                Log.d("SIZE", "" + dirPoints.size());
+                Log.d("MAP_FRAG DIR SIZE", "" + dirPoints.size());
 
                 for (int i = 0; i < dirPoints.size(); i++)
                 {
-                    Log.d("DIR POINTS:", "LATITUDE: " + dirPoints.get(i).latitude
+                    Log.d("MAP_FRAG DIR POINTS:", "LATITUDE: " + dirPoints.get(i).latitude
                             + ", LONGITUDE" + dirPoints.get(i).longitude);
                 }
+
+                toActivity.transmitPoints(dirPoints);
                 break;
 
+            // SET will take the start (current) and end locations to get directions.
+            // Will provide a LatLng List copied from getAutoDirections method.
             case R.id.set_button:
                 LatLng start = new LatLng(cLat, cLong);
                 LatLng end = new LatLng(eLat, eLong);
@@ -199,16 +243,9 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
                 Log.d("GO_BUTTON", "END: " + end.longitude + ", " + end.latitude);
                 getAutoDirections(start, end);
 
-
-                for (int i = 0; i < dirPoints.size(); i++)
-                {
-                    Log.d("HELLO", "" + dirPoints.size());
-                    Log.d("DIR POINTS:", "LATITUDE: " + dirPoints.get(i).latitude
-                            + ", LONGITUDE" + dirPoints.get(i).longitude);
-                }
-
                 break;
 
+            // STOP all actions
             case R.id.stop_button:
 
                 break;

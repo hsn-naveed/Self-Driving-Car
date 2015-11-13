@@ -298,7 +298,6 @@ public class GoogleDirection {
                 for(int j = 0 ; j < arr.size() ; j++) {
                     listGeopoints.add(new LatLng(arr.get(j).latitude
                             , arr.get(j).longitude));
-                    Log.d("LIST", "" + listGeopoints.get(j).longitude + ", " + listGeopoints.get(j).latitude);
                 }
 
                 locationNode = nl2.item(getNodeIndex(nl2, "end_location"));

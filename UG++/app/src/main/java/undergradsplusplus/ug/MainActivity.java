@@ -1,17 +1,18 @@
 package undergradsplusplus.ug;
 
 
-import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+
+import com.google.android.gms.maps.model.LatLng;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
 *      TODO 1:       Implement Setup, Map, and then Status Fragments
@@ -22,9 +23,10 @@ import android.view.View;
 *      TODO 4:       Parse CAN ID's
 */
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends FragmentActivity implements Map_Fragment.sendPointsToActivity {
 
-    public final static String EXTRA_MESSAGE = "ug.undergradsplusplus.MESSAGE";
+    private static List<LatLng> newDir;
+    private static List<LatLng> formattedDirections;
 
     FragmentManager manager;
     FragmentTransaction transaction;
@@ -119,4 +121,19 @@ public class MainActivity extends AppCompatActivity {
             manager.beginTransaction().hide(statusFrag).commit();
     }
 
+    @Override
+    public void transmitPoints(List<LatLng> dirPoints) {
+        newDir = new ArrayList<LatLng>(dirPoints);
+        DecimalFormat df = new DecimalFormat("#.000000");
+
+        Log.d("IN transmitPoints", "Transmit Points");
+
+        Log.d("ACTIVITY DIR SIZE", "" + newDir.size());
+        for (int i = 0; i < newDir.size(); i++)
+        {
+            Log.d("ACTIVITY DIR POINTS", "LATITUDE: " + df.format(newDir.get(i).latitude)
+                    + ", LONGITUDE" + df.format(newDir.get(i).longitude));
+        }
+
+    }
 }
