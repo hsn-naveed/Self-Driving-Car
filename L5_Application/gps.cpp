@@ -33,3 +33,8 @@ uint32_t curr_heading(){
     }
 }
 
+uint16_t setDirection(){
+    if (curr_heading() == CAN_ST.mAngleValue){
+
+    }
+}

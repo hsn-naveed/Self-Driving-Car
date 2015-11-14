@@ -86,7 +86,8 @@ static const int DISPLAY_FORWARD_RIGHT = 2;
 static const int DISPLAY_STOP = 3;
 static const int DISPLAY_REVERSE = 4;
 static const int DISPLAY_ERROR = 99;
-
+static const int GPS_LOST      = 98;
+static const int COMPASS_LOST  = 97;
 
 const int g_reset = 0;
 const int g_max_count_timer = 300; // we're running in 100Hz and we expect messages within 3Hz.
@@ -103,7 +104,8 @@ sen_msg_t sensor_data = { 0 };
 uint8_t reverse_counter = 0;
 
 can_fullcan_msg_t *g_sensor_msg;
-can_fullcan_msg_t *g_gps_msg;
+can_fullcan_msg_t *g_gps_msg = new can_fullcan_msg_t {0};
+can_fullcan_msg_t *g_compass_msg = new can_fullcan_msg_t {0};
 
 //currently not used
 can_msg_t msg_rx = { 0 };
@@ -182,6 +184,16 @@ void disp_7LED(int val)  {
             LD.clear();
             LD.setLeftDigit('E');
             LD.setRightDigit('E');
+            break;
+        case GPS_LOST:
+            LD.clear();
+            LD.setLeftDigit('G');
+            LD.setRightDigit('L');
+            break;
+        case COMPASS_LOST:
+            LD.clear();
+            LD.setLeftDigit('C');
+            LD.setRightDigit('L');
             break;
 
         default:
@@ -317,6 +329,12 @@ void period_1Hz(void)
 //counter for the receive sensor
 int g_sensor_receive_counter = 0;
 
+//counter for the GPS
+int g_gps_receive_counter = 0;
+
+//counter for the Compass
+int g_compass_receive_counter = 0;
+
 void period_10Hz(void)
 {
 
@@ -332,7 +350,8 @@ void period_100Hz(void)
 
     //can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t;
 
-
+    //TO DO @MARVIN: Move this out of 100Hz task because the mail box gets deleted every time task
+    //goes out of scope and define a separate pointer for motor, sensor.
     can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t{0};
 
    // can_fullcan_msg_t *temp_rx;
@@ -357,21 +376,25 @@ void period_100Hz(void)
             g_sensor_receive_counter = g_reset;
         }
         //GPS sends the current coordinates of the car
+        //TO DO @hsn_naveed
         //In the final stage, add the logic that motor does not start until coordinates are received
-        else if(iCAN_rx(temp_rx, (uint16_t) GPS_MASTER_COORDS)){
+        //Add the logic for else scenario of the g_gps_receive_counter i.e when the counter is NOT reset
+        else if(iCAN_rx(g_gps_msg, (uint16_t) GPS_MASTER_COORDS)){
             portDISABLE_INTERRUPTS();
-            CAN_ST.gps_coords_curr = (gps_coordinate_msg_t*) &temp_rx->data.qword;
+            CAN_ST.gps_coords_curr = (gps_coordinate_msg_t*) &g_gps_msg->data.qword;
             portENABLE_INTERRUPTS();
             printf("GPS VAL READ!\n");
-            g_sensor_receive_counter = g_reset;
+            g_gps_receive_counter = g_reset; //Do I need a different variable
         }
         //Compass sending current heading
-        else if(iCAN_rx(temp_rx, (uint16_t) GPS_MASTER_HEADING)){
+        //TO DO @hsn_naveed
+        //Add the logic for the g_compass_receive_counter i.e when the counter is NOT reset
+        else if(iCAN_rx(g_compass_msg, (uint16_t) GPS_MASTER_HEADING)){
                     portDISABLE_INTERRUPTS();
-                    CAN_ST.mAngleValue = (gps_heading_msg_t*) &temp_rx->data.qword;
+                    CAN_ST.mAngleValue = (gps_heading_msg_t*) &g_compass_msg->data.qword;
                     portENABLE_INTERRUPTS();
                     printf("Heading READ!\n");
-                    g_sensor_receive_counter = g_reset;
+                    g_compass_receive_counter = g_reset;
                 }
 
 
@@ -424,7 +447,7 @@ void period_100Hz(void)
             temp_rx->data.bytes[1] = (uint8_t) 0x00;
             temp_rx->data.bytes[2] = (uint8_t) 0xff;
             temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            CAN_ST.sensor_data     = (sen_msg_t*) & temp_rx->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
