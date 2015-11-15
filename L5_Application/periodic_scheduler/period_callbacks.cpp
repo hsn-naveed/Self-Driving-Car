@@ -102,10 +102,15 @@ uint8_t g_current_mode = (uint8_t) FREERUN_MODE;
 //motor command values
 mast_mot_msg_t motor_commands = { 0 };
 
-//sensor values
-sen_msg_t sensor_data = { 0 };
+uint8_t g_motor_LR = 0;
+uint8_t g_motor_SPD = 0;
 
-uint8_t reverse_counter = 0;
+//sensor values
+uint8_t g_sensor_left_value = 0;
+uint8_t g_sensor_middle_value = 0;
+uint8_t g_sensor_right_value = 0;
+uint8_t g_sensor_back_value = 0;
+
 
 can_fullcan_msg_t *g_sensor_msg;
 can_fullcan_msg_t *g_gps_msg = new can_fullcan_msg_t {0};
@@ -115,9 +120,12 @@ can_fullcan_msg_t *g_compass_msg = new can_fullcan_msg_t {0};
 can_msg_t msg_rx = { 0 };
 can_msg_t msg_tx = { 0 };
 
+//Android
+bool g_receiving_checkpoints = false;
+
+
 
 //default values are all zero
-//static const sen_msg_t *g_default_sensor_values = new sen_msg_t{(uint8_t) 0x0C, (uint8_t) 0x0D, (uint8_t) 0x0E, (uint8_t) 0x0F};
 sen_msg_t *g_default_sensor_values;
 
 
@@ -149,9 +157,18 @@ bool period_reg_tlm(void)
 
         tlm_component *master_cmp = tlm_component_add("master");
 
+
     TLM_REG_VAR(master_cmp,  g_heart_counter, tlm_double);
 
+    //sensor values
+    TLM_REG_VAR(master_cmp,  g_sensor_left_value, tlm_uint);
+    TLM_REG_VAR(master_cmp,  g_sensor_middle_value, tlm_uint);
+    TLM_REG_VAR(master_cmp,  g_sensor_right_value, tlm_uint);
+    TLM_REG_VAR(master_cmp,  g_sensor_back_value, tlm_uint);
 
+    //motor commands
+    TLM_REG_VAR(master_cmp,  g_motor_LR, tlm_uint);
+    TLM_REG_VAR(master_cmp,  g_motor_SPD, tlm_uint);
 
     return true; // Must return true upon success
 }
@@ -421,11 +438,9 @@ void period_100Hz(void)
             printf("GO Signal READ!\n");
         }
 
-
-
-        //if no message arrives
+        //NO MESSAGE RECEIVE LOGIC
 #if !DEBUG_NO_CAN
-        else if (g_sensor_receive_counter > g_max_count_timer)  {
+         if (g_sensor_receive_counter > g_max_count_timer)  {
 
                 portDISABLE_INTERRUPTS();
                     CAN_ST.setSafeSensorValues();
@@ -444,7 +459,7 @@ void period_100Hz(void)
         ///////////////////////////////////////////////////////////////
 
 #if DEBUG_NO_CAN == 1
-    // LE.toggle(3);
+
     int sw_value = SW.getSwitchValues();
     switch(sw_value)    {
         case 0:
@@ -628,10 +643,10 @@ void period_100Hz(void)
                           g_prev_state = g_current_state;
 
                           //testing
-                          temp[0] = (uint8_t) l_sensor_values->L;
-                          temp[1] = (uint8_t) l_sensor_values->M;
-                          temp[2] = (uint8_t) l_sensor_values->R;
-                          temp[3] = (uint8_t) l_sensor_values->B;
+                          g_sensor_left_value = (uint8_t) l_sensor_values->L;
+                          g_sensor_middle_value = (uint8_t) l_sensor_values->M;
+                          g_sensor_right_value = (uint8_t) l_sensor_values->R;
+                          g_sensor_back_value = (uint8_t) l_sensor_values->B;
                          // printf("            L: %d   M: %d   R: %d   B: %d\n", temp[0], temp[1], temp[2], temp[3]);
 
                           //we parse the sensor values
@@ -726,6 +741,10 @@ void period_100Hz(void)
 
                           //prepare our message id
                           msg_tx.msg_id = (uint32_t) MASTER_MOTOR_COMMANDS;
+
+                          g_motor_LR = msg_tx.data.bytes[0];
+                          g_motor_SPD = msg_tx.data.bytes[1];
+
                           //send our message
                           if(iCAN_tx(&msg_tx, (uint16_t) MASTER_MOTOR_COMMANDS))   {
                              //printf("Message sent to motor!\n");
@@ -747,7 +766,11 @@ void period_100Hz(void)
 
               }//end while
 
+           }//end else if
+           else if (g_receiving_checkpoints) {
+               //TO DO: Receive checkpoint logic
            }
+
 
         ///////////////////////////////////////////////////////////////
 
