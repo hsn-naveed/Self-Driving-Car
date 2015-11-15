@@ -66,7 +66,7 @@ int main(void)
      * @endcode
      */
 
-    uint16_t accepted_msg_ids[] = {SENSOR_MASTER_REG, MASTER_COMMANDS_MOTOR};
+    uint16_t accepted_msg_ids[] = {SENSOR_MASTER_REG, MASTER_MOTOR_COMMANDS};
     iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids) / sizeof(*accepted_msg_ids));
 
     //initialize our switches, LE, and CAN_ST

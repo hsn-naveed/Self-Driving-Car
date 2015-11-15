@@ -20,13 +20,9 @@ bool CAN_STORAGE::init()
 CAN_STORAGE::CAN_STORAGE()  {
 
     //Android
-    mGoSignal = 0;
-
-    //Motor
-    mMotorSpeed = 0;
+    mGoSignal = false;
 
     //Sensor
-
     sensor_data = new sen_msg_t;
     sensor_data->L = (uint8_t) MINIMUM_SENSOR_VALUE;
     sensor_data->M = (uint8_t) MINIMUM_SENSOR_VALUE;

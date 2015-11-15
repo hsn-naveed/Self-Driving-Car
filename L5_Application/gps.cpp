@@ -34,7 +34,9 @@ uint32_t curr_heading(){
 }
 
 uint16_t setDirection(){
-    if (curr_heading() == CAN_ST.mAngleValue){
+    if (curr_heading() == (uint32_t) CAN_ST.mAngleValue){
 
     }
+
+    return 0; //CHANGE THIS
 }
