@@ -15,8 +15,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 
@@ -26,8 +29,9 @@ import java.util.Set;
 public class Setup_Fragment extends Fragment implements View.OnClickListener{
 
     TextView text;
-    BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    public static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     ArrayAdapter<String> mArrayAdapter;
+    public static ListView newDevList;
 
     @Nullable
     @Override
@@ -36,6 +40,8 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
 
         Button ENABLE = (Button) v.findViewById(R.id.enable_button);
         ENABLE.setOnClickListener(this);
+        Button DISCOVER = (Button) v.findViewById(R.id.discover_button);
+        DISCOVER.setOnClickListener(this);
 
         return v;
     }
@@ -45,6 +51,7 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
         super.onActivityCreated(savedInstanceState);
 
         text = (TextView) getActivity().findViewById(R.id.text_setup);
+        newDevList = (ListView) getActivity().findViewById(android.R.id.list);
         Log.d("phil", "in setup");
     }
 
@@ -64,10 +71,12 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
                     Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     startActivityForResult(enableBtIntent, 1);
                 }
+
+                getPairedDevices();
+
                 break;
 
             case R.id.discover_button:
-                broadcastReceiver();
                 IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
                 getActivity().registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
                 break;
@@ -76,18 +85,20 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
 
     }
 
-    public void broadcastReceiver()
+    public void getPairedDevices()
     {
+        List <String> s = new ArrayList<String>();
+        mArrayAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, s);
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         // If there are paired devices
         if (pairedDevices.size() > 0) {
             // Loop through paired devices
             for (BluetoothDevice device : pairedDevices) {
                 // Add the name and address to an array adapter to show in a ListView
-                mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+                s.add(device.getName() + "\n" + device.getAddress());
             }
+            newDevList.setAdapter(mArrayAdapter);
         }
-
     }
 
     // Create a BroadcastReceiver for ACTION_FOUND
@@ -100,11 +111,10 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // Add the name and address to an array adapter to show in a ListView
                 mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
-
-                Log.d("BR", "IN BROADCAST");
             }
         }
     };
+
 
 
 
