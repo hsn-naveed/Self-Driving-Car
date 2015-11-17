@@ -26,6 +26,7 @@ public class ConnectThread extends Thread{
     {
         BluetoothSocket tmp = null;
         mmDevice = device;
+        mBluetoothAdapter = bluetoothAdapter;
         try
         {
             tmp = device.createInsecureRfcommSocketToServiceRecord(UG_UUID);
@@ -45,11 +46,12 @@ public class ConnectThread extends Thread{
         try {
             // Connect the device through the socket. This will block
             // until it succeeds or throws an exception
-            Log.d("CONNECT", "IS CONNECTED");
+            Log.d("CONNECT", "OPEN CONNECTED");
             mmSocket.connect();
         } catch (IOException connectException) {
             // Unable to connect; close the socket and get out
             try {
+                Log.d("CONNECT", "CLOSE CONNECTED");
                 mmSocket.close();
             } catch (IOException closeException) {
                 Log.d("CONNECT", "IS NOT CONNECTED");

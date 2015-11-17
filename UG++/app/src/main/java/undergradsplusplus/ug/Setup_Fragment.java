@@ -32,7 +32,7 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
     public BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     ArrayAdapter<String> mArrayAdapter;
     public static ListView newDevList;
-    public final String MAC = "34:36:3B:CD:11:D5";
+    public final String MAC = "00:6A:8E:16:C3:00";
 
     @Nullable
     @Override
@@ -43,6 +43,8 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
         ENABLE.setOnClickListener(this);
         Button DISCOVER = (Button) v.findViewById(R.id.discover_button);
         DISCOVER.setOnClickListener(this);
+        Button CONNECT = (Button) v.findViewById(R.id.connect_button);
+        CONNECT.setOnClickListener(this);
 
         return v;
     }
@@ -83,8 +85,9 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
                 break;
 
             case R.id.connect_button:
+                BluetoothDevice mDevice = mBluetoothAdapter.getRemoteDevice(MAC);
+                Log.d("BEFORE CHECK", MAC);
                 if (mBluetoothAdapter.checkBluetoothAddress(MAC)) {
-                    BluetoothDevice mDevice = mBluetoothAdapter.getRemoteDevice(MAC);
                     ConnectThread connectThread = new ConnectThread(mDevice, mBluetoothAdapter);
                     connectThread.start();
                     Log.d("MAC ADDRESS", MAC);
