@@ -20,8 +20,7 @@
         android:id="@+id/enable_button"
         android:onClick="enableButton"
         android:layout_below="@+id/text_setup"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="56dp" />
+        android:layout_centerHorizontal="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -29,12 +28,27 @@
         android:text="DISCOVERY"
         android:id="@+id/discover_button"
         android:layout_below="@+id/enable_button"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignRight="@+id/enable_button"
+        android:layout_alignEnd="@+id/enable_button"
+        android:layout_alignLeft="@+id/enable_button"
+        android:layout_alignStart="@+id/enable_button" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CONNECT"
+        android:id="@+id/connect_button"
+        android:layout_below="@+id/discover_button"
+        android:layout_alignLeft="@+id/discover_button"
+        android:layout_alignStart="@+id/discover_button"
+        android:layout_alignRight="@+id/discover_button"
+        android:layout_alignEnd="@+id/discover_button" />
+
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/discover_button">
+        android:layout_below="@+id/connect_button">
         <ListView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -45,6 +59,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/textview"/>
+
+
     </RelativeLayout>
 
 

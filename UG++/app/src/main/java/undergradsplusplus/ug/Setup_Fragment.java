@@ -29,9 +29,10 @@ import java.util.Set;
 public class Setup_Fragment extends Fragment implements View.OnClickListener{
 
     TextView text;
-    public static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    public BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     ArrayAdapter<String> mArrayAdapter;
     public static ListView newDevList;
+    public final String MAC = "34:36:3B:CD:11:D5";
 
     @Nullable
     @Override
@@ -79,6 +80,15 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
             case R.id.discover_button:
                 IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
                 getActivity().registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
+                break;
+
+            case R.id.connect_button:
+                if (mBluetoothAdapter.checkBluetoothAddress(MAC)) {
+                    BluetoothDevice mDevice = mBluetoothAdapter.getRemoteDevice(MAC);
+                    ConnectThread connectThread = new ConnectThread(mDevice, mBluetoothAdapter);
+                    connectThread.start();
+                    Log.d("MAC ADDRESS", MAC);
+                }
                 break;
         }
 
