@@ -1,6 +1,5 @@
 package undergradsplusplus.ug;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -18,9 +17,9 @@ public class ConnectThread extends Thread{
     private final BluetoothDevice mmDevice;
 
     public static BluetoothAdapter mBluetoothAdapter;
-    public static Activity activity;
 
-    private final static UUID UG_UUID = UUID.fromString("71e24236-1cb1-4c53-9217-93933abe4680");
+    private final static String APP_ID = "Connect Thread";
+    private final static UUID UG_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
 
     public ConnectThread (BluetoothDevice device, BluetoothAdapter bluetoothAdapter)
     {
@@ -33,8 +32,6 @@ public class ConnectThread extends Thread{
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
         mmSocket = tmp;
     }
 
@@ -55,8 +52,13 @@ public class ConnectThread extends Thread{
                 mmSocket.close();
             } catch (IOException closeException) {
                 Log.d("CONNECT", "IS NOT CONNECTED");
+                Log.e(APP_ID + " A", Log.getStackTraceString(closeException));
             }
+
+            Log.e(APP_ID + " B", Log.getStackTraceString(connectException));
         }
+
+
 
     }
 
@@ -66,5 +68,6 @@ public class ConnectThread extends Thread{
             mmSocket.close();
         } catch (IOException e) { }
     }
+
 
 }
