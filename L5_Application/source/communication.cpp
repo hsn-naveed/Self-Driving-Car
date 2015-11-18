@@ -14,18 +14,19 @@
 
 bool bluetoothTask::run(void *p)
 {
-    /*if (bluetoothUart.gets(input, sizeof(input), portMAX_DELAY))
+
+
+    if (bluetoothUart.getChar(&input, 100))
     {
-        LE.on(2);
-    }*/
+        putchar(input);
+    }
+
 
     if (SW.getSwitch(1))
     {
-        LE.on(1);
         bluetoothUart.putChar('s');
         printf("Sending.....");
     }
 
-    LE.off(1);
     return true;
 }
