@@ -104,8 +104,8 @@ sen_msg_t sensor_data = { 0 };
 uint8_t reverse_counter = 0;
 
 can_fullcan_msg_t *g_sensor_msg;
-can_fullcan_msg_t *g_gps_msg = new can_fullcan_msg_t {0};
-can_fullcan_msg_t *g_compass_msg = new can_fullcan_msg_t {0};
+can_fullcan_msg_t *g_gps_msg;
+can_fullcan_msg_t *g_compass_msg;
 
 //currently not used
 can_msg_t msg_rx = { 0 };
@@ -132,7 +132,8 @@ int g_heart_counter = 0;
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-
+    g_gps_msg = new can_fullcan_msg_t {0};
+    g_compass_msg = new can_fullcan_msg_t {0};
 
     return true; // Must return true upon success
 
@@ -396,7 +397,6 @@ void period_100Hz(void)
                     printf("Heading READ!\n");
                     g_compass_receive_counter = g_reset;
                 }
-
 
         //if no message arrives
 #if !DEBUG_NO_CAN
