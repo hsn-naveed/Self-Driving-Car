@@ -131,8 +131,8 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
         Log.d("ACTIVITY DIR SIZE", "" + newDir.size());
         for (int i = 0; i < newDir.size(); i++)
         {
-            Log.d("ACTIVITY DIR POINTS", "LATITUDE: " + df.format(newDir.get(i).latitude)
-                    + ", LONGITUDE" + df.format(newDir.get(i).longitude));
+            Log.d("ACTIVITY DIR POINTS", "" + df.format(newDir.get(i).latitude)
+                    + ", " + df.format(newDir.get(i).longitude));
         }
 
     }
