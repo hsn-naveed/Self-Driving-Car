@@ -39,6 +39,7 @@ uint32_t curr_heading(){
 }
 
 uint16_t setDirection(){
+
     /*
      * Use the distance formula to calculate the distance between current and desired position
      * if the distance is less than Y metres, do STRICT STEERING, else steer with a slight error of X%
@@ -48,4 +49,5 @@ uint16_t setDirection(){
         //go straight
     }
     else {}
+
 }
