@@ -32,8 +32,7 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     ArrayAdapter<String> mArrayAdapter;
     public static ListView newDevList;
-//    public final String MAC = "00:6A:8E:16:C3:00";
-    public final String MAC = "34:36:3B:CD:11:D5";
+    public final String MAC = "00:6A:8E:16:C3:00";    //UG++
 
     @Nullable
     @Override
