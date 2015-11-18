@@ -133,24 +133,6 @@
     <orderEntry type="library" exported="" name="support-v4-23.0.1" level="project" />
     <orderEntry type="library" exported="" name="appcompat-v7-23.0.1" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-23.0.1" level="project" />
-<<<<<<< HEAD
-    <orderEntry type="library" exported="" name="play-services-appinvite-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-ads-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-appstate-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-gcm-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-safetynet-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-games-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-wallet-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-basement-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-maps-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-nearby-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-panorama-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-fitness-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-wearable-8.1.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-plus-8.1.0" level="project" />
-<<<<<<< HEAD
-=======
-=======
     <orderEntry type="library" exported="" name="play-services-cast-8.3.0" level="project" />
     <orderEntry type="library" exported="" name="play-services-ads-8.3.0" level="project" />
     <orderEntry type="library" exported="" name="play-services-appinvite-8.3.0" level="project" />
@@ -163,8 +145,6 @@
     <orderEntry type="library" exported="" name="play-services-nearby-8.3.0" level="project" />
     <orderEntry type="library" exported="" name="play-services-fitness-8.3.0" level="project" />
     <orderEntry type="library" exported="" name="play-services-panorama-8.3.0" level="project" />
->>>>>>> 26f72bf101297f058f7ff66c0ea3f2524b811e32
     <orderEntry type="library" exported="" name="org.apache.http.legacy-android-23" level="project" />
->>>>>>> 69c938d3e09e6cef025d5bf9ede53242c4a6be6f
   </component>
 </module>
