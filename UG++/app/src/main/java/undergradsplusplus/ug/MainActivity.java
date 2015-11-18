@@ -26,7 +26,6 @@ import java.util.List;
 public class MainActivity extends FragmentActivity implements Map_Fragment.sendPointsToActivity {
 
     private static List<LatLng> newDir;
-    private static List<LatLng> formattedDirections;
 
     FragmentManager manager;
     FragmentTransaction transaction;
@@ -131,9 +130,19 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
         Log.d("ACTIVITY DIR SIZE", "" + newDir.size());
         for (int i = 0; i < newDir.size(); i++)
         {
-            Log.d("ACTIVITY DIR POINTS", "" + df.format(newDir.get(i).latitude)
-                    + ", " + df.format(newDir.get(i).longitude));
+            Log.d("ACTIVITY DIR POINTS", "" + (float) newDir.get(i).latitude
+                    + ", " + (float) newDir.get(i).longitude);
         }
 
+    }
+
+    @Override
+    public void goSignal(int i) {
+        // send go signal to bluetooth
+    }
+
+    @Override
+    public void stopSignal(int i) {
+        // send stop signal to bluetooth
     }
 }

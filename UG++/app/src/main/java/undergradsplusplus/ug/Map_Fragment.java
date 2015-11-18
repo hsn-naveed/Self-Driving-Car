@@ -47,6 +47,8 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
      */
     public interface sendPointsToActivity {
         void transmitPoints(List<LatLng> dirPoints);
+        void goSignal(int i);
+        void stopSignal(int i);
     }
 
     /*
@@ -167,10 +169,13 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
                 dirPoints = gd.getDirection(doc);   //Extra copy of the array. This for transmitting checkpoints to master.
                 gd.animateDirection(map, gd.getDirection(doc), GoogleDirection.SPEED_NORMAL
                         , false, false, true, false, null, false, true, new PolylineOptions().width(3));
+
+                toActivity.transmitPoints(dirPoints);
             }
         });
 
         gd.request(start, end, GoogleDirection.MODE_WALKING);
+
     }
 
     @Override
@@ -222,16 +227,7 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
             // After SET is pressed. Press GO to send the coordinates to MainActivity. MainActivity will transmit
             // coordinates via Bluetooth.
             case R.id.go_button:
-
-                Log.d("MAP_FRAG DIR SIZE", "" + dirPoints.size());
-
-                for (int i = 0; i < dirPoints.size(); i++)
-                {
-                    Log.d("MAP_FRAG DIR POINTS:", "LATITUDE: " + dirPoints.get(i).latitude
-                            + ", LONGITUDE" + dirPoints.get(i).longitude);
-                }
-
-                toActivity.transmitPoints(dirPoints);
+                toActivity.goSignal(1);
                 break;
 
             // SET will take the start (current) and end locations to get directions.
@@ -239,15 +235,14 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
             case R.id.set_button:
                 LatLng start = new LatLng(cLat, cLong);
                 LatLng end = new LatLng(eLat, eLong);
-                Log.d("GO_BUTTON", "START: " + start.longitude + ", " + start.latitude);
-                Log.d("GO_BUTTON", "END: " + end.longitude + ", " + end.latitude);
+                Log.d("SET_BUTTON", "START: " + start.longitude + ", " + start.latitude);
+                Log.d("SET_BUTTON", "END: " + end.longitude + ", " + end.latitude);
                 getAutoDirections(start, end);
-
                 break;
 
             // STOP all actions
             case R.id.stop_button:
-
+                toActivity.stopSignal(0);
                 break;
 
             default:
