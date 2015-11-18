@@ -12,11 +12,6 @@
 
 
 
-bluetoothTask::bluetoothTask(uint8_t priority) : scheduler_task("bluetooth", 2048, priority)
-{
-
-}
-
 bool bluetoothTask::run(void *p)
 {
     /*if (bluetoothUart.gets(input, sizeof(input), portMAX_DELAY))
