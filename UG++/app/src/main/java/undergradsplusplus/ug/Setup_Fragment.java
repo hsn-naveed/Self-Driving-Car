@@ -29,9 +29,10 @@ import java.util.Set;
 public class Setup_Fragment extends Fragment implements View.OnClickListener{
 
     TextView text;
-    public BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     ArrayAdapter<String> mArrayAdapter;
     public static ListView newDevList;
+//    public final String MAC = "00:6A:8E:16:C3:00";
     public final String MAC = "34:36:3B:CD:11:D5";
 
     @Nullable
@@ -43,6 +44,8 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
         ENABLE.setOnClickListener(this);
         Button DISCOVER = (Button) v.findViewById(R.id.discover_button);
         DISCOVER.setOnClickListener(this);
+        Button CONNECT = (Button) v.findViewById(R.id.connect_button);
+        CONNECT.setOnClickListener(this);
 
         return v;
     }
@@ -51,8 +54,8 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        text = (TextView) getActivity().findViewById(R.id.text_setup);
-        newDevList = (ListView) getActivity().findViewById(android.R.id.list);
+        text = (TextView) getActivity().findViewById(R.id.text_setup);  // TITLE
+        newDevList = (ListView) getActivity().findViewById(android.R.id.list);  // ListView of available devices
         Log.d("phil", "in setup");
     }
 
@@ -61,6 +64,7 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View v) {
 
+        // Enable bluetooth and/or see available devices
         switch(v.getId())
         {
             case R.id.enable_button:
@@ -77,14 +81,17 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
 
                 break;
 
+            // Discover other devices. This button probably doesn't work....
             case R.id.discover_button:
                 IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
                 getActivity().registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
                 break;
 
+            // Connect to device via MAC address. MAC address hardcoded for now. Connect from list if time permits.
             case R.id.connect_button:
+                BluetoothDevice mDevice = mBluetoothAdapter.getRemoteDevice(MAC);
+                Log.d("BEFORE CHECK", MAC);
                 if (mBluetoothAdapter.checkBluetoothAddress(MAC)) {
-                    BluetoothDevice mDevice = mBluetoothAdapter.getRemoteDevice(MAC);
                     ConnectThread connectThread = new ConnectThread(mDevice, mBluetoothAdapter);
                     connectThread.start();
                     Log.d("MAC ADDRESS", MAC);
@@ -125,7 +132,10 @@ public class Setup_Fragment extends Fragment implements View.OnClickListener{
         }
     };
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
 
-
-
+        getActivity().unregisterReceiver(mReceiver);
+    }
 }
