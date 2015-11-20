@@ -62,10 +62,6 @@ int main(void)
      * control codes can be learned by typing the "learn" terminal command.
      */
 
-
-    //scheduler_add_task(new can_receive(PRIORITY_HIGH)); //CAN Bus task
-
-
 #if 1
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 

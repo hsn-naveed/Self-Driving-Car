@@ -66,21 +66,20 @@ bool period_init(void)
     PWM servoPWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
 
     motorObj = new MotorControl(motorPWM, servoPWM);
-    if (ESC_INIT_NEEDED)
-        motorObj.initCarMotor();
+    motorObj.initESC();
 
 
     /// For initial testing of the motor and brake functionality prior to starting
     float testDutyCycle = 0;
     do{
         if (SW.getSwitch(1)){
-            testDutyCycle = speedSetting_t.MEDIUM_SPEED;
+            testDutyCycle = motorObj.SLOW_SPEED;
             motorPWM.set(testDutyCycle);
             printf("motor set to %f\n", testDutyCycle);
         }
 
         if (SW.getSwitch(2)){
-            testDutyCycle = speedSetting_t.BRAKE;
+            testDutyCycle = motorObj.BRAKE;
             motorPWM.set(testDutyCycle);
             printf("motor set to %f\n", testDutyCycle);
         }
@@ -90,15 +89,13 @@ bool period_init(void)
 }
 
 /// Register any telemetry variables
-bool period_reg_tlm(void)
-{
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)ESC_INIT_NEEDED, tlm_float);
+bool period_reg_tlm(void){
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), MOTOR_SERVO_PWM_FREQ, tlm_float);
 
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)MOTOR_SERVO_PWM_FREQ, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), MEDIUM_SPEED_OFFSET, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), SLOW_SPEED_OFFSET, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("disk"), BACK_SPEED_OFFSET, tlm_float);
 
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)MEDIUM_SPEED_OFFSET, tlm_float);
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)SLOW_SPEED_OFFSET, tlm_float);
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), (float)BACK_SPEED_OFFSET, tlm_uint);
     return true; // Must return true upon success
 }
 
