@@ -28,6 +28,35 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+
+/*
+ *
+ *
+ *          MASTER CONTROLLER TEAM NOTES!!!
+ *
+ *          11/20/2015
+*            Marvin:
+*            removed the full_can msg_temp and used global pointers; initiated @ init() function
+ *           cleaned up some code; just minor changes -> should not affect our logic
+ *
+ *          NOTE TO HASSAN:
+ *              @ DEBUG_NO_CAN == 0
+ *              When testing, make sure you press the FOURTH switch to enable FREERUN mode.
+ *              SWITCH3 = AUTO MODE --> not yet implemented since we need GPS and ANDROID
+ *              SWITCH4 - FREERUN MODE --> to test our logic; CAN integration; SENSORS and MOTOR communications
+ *
+ *              @ DEBUG_NO_CAN == 1
+ *              Debug mode used to simulate sensor values.
+ *              The four switches acts as LEFT, MIDDLE, RIGHT, and BACK sensors
+ *              CAN MESSAGES ARE OVERRIDDEN IN THIS MODE, THUS TO TEST THE SYSTEM USING CAN, set DEBUG_NO_CAN = 0
+ *
+ *
+ */
+
+
+
+
+
 #include <stdio.h>
 #include <stdint.h>
 #include "io.hpp"
@@ -53,9 +82,9 @@
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
-// set to 1 if you want to enable motor_control with switches
-// set to 0 if you want to use CAN
-#define DEBUG_NO_CAN 1
+// set to 1 if you want to test motor controls using switches
+// set to 0 if you want to use CAN (normal mode)
+#define DEBUG_NO_CAN 0
 
 
 
@@ -96,6 +125,15 @@ static const int COMPASS_LOST  = 97;
 const int g_reset = 0;
 const int g_max_count_timer = 300; // we're running in 100Hz and we expect messages within 3Hz.
 
+//counter for the receive sensor
+int g_sensor_receive_counter = 0;
+
+//counter for the GPS
+int g_gps_receive_counter = 0;
+
+//counter for the Compass
+int g_compass_receive_counter = 0;
+
 //we initialize to freerun mode
 uint8_t g_current_mode = (uint8_t) FREERUN_MODE;
 
@@ -115,6 +153,8 @@ uint8_t g_sensor_back_value = 0;
 can_fullcan_msg_t *g_sensor_msg;
 can_fullcan_msg_t *g_gps_msg;
 can_fullcan_msg_t *g_compass_msg;
+
+can_fullcan_msg_t *g_android_msg;
 
 //currently not used
 can_msg_t msg_rx = { 0 };
@@ -144,8 +184,11 @@ double g_heart_counter = 0;
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    //intialize our messages here
     g_gps_msg = new can_fullcan_msg_t {0};
     g_compass_msg = new can_fullcan_msg_t {0};
+    g_sensor_msg = new can_fullcan_msg_t {0};
+    g_android_msg = new can_fullcan_msg_t {0};
 
     return true; // Must return true upon success
 
@@ -356,15 +399,6 @@ void period_1Hz(void)
 
 }
 
-//counter for the receive sensor
-int g_sensor_receive_counter = 0;
-
-//counter for the GPS
-int g_gps_receive_counter = 0;
-
-//counter for the Compass
-int g_compass_receive_counter = 0;
-
 void period_10Hz(void)
 {
 
@@ -378,24 +412,20 @@ void period_100Hz(void)
 {
 
 
-    //can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t;
-
-    //TO DO @MARVIN: Move this out of 100Hz task because the mail box gets deleted every time task
-    //goes out of scope and define a separate pointer for motor, sensor.
-    can_fullcan_msg_t *temp_rx = new can_fullcan_msg_t{0};
-
-   // can_fullcan_msg_t *temp_rx;
-        //RECEIVE AND SAVE FULL_CAN MESSAGES
-        if(iCAN_rx(temp_rx, (uint16_t) SENSOR_MASTER_REG))    {
+        /*
+         * RECEIVE AND SAVE FULL_CAN MESSAGES
+         * We parse all new messages in one 100Hz -> THIS NEEDS TO BE TESTED!
+         */
+        if(iCAN_rx(g_sensor_msg, (uint16_t) SENSOR_MASTER_REG))    {
 
             portDISABLE_INTERRUPTS();
 
           //  CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
             //if this ^ does not work try to uncomment these:
-        CAN_ST.sensor_data->L = (uint8_t) temp_rx->data.bytes[0];
-        CAN_ST.sensor_data->M =(uint8_t) temp_rx->data.bytes[1];
-        CAN_ST.sensor_data->R = (uint8_t) temp_rx->data.bytes[2];
-        CAN_ST.sensor_data->B =  (uint8_t) temp_rx->data.bytes[3];
+        CAN_ST.sensor_data->L = (uint8_t) g_sensor_msg->data.bytes[0];
+        CAN_ST.sensor_data->M =(uint8_t) g_sensor_msg->data.bytes[1];
+        CAN_ST.sensor_data->R = (uint8_t) g_sensor_msg->data.bytes[2];
+        CAN_ST.sensor_data->B =  (uint8_t) g_sensor_msg->data.bytes[3];
 
             portENABLE_INTERRUPTS();
 
@@ -409,7 +439,7 @@ void period_100Hz(void)
         //TO DO @hsn_naveed
         //In the final stage, add the logic that motor does not start until coordinates are received
         //Add the logic for else scenario of the g_gps_receive_counter i.e when the counter is NOT reset
-        else if(iCAN_rx(g_gps_msg, (uint16_t) GPS_MASTER_COORDS)){
+        if (iCAN_rx(g_gps_msg, (uint16_t) GPS_MASTER_COORDS)){
             portDISABLE_INTERRUPTS();
             CAN_ST.gps_coords_curr = (gps_coordinate_msg_t*) &g_gps_msg->data.qword;
             portENABLE_INTERRUPTS();
@@ -419,20 +449,18 @@ void period_100Hz(void)
         //Compass sending current heading
         //TO DO @hsn_naveed
         //Add the logic for the g_compass_receive_counter i.e when the counter is NOT reset
-        else if(iCAN_rx(g_compass_msg, (uint16_t) GPS_MASTER_HEADING)){
+        if (iCAN_rx(g_compass_msg, (uint16_t) GPS_MASTER_HEADING)){
                     portDISABLE_INTERRUPTS();
                     CAN_ST.mAngleValue = (gps_heading_msg_t*) &g_compass_msg->data.qword;
                     portENABLE_INTERRUPTS();
                     printf("Heading READ!\n");
                     g_compass_receive_counter = g_reset;
-                }
-
-
+         }
 
         //Parse GO signal message
-        else if(iCAN_rx(temp_rx, (uint16_t) ANDROID_MASTER_GO)){
+        if(iCAN_rx(g_android_msg, (uint16_t) ANDROID_MASTER_GO)){
             portDISABLE_INTERRUPTS();
-            if((uint8_t) temp_rx->data.bytes[0] == (uint8_t) VALUE_TRUE) {
+            if((uint8_t) g_android_msg->data.bytes[0] == (uint8_t) VALUE_TRUE) {
                 CAN_ST.setGoSignal(true);
             } else {
                 CAN_ST.setGoSignal(false);
@@ -468,111 +496,111 @@ void period_100Hz(void)
     switch(sw_value)    {
         case 0:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0xff;
-            temp_rx->data.bytes[1] = (uint8_t) 0xff;
-            temp_rx->data.bytes[2] = (uint8_t) 0xff;
-            temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 1:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0x00;
-            temp_rx->data.bytes[1] = (uint8_t) 0xff;
-            temp_rx->data.bytes[2] = (uint8_t) 0xff;
-            temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 2:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0xff;
-            temp_rx->data.bytes[1] = (uint8_t) 0x00;
-            temp_rx->data.bytes[2] = (uint8_t) 0xff;
-            temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data     = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data     = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 3:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0x00;
-            temp_rx->data.bytes[1] = (uint8_t) 0x00;
-            temp_rx->data.bytes[2] = (uint8_t) 0xff;
-            temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 4:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0xff;
-            temp_rx->data.bytes[1] = (uint8_t) 0xff;
-            temp_rx->data.bytes[2] = (uint8_t) 0x00;
-            temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 5:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0x00;
-            temp_rx->data.bytes[1] = (uint8_t) 0xff;
-            temp_rx->data.bytes[2] = (uint8_t) 0x00;
-            temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 6:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0xff;
-            temp_rx->data.bytes[1] = (uint8_t) 0x00;
-            temp_rx->data.bytes[2] = (uint8_t) 0x00;
-            temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 7:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0x00;
-            temp_rx->data.bytes[1] = (uint8_t) 0x00;
-            temp_rx->data.bytes[2] = (uint8_t) 0x00;
-            temp_rx->data.bytes[3] = (uint8_t) 0xff;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 8:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0xff;
-            temp_rx->data.bytes[1] = (uint8_t) 0xff;
-            temp_rx->data.bytes[2] = (uint8_t) 0xff;
-            temp_rx->data.bytes[3] = (uint8_t) 0x00;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         case 15:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0x00;
-            temp_rx->data.bytes[1] = (uint8_t) 0x00;
-            temp_rx->data.bytes[2] = (uint8_t) 0x00;
-            temp_rx->data.bytes[3] = (uint8_t) 0x00;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
 
         default:
             portDISABLE_INTERRUPTS();
-            temp_rx->data.bytes[0] = (uint8_t) 0x00;
-            temp_rx->data.bytes[1] = (uint8_t) 0x00;
-            temp_rx->data.bytes[2] = (uint8_t) 0x00;
-            temp_rx->data.bytes[3] = (uint8_t) 0x00;
-            CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
+            g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+            g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
+            CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
             portENABLE_INTERRUPTS();
             break;
     }
@@ -780,7 +808,7 @@ void period_100Hz(void)
 
 
 
-    delete temp_rx;
+   // delete temp_rx;
     //delete default_sensor_msg;
 
 
