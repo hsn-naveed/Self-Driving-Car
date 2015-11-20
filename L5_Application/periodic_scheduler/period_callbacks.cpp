@@ -427,8 +427,6 @@ void period_100Hz(void)
                     g_compass_receive_counter = g_reset;
                 }
 
-
-
         //Parse GO signal message
         else if(iCAN_rx(temp_rx, (uint16_t) ANDROID_MASTER_GO)){
             portDISABLE_INTERRUPTS();
