@@ -101,10 +101,10 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
 
         text = (TextView) getActivity().findViewById(R.id.longitude1);
-        text.setText("Longitude\n" + df.format(eLat));
+        text.setText("Longitude\n" + df.format(eLong));
 
         text = (TextView) getActivity().findViewById(R.id.latitude1);
-        text.setText("Latitude\n" + df.format(eLong));
+        text.setText("Latitude\n" + df.format(eLat));
 
     }
 
