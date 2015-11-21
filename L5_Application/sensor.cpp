@@ -30,13 +30,13 @@ can_msg_t *sonarMsg = new can_msg_t ;
 void Range(){
 
     Range_right();
-    delay_ms(50);
+    delay_ms(20); //changed from 50ms delay to 20ms for the 5hz Ranging
 
     Range_middle();
-    delay_ms(50);
+    delay_ms(20);
 
     Range_left();
-    delay_ms(50);
+    delay_ms(20);
 
 /*
     Range_rear();
@@ -69,11 +69,9 @@ void store(int in)
 void filter(int in, int out)
 {
 
-
     if()
 
 }
-
 
 */
 
