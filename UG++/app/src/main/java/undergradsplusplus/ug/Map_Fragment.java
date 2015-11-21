@@ -73,7 +73,7 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
             cLat = loc.latitude;
             cLong = loc.longitude;
-            Log.d("CURRENT LOCATION", "" + cLong + ", " + cLat);
+//            Log.d("CURRENT LOCATION", "" + cLong + ", " + cLat);
         }
     };
 
@@ -150,6 +150,8 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         GO.setOnClickListener(this);
         Button SET = (Button) v.findViewById(R.id.set_button);
         SET.setOnClickListener(this);
+        Button STOP = (Button) v.findViewById(R.id.stop_button);
+        STOP.setOnClickListener(this);
 
 
         return v;
@@ -227,7 +229,8 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
             // After SET is pressed. Press GO to send the coordinates to MainActivity. MainActivity will transmit
             // coordinates via Bluetooth.
             case R.id.go_button:
-                toActivity.goSignal(1);
+                final int Go_signal = 1;
+                toActivity.goSignal(Go_signal);
                 break;
 
             // SET will take the start (current) and end locations to get directions.
@@ -242,7 +245,8 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
 
             // STOP all actions
             case R.id.stop_button:
-                toActivity.stopSignal(0);
+                final int Stop_signal = 0;
+                toActivity.stopSignal(Stop_signal);
                 break;
 
             default:

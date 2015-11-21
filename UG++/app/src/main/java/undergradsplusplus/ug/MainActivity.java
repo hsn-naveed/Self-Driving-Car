@@ -3,6 +3,7 @@ package undergradsplusplus.ug;
 
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -10,7 +11,7 @@ import android.view.View;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import java.text.DecimalFormat;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +24,10 @@ import java.util.List;
 *      TODO 4:       Parse CAN ID's
 */
 
-public class MainActivity extends FragmentActivity implements Map_Fragment.sendPointsToActivity {
+public class MainActivity extends FragmentActivity implements Map_Fragment.sendPointsToActivity, ConnectThread.BTSocket {
 
-    private static List<LatLng> newDir;
+    private BluetoothSocket mmSocket;
+    private final String APP_ID = "MainActivity";
 
     FragmentManager manager;
     FragmentTransaction transaction;
@@ -38,8 +40,6 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
 
         /*
         *   This section of onCreate will initialize all the fragments.
@@ -122,8 +122,7 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
 
     @Override
     public void transmitPoints(List<LatLng> dirPoints) {
-        newDir = new ArrayList<LatLng>(dirPoints);
-        DecimalFormat df = new DecimalFormat("#.000000");
+        List<LatLng> newDir = new ArrayList<LatLng>(dirPoints);
 
         Log.d("IN transmitPoints", "Transmit Points");
 
@@ -138,11 +137,34 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
 
     @Override
     public void goSignal(int i) {
-        // send go signal to bluetooth
+//        byte[] sendGo = "GO\n".getBytes();
+        byte[] sendGo = ByteBuffer.allocate(1).putInt(i).array();   // 1 byte, i = 1 for Go.
+        for (int j = 0; j < sendGo.length; j++)
+        {
+            Log.d(APP_ID + " GO", "" + sendGo[j]);
+        }
+        ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
+        mConnectedThread.write(sendGo);
     }
 
     @Override
     public void stopSignal(int i) {
-        // send stop signal to bluetooth
+//        byte [] sendStop = "STOP\n".getBytes();
+        byte [] sendStop = ByteBuffer.allocate(1).putInt(i).array();    // 1 byte, i = 0 for Stop.
+        for (int j = 0; j < sendStop.length; j++)
+        {
+            Log.d(APP_ID + " STOP", "" + sendStop[j]);
+        }
+        ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
+        mConnectedThread.write(sendStop);
+    }
+
+    @Override
+    public void getSocket(BluetoothSocket socket) {
+        Log.d("In getSocket", "in here");
+
+        if (socket != null)
+            mmSocket = socket;
+        Log.d("NULL socket", "NULL");
     }
 }
