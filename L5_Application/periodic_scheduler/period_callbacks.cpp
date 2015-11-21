@@ -60,41 +60,16 @@ bool period_init(void)
 
     iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
 
-
-    /// Motor/Servo PWM initialization
-    PWM motorPWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
-    PWM servoPWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
-
-    motorObj = new MotorControl(motorPWM, servoPWM);
-    motorObj.initESC();
-
-
-    /// For initial testing of the motor and brake functionality prior to starting
-    float testDutyCycle = 0;
-    do{
-        if (SW.getSwitch(1)){
-            testDutyCycle = motorObj.SLOW_SPEED;
-            motorPWM.set(testDutyCycle);
-            printf("motor set to %f\n", testDutyCycle);
-        }
-
-        if (SW.getSwitch(2)){
-            testDutyCycle = motorObj.BRAKE;
-            motorPWM.set(testDutyCycle);
-            printf("motor set to %f\n", testDutyCycle);
-        }
-    } while(!SW.getSwitch(4));
-
     return true; // Must return true upon success
 }
 
 /// Register any telemetry variables
 bool period_reg_tlm(void){
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), MOTOR_SERVO_PWM_FREQ, tlm_float);
-
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), MEDIUM_SPEED_OFFSET, tlm_float);
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), SLOW_SPEED_OFFSET, tlm_float);
-    TLM_REG_VAR(tlm_component_get_by_name("disk"), BACK_SPEED_OFFSET, tlm_float);
+//    TLM_REG_VAR(tlm_component_get_by_name("disk"), MOTOR_SERVO_PWM_FREQ, tlm_float);
+//
+//    TLM_REG_VAR(tlm_component_get_by_name("disk"), MEDIUM_SPEED_OFFSET, tlm_float);
+//    TLM_REG_VAR(tlm_component_get_by_name("disk"), SLOW_SPEED_OFFSET, tlm_float);
+//    TLM_REG_VAR(tlm_component_get_by_name("disk"), BACK_SPEED_OFFSET, tlm_float);
 
     return true; // Must return true upon success
 }
@@ -107,11 +82,6 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-
-}
-
-void period_100Hz(void)
-{
     if (CAN_is_bus_off(can1)){
         puts("====CAN BUS is off====\n");
         LE.on(led1);
@@ -122,8 +92,14 @@ void period_100Hz(void)
         LE.off(led1);
     }
     else{
+        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.NEUTRAL);
         LE.on(led1);
     }
+}
+
+void period_100Hz(void)
+{
+
 }
 
 void period_1000Hz(void)

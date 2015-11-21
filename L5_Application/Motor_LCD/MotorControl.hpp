@@ -22,7 +22,7 @@
 
 
 /// Used for PWM
-static float MOTOR_SERVO_PWM_FREQ = 290;
+static float MOTOR_SERVO_PWM_FREQ = 100;
 
 /// For dynamically calculating
 static float ONE_SECOND_MS = 1000;
@@ -38,7 +38,7 @@ static float FULL_LEFT_PWM_PERIOD_MS = 1, REVERSE_PWM_PERIOD_MS = 1;
  * that the speeds are too fast
  */
 static float MEDIUM_SPEED_OFFSET = 0;
-static float SLOW_SPEED_OFFSET = -2.38;//-.81605;
+static float SLOW_SPEED_OFFSET = -.81;//-2.38;
 static float BACK_SPEED_OFFSET = 0;
 
 class MotorControl{
@@ -86,8 +86,6 @@ class MotorControl{
             this->CurrentServoValue = obj->CurrentServoValue;
             this->motorControlStruct = obj->motorControlStruct;
             this->escHasBeenInitialized = obj->escHasBeenInitialized;
-
-            //return (*this);
         }
 
         /// Used for programming ESC, if needed

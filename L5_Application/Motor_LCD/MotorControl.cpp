@@ -14,13 +14,13 @@ void MotorControl::triggerForwardOrReverseThrottle(float maxOrMin,
                                                     int pwmDelay){
     /// Increment all the way to full throttle
     if (incrementAndDecrementSize > 0){
-        for (int i = NEUTRAL; i < maxOrMin; i += incrementAndDecrementSize){
+        for (int i = NEUTRAL; i <= maxOrMin; i += incrementAndDecrementSize){
             MotorPwm.set(i);
             delay_ms(pwmDelay);
         }
     }
     else{
-        for (int i = NEUTRAL; i > maxOrMin; i += incrementAndDecrementSize){
+        for (int i = NEUTRAL; i >= maxOrMin; i += incrementAndDecrementSize){
             MotorPwm.set(i);
             delay_ms(pwmDelay);
         }
@@ -78,7 +78,7 @@ MotorControl::MotorControl(){
 void MotorControl::initESC(){
     puts("Setting throttle to neutral\n");
     MotorPwm.set(NEUTRAL);
-    delay_ms(2000);
+    delay_ms(2500);
 
     puts("------Initializing PWM/ESC-------");
     puts("Will begin count down for programming ESC!\n");
@@ -129,7 +129,7 @@ void MotorControl::initESC(){
             LE.off(led4);  // End programming ESC mode
 
             // Finish off programming of ESC by returning to neutral
-            MotorPwm.set(15);
+            MotorPwm.set(NEUTRAL);
         }
         countDown--;
         delay_ms(1000);
@@ -152,8 +152,13 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
             changeMotorDirection(speedToSet);
         }
         else{       // Normal operation
-            CurrentMotorValue = speedToSet;
-            MotorPwm.set(CurrentMotorValue);
+
+            printf("Current motor value = %.2f\n", CurrentMotorValue);
+            if (CurrentMotorValue != speedToSet){
+                CurrentMotorValue = speedToSet;
+                printf("Motor value set to CurrentMotorValue = %.2f\n", CurrentMotorValue);
+                MotorPwm.set(CurrentMotorValue);
+            }
         }
     }
 }

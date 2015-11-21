@@ -49,8 +49,32 @@
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
 
+extern MotorControl motorObj;
+
 int main(void)
 {
+    /// Motor/Servo PWM initialization
+    PWM motorPWM = PWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
+    PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
+
+    motorObj = new MotorControl(motorPWM, servoPWM);
+    motorObj.initESC();
+
+    /// For initial testing of the motor and brake functionality prior to starting
+    float testDutyCycle = 0;
+    do{
+        if (SW.getSwitch(1)){
+            testDutyCycle = motorObj.SLOW_SPEED;
+            motorPWM.set(testDutyCycle);
+            printf("motor set to %f\n", testDutyCycle);
+        }
+
+        if (SW.getSwitch(2)){
+            testDutyCycle = motorObj.BRAKE;
+            motorPWM.set(testDutyCycle);
+            printf("motor set to %f\n", testDutyCycle);
+        }
+    } while(!SW.getSwitch(4));
 /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
