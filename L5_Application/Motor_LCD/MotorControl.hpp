@@ -87,7 +87,7 @@ class MotorControl{
             this->motorControlStruct = obj->motorControlStruct;
             this->escHasBeenInitialized = obj->escHasBeenInitialized;
 
-            return (*this);
+            //return (*this);
         }
 
         /// Used for programming ESC, if needed
