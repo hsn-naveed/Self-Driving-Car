@@ -144,6 +144,7 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
             synchronized (this) {
                 // Sends to thread to write. catArray(Lat, Long) concatenates Lat/Lng arrays to a single byte array.
                 connectedThread.write(catArray(Lat, Long));
+                connectedThread.flush();
             }
         }
 
@@ -151,26 +152,22 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
 
     @Override
     public void goSignal(int i) {
-        byte[] sendGo = "GO".getBytes();
+        byte[] sendGo = "GO\n".getBytes();
 //        byte[] sendGo = ByteBuffer.allocate(1).putInt(i).array();   // 1 byte, i = 1 for Go.
-        for (int j = 0; j < sendGo.length; j++)
-        {
-            Log.d(APP_ID + " GO", "" + sendGo[j]);
-        }
+        Log.d(APP_ID + " GO", "" + sendGo);
         ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
         mConnectedThread.write(sendGo);
+        mConnectedThread.flush();
     }
 
     @Override
     public void stopSignal(int i) {
-        byte [] sendStop = "STOP".getBytes();
+        byte [] sendStop = "STOP\n".getBytes();
 //        byte [] sendStop = ByteBuffer.allocate(1).putInt(i).array();    // 1 byte, i = 0 for Stop.
-        for (int j = 0; j < sendStop.length; j++)
-        {
-            Log.d(APP_ID + " STOP", "" + sendStop[j]);
-        }
+        Log.d(APP_ID + " STOP", "" + sendStop);
         ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
         mConnectedThread.write(sendStop);
+        mConnectedThread.flush();
     }
 
     @Override
