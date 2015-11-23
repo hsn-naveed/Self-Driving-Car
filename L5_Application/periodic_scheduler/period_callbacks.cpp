@@ -38,6 +38,7 @@
 #include "CAN_structs.h"
 #include "iCAN.hpp"
 #include "Motor_LCD/MotorControl.hpp"
+#include "Motor_LCD/MotorEncoder.hpp"
 
 /// Object that will be used for calling all functions
    // related to motor and servo
@@ -82,6 +83,11 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
+
+}
+
+void period_100Hz(void)
+{
     if (CAN_is_bus_off(can1)){
         puts("====CAN BUS is off====\n");
         LE.on(led1);
@@ -97,12 +103,9 @@ void period_10Hz(void)
     }
 }
 
-void period_100Hz(void)
-{
-
-}
-
 void period_1000Hz(void)
 {
-
+    if (HasSpeedChanged()){
+        /// Adjust motor speed offset accordingly
+    }
 }

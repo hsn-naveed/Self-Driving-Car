@@ -19,23 +19,7 @@
 static GPIO encoderInput(P2_6);
 
 extern uint64_t beginTimeOfEncoder;
-extern uint64_t endTimeOfEncoder;
-
-extern uint64_t diffOfEncoderTimePrev;
-extern uint64_t diffOfEncoderTime;
-
-
-
-
-
 void storeBeginTime();
-
-
-void storeEndTime();
-
-void CalculateEncoderTimeDifference();
-
-
 
 void CalculateSpeed();
 bool HasSpeedChanged();

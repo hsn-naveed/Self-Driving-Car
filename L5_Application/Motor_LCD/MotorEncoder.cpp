@@ -6,9 +6,6 @@
 
 #include "MotorEncoder.hpp"
 
-
-uint64_t beginTimeOfEncoder;
-
 /*
  * @about Each tick represents a distance traveled of about 31cm
  * Diameter = 9.9cm, radius = 4.95 cm
@@ -25,6 +22,7 @@ double percentDifferenceOfSpeed = .10;
 double upperLimitThresholdDiffOfSpeed;
 double lowerLimitThresholdDiffOfSpeed;
 
+uint64_t beginTimeOfEncoder;
 bool startOfNewTime = false;
 
 void storeBeginTime(){
@@ -59,40 +57,3 @@ bool HasSpeedChanged(){
         return false;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-/// Probably getting deleted
-void CalculateEncoderTimeDifference(){
-    diffOfEncoderTime = sys_get_uptime_us() - beginTimeOfEncoder;
-
-    double upperLimitOfThresholdDifferenceOfPrevTime = diffOfEncoderTimePrev + (diffOfEncoderTime * percentDifferenceOfTime);
-    double lowerLimitOfThresholdDifferenceOfPrevTime = diffOfEncoderTimePrev - (diffOfEncoderTime * percentDifferenceOfTime);
-
-    if (diffOfEncoderTime > upperLimitOfThresholdDifferenceOfPrevTime ||
-            diffOfEncoderTime < lowerLimitOfThresholdDifferenceOfPrevTime){
-
-    }
-
-
-
-
-    if (!prevWasCalculated){
-       diffOfEncoderTimePrev = endTimeOfEncoder - beginTimeOfEncoder;
-       prevWasCalculated = true;
-    }
-    else{
-        diffOfEncoderTime = endTimeOfEncoder - beginTimeOfEncoder;
-        prevWasCalculated = false;
-    }
-}
-
