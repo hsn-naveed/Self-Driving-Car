@@ -33,6 +33,9 @@
 #include "CAN_structs.h"
 #include "iCAN.hpp"
 #include "periodic_scheduler/periodic_callback.h"
+#include "gpio.hpp"
+#include "Motor_LCD/MotorEncoder.hpp"
+#include "eint.h"
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -53,6 +56,25 @@ extern MotorControl motorObj;
 
 int main(void)
 {
+    uint8_t port2_6 = 6;
+    encoderInput.setAsInput();
+
+    eint3_enable_port2(port2_6, eint_rising_edge, storeBeginTime);
+
+
+    while (1){
+        if (encoderInput.read() == true){
+            printf("Encoder detected line!\n");
+        }
+        else{
+            printf("Encoder detects black!\n");
+        }
+        delay_ms(500);
+    }
+
+
+
+
     /// Motor/Servo PWM initialization
     PWM motorPWM = PWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
     PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);

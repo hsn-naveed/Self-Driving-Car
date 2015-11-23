@@ -151,12 +151,11 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
         if (CurrentMotorValue == BACK_SPEED){
             changeMotorDirection(speedToSet);
         }
-        else{       // Normal operation
+        else{ // Normal operation
 
             printf("Current motor value = %.2f\n", CurrentMotorValue);
             if (CurrentMotorValue != speedToSet){
                 CurrentMotorValue = speedToSet;
-                printf("Motor value set to CurrentMotorValue = %.2f\n", CurrentMotorValue);
                 MotorPwm.set(CurrentMotorValue);
             }
         }
