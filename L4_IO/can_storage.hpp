@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <L3_Utils/singleton_template.hpp>
 
-#include <243_can/CAN_structs.h>
+#include "243_can/CAN_structs.h"
 
 
 /**
@@ -26,19 +26,13 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
     public:
         bool init(); ///< Initializes this device, @returns true if successful
 
-        //Android
-        uint8_t getManualControlValue() {return mManualControlValue;}
-        void setManualControlValue(uint8_t val) {mManualControlValue = val;}
-
-        uint8_t getGoSignalValue() {return mGoSignal;}
-        void setGoSignalValue(uint8_t val) { mGoSignal = val;}
-
-        //Motor
-        int getMotorSpeed() {return mMotorSpeed;}
-        void setMotorSpeed(uint8_t speed) { mMotorSpeed = speed;}
 
         //Sensor
         void setSafeSensorValues();
+
+        //Android
+        void setGoSignal(bool signal) {mGoSignal = signal;}
+        bool getGoSignal() {return mGoSignal;}
 
 
         //Sensor
@@ -46,35 +40,20 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
 
         //Motor
         mast_mot_msg_t* motor_data;
+
+        //current car coordinates sent by gps
+        gps_coordinate_msg_t* gps_coords_curr;
+
+        //destination coordinates sent by android
+        gps_coordinate_msg_t* gps_coords_dest;
+
+        //car bearing as measured by the compass
+        gps_heading_msg_t* mAngleValue;
+
     private:
 
+        bool mGoSignal;
 
-
-        //Android
-
-
-               //byte[0] of ANDROID_COMMANDS -> MAS
-               //ENABLE: 0xFF
-               //DISABLE: 0x11
-               uint8_t mManualControlValue;
-               uint8_t mGoSignal;
-
-               //GPS
-               uint32_t mCheckPointX[8]; //contains X coordinates of the checkpoints. 8 max check points supported
-               uint32_t mCheckPointY[8]; //contains Y coordinates of the checkpoints
-
-               //if there's only one checkpoint, mCheckPoint[0] will be equal to mFinalDestination
-               uint32_t mFinalDestinationX; //contains X coordinates of the final destination
-               uint32_t mFinalDestinationY; //contains Y coordinates of the final destination
-               uint16_t mAngleValue; //angle value with respect to the current checkpoint
-
-               //Sensor
-              // uint8_t mSensorValues[(int)SIZE_OF_SENSOR_ARRAY]; //current sensor values; 4 total sensors
-
-        //Motor
-        int mMotorSpeed;
-        int mMotorDirection;
-        int mMotorTurn;
 
         ///< Private constructor of this Singleton class
           /*  CAN_STORAGE() :  mMotorSpeed(0)  {
@@ -87,6 +66,7 @@ class CAN_STORAGE : public SingletonTemplate <CAN_STORAGE>
             }*/
         CAN_STORAGE();
         ~CAN_STORAGE();
+
         friend class SingletonTemplate<CAN_STORAGE>;  ///< Friend class used for Singleton Template
 };
 
