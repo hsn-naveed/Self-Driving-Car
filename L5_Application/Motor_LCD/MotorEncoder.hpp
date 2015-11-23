@@ -21,7 +21,16 @@ static GPIO encoderInput(P2_6);
 extern uint64_t beginTimeOfEncoder;
 void storeBeginTime();
 
+/* @about Stores current speed to use
+ * for comparing against previous speed in
+ * HasSpeedChanged()
+ */
 void CalculateSpeed();
+/*
+ * @about Returns 1 if speed has decreased
+ * returns 2 if speed has increased *Should not happen*
+ * default return 0 if speed is within percent threshold
+ */
 bool HasSpeedChanged();
 
 #endif

@@ -37,8 +37,9 @@ static float FULL_LEFT_PWM_PERIOD_MS = 1, REVERSE_PWM_PERIOD_MS = 1;
  * and positive for back speed, as it is probably more likely
  * that the speeds are too fast
  */
+static float maxNegativeSlowSpeedOffset = -.81;
 static float MEDIUM_SPEED_OFFSET = 0;
-static float SLOW_SPEED_OFFSET = -.81;//-2.38;
+static float SLOW_SPEED_OFFSET = maxNegativeSlowSpeedOffset;//-2.38;
 static float BACK_SPEED_OFFSET = 0;
 
 class MotorControl{

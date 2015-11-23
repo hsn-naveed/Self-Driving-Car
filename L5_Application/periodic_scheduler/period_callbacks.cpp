@@ -103,9 +103,20 @@ void period_100Hz(void)
     }
 }
 
+float incrementSpeedAmount = .5;
 void period_1000Hz(void)
 {
-    if (HasSpeedChanged()){
+    if (HasSpeedChanged() == 1){
         /// Adjust motor speed offset accordingly
+        SLOW_SPEED_OFFSET += incrementSpeedAmount;
+        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
+    }
+    else if (HasSpeedChanged() == 2){
+        // Anything below the max negative speed offset, it throws off the duty cycle
+        // and car motor is unpredictable
+        if (SLOW_SPEED_OFFSET < (maxNegativeSlowSpeedOffset - incrementSpeedAmount)){
+            SLOW_SPEED_OFFSET -= incrementSpeedAmount;
+        }
+        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
     }
 }

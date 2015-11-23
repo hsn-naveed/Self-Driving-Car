@@ -43,17 +43,19 @@ void CalculateSpeed(){
     currentSpeed = distanceInMeters / timeDiffOfTickMarksInSeconds;
 }
 
-bool HasSpeedChanged(){
+int HasSpeedChanged(){
     if (previousSpeed == 0){
         previousSpeed = currentSpeed;
-        return false;
+        return 0;
     }
 
     upperLimitThresholdDiffOfSpeed = previousSpeed + (previousSpeed * percentDifferenceOfSpeed);
     lowerLimitThresholdDiffOfSpeed = previousSpeed - (previousSpeed * percentDifferenceOfSpeed);
     if (previousSpeed > 0){
-        if (currentSpeed < lowerLimitThresholdDiffOfSpeed || currentSpeed > upperLimitThresholdDiffOfSpeed)
-            return true;
-        return false;
+        if (currentSpeed < lowerLimitThresholdDiffOfSpeed)
+            return 1;
+        else if (currentSpeed > upperLimitThresholdDiffOfSpeed)
+            return 2;
+        return 0;
     }
 }
