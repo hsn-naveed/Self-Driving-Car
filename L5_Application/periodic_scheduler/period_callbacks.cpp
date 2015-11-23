@@ -3,11 +3,16 @@
 //#include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
+<<<<<<< HEAD
 #include "shared_handles.h"
 #include "tasks.hpp"
 #include <inttypes.h>
 
 <<<<<<< HEAD
+=======
+#include "sensor.hpp"
+#include <tasks.hpp>
+>>>>>>> 6625af867ead0802c94574dc989f89cbe8f3fb0c
 
 #include "master_control.hpp"
 #include "can.h"
@@ -36,8 +41,17 @@ const int g_reset = 0;
 const int g_max_count_timer = 10; // we're running in 100Hz and we expect messages within 10Hz.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 //currently not used
 uint8_t current_mode = 0;
+=======
+/*
+// Homework 4 Filtered Light Sensor
+#define hw4LightSensor 1
+int filteredLightSensorValue = 0;
+int sumOfLightSensorValues = 0;
+int counterOfLightSensorValues = 0;
+>>>>>>> 6625af867ead0802c94574dc989f89cbe8f3fb0c
 
 //motor command values
 mast_mot_msg_t motor_commands = { 0 };
@@ -201,14 +215,30 @@ void generateMotorCommands(int command)    {
 
 
 }
+*/
+
 
 
 void period_1Hz(void)
 {
+<<<<<<< HEAD
     LE.toggle(1);
     printf("HEART BEAT: %d\n", g_heart_counter++);
     if (10000 < g_heart_counter) g_heart_counter = 0;
 
+=======
+    delay_ms(10);
+    Range();
+    delay_ms(10);
+    Range();
+    delay_ms(10);
+    Range();
+    delay_ms(10);
+    Range();
+    delay_ms(10);
+
+   // CAN_send();
+>>>>>>> 6625af867ead0802c94574dc989f89cbe8f3fb0c
 }
 
 //counter for the receive sensor
@@ -216,6 +246,7 @@ int g_sensor_receive_counter = 0;
 
 void period_10Hz(void)
 {
+<<<<<<< HEAD
     portDISABLE_INTERRUPTS();
     //copy our global values to local values
     sen_msg_t *l_sensor_values = CAN_ST.sensor_data;
@@ -226,6 +257,9 @@ void period_1Hz(void)
 {
    // LE.toggle(1);
 
+=======
+    LE.toggle(2);
+>>>>>>> 6625af867ead0802c94574dc989f89cbe8f3fb0c
 }
 
 void period_10Hz(void)

@@ -1,3 +1,3 @@
 [submodule "243_can"]
 	path = 243_can
-	url = https://gitlab.com/jhongpananon/243_can.git
+	url = git@gitlab.com:jhongpananon/243_can.git

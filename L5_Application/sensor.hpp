@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
  * sensor.hpp
  *
  *  Created on: Nov 2, 2015
@@ -14,10 +15,28 @@
 #include"gpio.hpp"
 #include "243_can/CAN_structs.h"
 #include"utilities.h" //delay lib
+=======
+ * sensor.h
+ *
+ *  Created on: Nov 6, 2015
+ *      Author: Administrator
+ */
+
+#ifndef L5_APPLICATION_SENSOR_HPP_
+#define L5_APPLICATION_SENSOR_HPP_
+
+#include <stdio.h>
+#include "io.hpp"
+#include "lpc_sys.h"
+#include "gpio.hpp"
+#include "243_can/CAN_structs.h"
+#include "utilities.h" //delay lib
+>>>>>>> 6625af867ead0802c94574dc989f89cbe8f3fb0c
 #include <L3_Utils/singleton_template.hpp>
 #include <243_can/CAN_structs.h>
 #include "can.h"
 #include "semphr.h"
+<<<<<<< HEAD
 
 
 class sensor : public SingletonTemplate <sensor>
@@ -74,3 +93,40 @@ public:
 
 
 #endif /* SENSOR_HPP_ */
+=======
+#include "eint.h"
+#include "243_can/iCAN.hpp"
+
+
+extern GPIO  Left_en;   // left RXpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
+extern GPIO Middle_en; // Middle
+extern GPIO Right_en; // Right
+extern GPIO Rear_en;  //Rear
+
+//extern can_msg_t *sonarMsg  ;
+
+
+     void calc_dist_left(void);
+     void calc_dist_middle(void);
+     void calc_dist_right(void);
+     void calc_dist_rear(void);
+
+     void Range_left(void);
+     void Range_middle(void);
+     void Range_right(void);
+     void Range_rear(void);
+
+     void Range(void);
+
+     void test(void);
+
+     void CAN_send(void);
+
+     void store (int in);
+     void filter(int in, int out);
+
+
+
+
+#endif /* L5_APPLICATION_SENSOR_HPP_ */
+>>>>>>> 6625af867ead0802c94574dc989f89cbe8f3fb0c

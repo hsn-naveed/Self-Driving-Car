@@ -28,6 +28,7 @@
 #include <243_can/iCAN.hpp>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+<<<<<<< HEAD
 #include "io.hpp"
 #include "stdio.h"
 #include "file_logger.h"
@@ -151,6 +152,9 @@
 
 
 
+=======
+#include "sensor.hpp"
+>>>>>>> 6625af867ead0802c94574dc989f89cbe8f3fb0c
 
 
 
@@ -168,8 +172,12 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
+
+uint16_t accepted_msg_ids[] = {0x100, 0x102, 0x104, 0x200};
+
 int main(void)
 {
+<<<<<<< HEAD
 
     /**
      * Initializes the CAN bus with FullCAN
@@ -369,6 +377,29 @@ int main(void)
 #endif
 
 >>>>>>> 89e575a84a94b67be5599bb2db3c8e9a88529312
+=======
+    iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids)/sizeof(*accepted_msg_ids));// sizeof(*accepted_msg_ids);
+
+    eint3_enable_port2(0, eint_falling_edge, calc_dist_left); //Left Sonar
+    eint3_enable_port2(2, eint_falling_edge, calc_dist_middle); //Middle Sonar
+    eint3_enable_port2(1, eint_falling_edge, calc_dist_right); //Right Sonar
+    eint3_enable_port2(3, eint_falling_edge, calc_dist_rear); //Rear Sonar*/
+
+    Left_en.setAsOutput(); // set p0.0 as an output pin to enable or disable Left Sonar
+    Middle_en.setAsOutput();
+    Right_en.setAsOutput();
+    Rear_en.setAsOutput();
+
+
+
+    delay_ms(251); //250ms after powerup sensor is ready to receive commands
+
+/*    while(1){
+
+        Range_left();
+        delay_ms(1000);
+    }*/
+>>>>>>> 6625af867ead0802c94574dc989f89cbe8f3fb0c
 
     /**
      * A few basic tasks for this bare-bone system :
