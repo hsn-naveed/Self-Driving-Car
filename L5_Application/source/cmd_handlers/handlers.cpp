@@ -45,10 +45,6 @@
 #include "c_tlm_stream.h"
 #include "c_tlm_var.h"
 
-#include <inttypes.h>
-
-
-#include "243_can/CAN_structs.h"
 
 
 CMD_HANDLER_FUNC(taskListHandler)
@@ -720,7 +716,7 @@ CMD_HANDLER_FUNC(canBusHandler)
         output.printf("CAN init: %s\n", ok ? "OK" : "ERROR");
 
         CAN_reset_bus(can);
-        //CAN_bypass_filter_ack_all_msgs();
+//        CAN_bypass_filter_ack_all_msgs();
         CAN_bypass_filter_accept_all_msgs();
     }
     else if (cmdParams.beginsWithIgnoreCase("filter"))
@@ -823,64 +819,6 @@ CMD_HANDLER_FUNC(canBusHandler)
     }
 
     return true;
-}
-
-
-
-//Added for master_controller
-CMD_HANDLER_FUNC(masterHandler) {
-
-    //uint32_t message_id;
-
-    can_msg_t msg_rx = { 0 };
-
-
-
-
-    if(cmdParams.beginsWithIgnoreCase("test"))  {
-        /* Get length and message id */
-
-           if (cmdParams.scanf("%*s %*s %x", &msg_rx.msg_id)) {
-               //output.printf("Test %" PRIu32 " \n", message_id);
-               output.printf("Message ID: %3x \n", msg_rx.msg_id);
-
-              // msg_rx.msg_id = message_id;
-
-
-               //send queue to periodic_tasks
-               xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &msg_rx, 0);
-
-               //bypass the periodic_tasks, sends straight to control_handler_task
-               // xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_master), &msg_rx, 0);
-           }
-
-    }
-    else if(cmdParams.beginsWithIgnoreCase("message"))  {
-        uint64_t temp_data = 0;
-        uint32_t temp_data_word_upper = 0;
-        uint32_t temp_data_word_lower = 0;
-       // if (cmdParams.scanf("%*s %x %" SCNx64 "", &msg_rx.msg_id, &temp_data))    {
-        if (cmdParams.scanf("%*s %x %x %x", &msg_rx.msg_id, &temp_data_word_upper, &temp_data_word_lower))    {
-           // msg_rx.data.qword = temp_data;
-           msg_rx.data.dwords[1] = temp_data_word_upper;
-           msg_rx.data.dwords[0] = temp_data_word_lower;
-
-            output.printf("Message ID: %x \n", msg_rx.msg_id);
-            output.printf("Message DATA: %" PRIx64 " \n", msg_rx.data.qword);
-            for (int i = 7; i>=0; i--){
-                output.printf("|%2x| ", msg_rx.data.bytes[i]);
-
-                //send queue to periodic_tasks
-                xQueueSend(scheduler_task::getSharedObject(shared_CAN_message_queue_terminal), &msg_rx, 0);
-            }
-
-        }
-    }
-
-
-
-    return true;
-
 }
 
 #endif

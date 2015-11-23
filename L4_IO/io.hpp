@@ -37,8 +37,6 @@
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
 
-#include "can_storage.hpp"
-
 #include "L5_Application/sensor.hpp"
 
 
