@@ -146,6 +146,9 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
     if (speedToSet == BACK_SPEED){
         changeMotorDirection(speedToSet);
     }
+    else if ((speedToSet == BRAKE) && (CurrentMotorValue == NEUTRAL)){
+            MotorPwm.set(NEUTRAL);
+        }
     else{
         // If previously was moving going reverse, change speed to move forward
         if (CurrentMotorValue == BACK_SPEED){
@@ -153,7 +156,7 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
         }
         else{ // Normal operation
 
-            printf("Current motor value = %.2f\n", CurrentMotorValue);
+//            printf("Current motor value = %.2f\n", CurrentMotorValue);
             if (CurrentMotorValue != speedToSet){
                 CurrentMotorValue = speedToSet;
                 MotorPwm.set(CurrentMotorValue);
