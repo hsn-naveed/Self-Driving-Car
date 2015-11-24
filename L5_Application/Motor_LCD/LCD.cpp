@@ -34,14 +34,7 @@ again,
 
 LCD::LCD()
 {
-    Uart3 &lcd = Uart3::getInstance();
-    lcd.init(9600, 10, 10);
-    delay_ms(100);
-    char initChar = '0xF0';
-    lcd.putChar(initChar, portMAX_DELAY);
-    delay_ms(100);
-    lcd.putline("$BLIGHT:100", portMAX_DELAY);
-    printf("LCD initialized\n");
+    initLCD();
     /*
      * init the LCD
      * send 0xF0 to baud detection
@@ -51,7 +44,6 @@ LCD::LCD()
 }
 void LCD::initLCD()
 {
-    Uart3 &lcd = Uart3::getInstance();
     lcd.init(9600, 10, 10);
     delay_ms(100);
     char initChar = '0xF0';
