@@ -87,7 +87,6 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 #define DEBUG_NO_CAN 0
 
 
-
 //States
 static const int CHECK_SENSOR_VALUES = 0;
 static const int CONTROL_BASED_ON_SENSOR = 1;
@@ -344,7 +343,7 @@ void generateMotorCommands(int command)    {
         case COMMAND_MOTOR_FORWARD_STRAIGHT:
 
             CAN_ST.motor_data->LR = (uint8_t) COMMAND_STRAIGHT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MEDIUM;
+            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_SLOW;
             disp_7LED(DISPLAY_FORWARD_STRAIGHT);
             break;
 
@@ -352,7 +351,7 @@ void generateMotorCommands(int command)    {
         case COMMAND_MOTOR_FORWARD_LEFT:
 
             CAN_ST.motor_data->LR = (uint8_t) COMMAND_LEFT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MEDIUM;
+            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_SLOW;
             disp_7LED(DISPLAY_FORWARD_LEFT);
             break;
 
@@ -360,7 +359,7 @@ void generateMotorCommands(int command)    {
         case COMMAND_MOTOR_FORWARD_RIGHT:
 
             CAN_ST.motor_data->LR = (uint8_t) COMMAND_RIGHT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_MEDIUM;
+            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_SLOW;
             disp_7LED(DISPLAY_FORWARD_RIGHT);
             break;
 
@@ -429,9 +428,9 @@ void period_100Hz(void)
 
             portENABLE_INTERRUPTS();
 
-            printf("SENSOR VAL READ!\n");
+            //printf("SENSOR VAL READ!\n");
            // printf("NEW VALUES: %d\n", (int) CAN_ST.sensor_data->L);
-           // printf("NEW VALUES %d %d %d %d\n", (int) CAN_ST.sensor_data->L, (int) CAN_ST.sensor_data->M, (int) CAN_ST.sensor_data->R, (int) CAN_ST.sensor_data->B );
+            printf("NEW VALUES %d %d %d %d\n", (int) CAN_ST.sensor_data->L, (int) CAN_ST.sensor_data->M, (int) CAN_ST.sensor_data->R, (int) CAN_ST.sensor_data->B );
             //g_reset counter because we received a message
             g_sensor_receive_counter = g_reset;
         }
@@ -444,7 +443,7 @@ void period_100Hz(void)
             CAN_ST.gps_coords_curr = (gps_coordinate_msg_t*) &g_gps_msg->data.qword;
             portENABLE_INTERRUPTS();
             printf("GPS VAL READ!\n");
-            g_gps_receive_counter = g_reset; //Do I need a different variable
+            g_gps_receive_counter = g_reset;
         }
         //Compass sending current heading
         //TO DO @hsn_naveed
@@ -488,7 +487,7 @@ void period_100Hz(void)
         //INCREMENT COUNTERS HERE
         g_sensor_receive_counter++;
         g_gps_receive_counter++;
-
+        g_compass_receive_counter++;
 
         ///////////////////////////////////////////////////////////////
 
@@ -656,7 +655,7 @@ void period_100Hz(void)
                 //send our message
                 generateMotorCommands(COMMAND_MOTOR_STOP);
                 if(iCAN_tx(&msg_tx, (uint16_t) MASTER_MOTOR_COMMANDS))   {
-                   //printf("Message sent to motor!\n");
+                   //printf("Stop Message sent to motor, Waiting for Android!\n");
 
                 }
            }
@@ -781,7 +780,7 @@ void period_100Hz(void)
 
                           //send our message
                           if(iCAN_tx(&msg_tx, (uint16_t) MASTER_MOTOR_COMMANDS))   {
-                             //printf("Message sent to motor!\n");
+                             //printf("Message sent to motor, In Free run mode!\n");
 
                           }
 

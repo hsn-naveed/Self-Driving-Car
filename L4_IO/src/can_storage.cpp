@@ -51,6 +51,7 @@ CAN_STORAGE::~CAN_STORAGE() {
     delete motor_data;
     delete gps_coords_curr;
     delete gps_coords_dest;
+
 }
 
 

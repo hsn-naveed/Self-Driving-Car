@@ -53,7 +53,7 @@
 #define SW      Switches::getInstance()            ///< 4 On-board Switches
 /** @} */
 
-#define CAN_ST  CAN_STORAGE::getInstance()  //can data storage
+#define CAN_ST CAN_STORAGE::getInstance()  //can data storage
 
 
 #endif /* IO_SHORTCUTS_HPP_ */
