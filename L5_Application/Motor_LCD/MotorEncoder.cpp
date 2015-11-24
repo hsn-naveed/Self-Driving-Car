@@ -43,7 +43,7 @@ void CalculateSpeed(){
     currentSpeed = distanceInMeters / timeDiffOfTickMarksInSeconds;
 }
 
-int HasSpeedChanged(){
+bool HasSpeedChanged(){
     if (previousSpeed == 0){
         previousSpeed = currentSpeed;
         return 0;
