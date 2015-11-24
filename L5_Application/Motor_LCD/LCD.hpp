@@ -11,6 +11,10 @@
 #include "scheduler_task.hpp"
 #include "FreeRTOS.h"
 #include <string>
+#include "stdlib.h"
+#include "CAN_structs.h"
+#include "can.h"
+#include "uart3.hpp"
 
 /* Pinout:-
  * VSS  -  ground
@@ -39,17 +43,26 @@ again,
  * LEDA -  LED backlight anode
  * LEDK -  LED backlight cathode
  */
+/*
+ * LCD Commands
+ * $CLR_SCR -> clears the screen
+ *
+ */
 
 using namespace std;
 
-class LCD: public scheduler_task
+class LCD
 {
     public:
-        LCD(uint8_t priorityToUse);
-
-        void writetoLCD(string datatoDisplay); //takes data and displays on the LCD
+        LCD();
+        bool LCD_busy();
+        void getCANmessageData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct);
+        void writetoLCD(char *datatoDisplay); //takes data and displays on the LCD
         void clearLCD(); //clears the entire LCD
         void moveCursor(int row, int column); //moves the cursor to a desired point
+
+        void initLCD();
     private:
+        Uart3& lcd = Uart3::getInstance();
 
 };
