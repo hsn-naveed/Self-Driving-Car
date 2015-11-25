@@ -6,6 +6,7 @@
 
 #include "MotorEncoder.hpp"
 #include "file_logger.h"
+#include "io.hpp"
 
 /*
  * @about Each tick represents a distance traveled of about 31cm
@@ -42,14 +43,18 @@ void storeBeginTime(){
     }
 }
 
+char temp;
 void CalculateSpeed(){
     double timeDiffOfTickMarksInSeconds = (double)sys_get_uptime_ms() - (double)beginTimeOfEncoder;
 
     /// Log time info for each tick mark
-    LOG_INFO("Current time = %f, begin time = %.0f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
+    //LOG_INFO("Current time = %f, begin time = %.0f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
     //printf("Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
 
     currentSpeed = distanceInMeters / timeDiffOfTickMarksInSeconds;
+
+//    temp = 25;
+//    LD.setNumber(temp);
 }
 
 bool HasSpeedChanged(){

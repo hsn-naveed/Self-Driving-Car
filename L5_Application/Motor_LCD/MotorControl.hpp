@@ -27,8 +27,8 @@ static float MOTOR_SERVO_PWM_FREQ = 100;
 /// For dynamically calculating
 static float ONE_SECOND_MS = 1000;
 static float STRAIGHT_PWM_PERIOD_MS = 1.5, NEUTRAL_PWM_PERIOD_MS = 1.5;
-static float FULL_RIGHT_PWM_PERIOD_MS = 2, FORWARD_PWM_PERIOD_MS = 2;
-static float FULL_LEFT_PWM_PERIOD_MS = 1, REVERSE_PWM_PERIOD_MS = 1;
+static float FULL_RIGHT_PWM_PERIOD_MS = 1.85, FORWARD_PWM_PERIOD_MS = 2;
+static float FULL_LEFT_PWM_PERIOD_MS = 1.15, REVERSE_PWM_PERIOD_MS = 1;
 
 /*
  * @about For precise tweaking of speed
@@ -39,7 +39,7 @@ static float FULL_LEFT_PWM_PERIOD_MS = 1, REVERSE_PWM_PERIOD_MS = 1;
  */
 static float MEDIUM_SPEED_OFFSET = 0;
 static float SLOW_SPEED_OFFSET = -.81;//-2.38;
-static float BACK_SPEED_OFFSET = .81;
+static float BACK_SPEED_OFFSET = 0;
 
 class MotorControl{
     private:

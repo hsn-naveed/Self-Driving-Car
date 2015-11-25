@@ -78,7 +78,6 @@ bool period_reg_tlm(void){
 void period_1Hz(void)
 {
 
-
 }
 
 void period_10Hz(void)
@@ -98,7 +97,6 @@ void period_100Hz(void)
             LE.off(led1);
         }
         else{
-            motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.NEUTRAL);
             LE.on(led1);
         }
 }
@@ -106,17 +104,18 @@ void period_100Hz(void)
 float incrementSpeedAmount = .5;
 void period_1000Hz(void)
 {
-    if (HasSpeedChanged() == 1){
-        /// Adjust motor speed offset accordingly
-        SLOW_SPEED_OFFSET += incrementSpeedAmount;
-        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
-    }
-    else if (HasSpeedChanged() == 2){
-        // Anything below the max negative speed offset, it throws off the duty cycle
-        // and car motor is unpredictable
-        if (SLOW_SPEED_OFFSET < ((-.81)- incrementSpeedAmount)){
-            SLOW_SPEED_OFFSET -= incrementSpeedAmount;
-        }
-        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
-    }
+//    if (HasSpeedChanged() == 1){
+//        /// Adjust motor speed offset accordingly
+//        SLOW_SPEED_OFFSET += incrementSpeedAmount;
+//        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
+//    }
+//    else if (HasSpeedChanged() == 2){
+//        // Anything below the max negative speed offset, it throws off the duty cycle
+//        // and car motor is unpredictable
+//        if (SLOW_SPEED_OFFSET < ((-.81)- incrementSpeedAmount)){
+//            SLOW_SPEED_OFFSET -= incrementSpeedAmount;
+//        }
+//        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
+//    }
+
 }
