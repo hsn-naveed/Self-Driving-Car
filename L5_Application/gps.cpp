@@ -5,16 +5,14 @@
  *      Author: Hassan
  */
 
-//#include "243_can/CAN_structs.h"
 #include "can_storage.hpp"
 #include "io.hpp"
 #include "math.h"
 #include <stdlib.h>
-//#include "periodic_scheduler/period_callbacks.cpp"
-//#include "periodic_scheduler/periodic_callback.h"
-
 
 #define Pi 3.14159265
+
+void generateMotorCommands(int command);
 
 uint32_t des_heading(){
     float degrees = atan((CAN_ST.gps_coords_dest->y_coordinate - CAN_ST.gps_coords_curr->y_coordinate)/(CAN_ST.gps_coords_dest->x_coordinate - CAN_ST.gps_coords_curr->x_coordinate)) * 180/Pi;
@@ -47,13 +45,14 @@ uint32_t des_heading(){
 
 void setDirection(){
     int tolerance = 20;
+    //if we are in +/- 20 degrees of our destination heading, maintain course
     if ((CAN_ST.mAngleValue->heading >= (des_heading()-tolerance)) and (CAN_ST.mAngleValue->heading <= (des_heading()+tolerance)))//+- X%
         {
         //go straight
         //generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT);
     }
     else if(des_heading()>CAN_ST.mAngleValue->heading) {
-        if (abs(des_heading()-CAN_ST.mAngleValue->heading)>180){
+        if (abs(des_heading()-CAN_ST.mAngleValue->heading)>=180){
             //generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT);
         }
         else{
@@ -61,17 +60,11 @@ void setDirection(){
         }
     }
     else{
-        if (abs(des_heading()-CAN_ST.mAngleValue->heading)>180){
+        if (abs(des_heading()-CAN_ST.mAngleValue->heading)>=180){
             //generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT);
         }
         else{
             //generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT);
-        }
-        if (abs(des_heading()-CAN_ST.mAngleValue->heading)>180){
-            //generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT);
-        }
-        else{
-            //generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT);
         }
     }
 }
