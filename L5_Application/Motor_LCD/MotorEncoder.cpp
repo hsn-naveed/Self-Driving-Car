@@ -5,6 +5,7 @@
  */
 
 #include "MotorEncoder.hpp"
+#include "file_logger.h"
 
 /*
  * @about Each tick represents a distance traveled of about 31cm
@@ -13,49 +14,51 @@
  *
  * Will calculate rate based of distance traveled and amount of time it took.
  */
-uint64_t previousSpeed = 0;
-uint64_t currentSpeed = 0;
+//double previousSpeed = 0;
+double currentSpeed = 0;
 
 const int circumferenceOfTire = 31;
+const double distanceInMeters = circumferenceOfTire / 100;
+
+/// Done through excel sheet after logging speed
+double slowSpeedAverageTime = 62;
+double slowSpeedAverageRateInMetersPerMilliSecond = distanceInMeters/slowSpeedAverageTime;
 
 double percentDifferenceOfSpeed = .10;
 double upperLimitThresholdDiffOfSpeed;
 double lowerLimitThresholdDiffOfSpeed;
 
 uint64_t beginTimeOfEncoder;
-bool startOfNewTime = false;
+bool startOfNewTime = true;
 
 void storeBeginTime(){
-    beginTimeOfEncoder = sys_get_uptime_us();
     if (startOfNewTime){
+        beginTimeOfEncoder = sys_get_uptime_ms();
         startOfNewTime = false;
-        CalculateSpeed();
     }
     else{
+        CalculateSpeed();
         startOfNewTime = true;
     }
 }
 
 void CalculateSpeed(){
-    double timeDiffOfTickMarksInSeconds = (sys_get_uptime_us() - beginTimeOfEncoder) * 1000000;
-    double distanceInMeters = circumferenceOfTire / 100;
+    double timeDiffOfTickMarksInSeconds = (double)sys_get_uptime_ms() - (double)beginTimeOfEncoder;
+
+    /// Log time info for each tick mark
+    LOG_INFO("Current time = %f, begin time = %.0f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
+    //printf("Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
 
     currentSpeed = distanceInMeters / timeDiffOfTickMarksInSeconds;
 }
 
 bool HasSpeedChanged(){
-    if (previousSpeed == 0){
-        previousSpeed = currentSpeed;
-        return 0;
-    }
+    upperLimitThresholdDiffOfSpeed = slowSpeedAverageRateInMetersPerMilliSecond + (slowSpeedAverageRateInMetersPerMilliSecond * percentDifferenceOfSpeed);
+    lowerLimitThresholdDiffOfSpeed = slowSpeedAverageRateInMetersPerMilliSecond - (slowSpeedAverageRateInMetersPerMilliSecond * percentDifferenceOfSpeed);
 
-    upperLimitThresholdDiffOfSpeed = previousSpeed + (previousSpeed * percentDifferenceOfSpeed);
-    lowerLimitThresholdDiffOfSpeed = previousSpeed - (previousSpeed * percentDifferenceOfSpeed);
-    if (previousSpeed > 0){
-        if (currentSpeed < lowerLimitThresholdDiffOfSpeed)
-            return 1;
-        else if (currentSpeed > upperLimitThresholdDiffOfSpeed)
-            return 2;
-        return 0;
-    }
+    if (currentSpeed < lowerLimitThresholdDiffOfSpeed)
+        return 1;
+    else if (currentSpeed > upperLimitThresholdDiffOfSpeed)
+        return 2;
+    return 0;
 }

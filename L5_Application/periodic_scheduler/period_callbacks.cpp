@@ -83,24 +83,24 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-
+//    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.SLOW_SPEED);
 }
 
 void period_100Hz(void)
 {
-    if (CAN_is_bus_off(can1)){
-        puts("====CAN BUS is off====\n");
-        LE.on(led1);
-    }
-    else if (iCAN_rx(canMsgForMotor, motorMsgId)){
-        motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
-        motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
-        LE.off(led1);
-    }
-    else{
-        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.NEUTRAL);
-        LE.on(led1);
-    }
+        if (CAN_is_bus_off(can1)){
+            puts("====CAN BUS is off====\n");
+            LE.on(led1);
+        }
+        else if (iCAN_rx(canMsgForMotor, motorMsgId)){
+            motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
+            motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
+            LE.off(led1);
+        }
+        else{
+            motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.NEUTRAL);
+            LE.on(led1);
+        }
 }
 
 float incrementSpeedAmount = .5;
@@ -114,7 +114,7 @@ void period_1000Hz(void)
     else if (HasSpeedChanged() == 2){
         // Anything below the max negative speed offset, it throws off the duty cycle
         // and car motor is unpredictable
-        if (SLOW_SPEED_OFFSET < (maxNegativeSlowSpeedOffset - incrementSpeedAmount)){
+        if (SLOW_SPEED_OFFSET < ((-.81)- incrementSpeedAmount)){
             SLOW_SPEED_OFFSET -= incrementSpeedAmount;
         }
         MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;

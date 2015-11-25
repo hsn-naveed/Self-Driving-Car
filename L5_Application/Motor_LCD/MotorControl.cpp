@@ -38,28 +38,6 @@ void MotorControl::changeMotorDirection(float speedToSet){
 
 
 #if 1   /// Public Functions
-void MotorControl::initAllGlobalsForMotorControl(){
-    /// Used for PWM
-    MOTOR_SERVO_PWM_FREQ = 100;
-
-    /// For dynamically calculating
-    ONE_SECOND_MS = 1000;
-    NEUTRAL_PWM_PERIOD_MS = 1.5;
-    FORWARD_PWM_PERIOD_MS = 2;
-    REVERSE_PWM_PERIOD_MS = 1;
-
-    /*
-     * @about For precise tweaking of speed
-     *
-     * @warning Make sure to use negative for medium and slow
-     * and positive for back speed, as it is probably more likely
-     * that the speeds are too fast
-     */
-    MEDIUM_SPEED_OFFSET = 0;
-    SLOW_SPEED_OFFSET = 0;
-    BACK_SPEED_OFFSET = 0;
-}
-
 MotorControl::MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet){
     MotorPwm = motorPwmToSet;
     ServoPwm = servoPwmToSet;
@@ -67,8 +45,7 @@ MotorControl::MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet){
     CurrentMotorValue = NEUTRAL;
     CurrentServoValue = STRAIGHT;
 
-//    initAllGlobalsForMotorControl();
-        escHasBeenInitialized = false;
+    escHasBeenInitialized = false;
 }
 
 MotorControl::MotorControl(){
@@ -138,6 +115,15 @@ void MotorControl::initESC(){
     puts("ESC assumed to be working!\n");
 }
 
+void MotorControl::pulseBrake()
+{
+    MotorPwm.set(BRAKE);
+    MotorPwm.set(NEUTRAL);
+    delay_us(10);
+    MotorPwm.set(BACK_SPEED);
+//    MotorPwm.set(NEUTRAL);
+}
+
 void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet){
     // Set steering prior to changing motor speed
     CurrentServoValue = steeringDirectionToSet;
@@ -151,15 +137,20 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
         }
     else{
         // If previously was moving going reverse, change speed to move forward
-        if (CurrentMotorValue == BACK_SPEED){
+        if (CurrentMotorValue == BACK_SPEED && (speedToSet == SLOW_SPEED || speedToSet == MEDIUM_SPEED
+                                                || speedToSet == FAST_SPEED)){
             changeMotorDirection(speedToSet);
         }
         else{ // Normal operation
 
-//            printf("Current motor value = %.2f\n", CurrentMotorValue);
+            printf("Current motor value = %.5f\n", CurrentMotorValue);
             if (CurrentMotorValue != speedToSet){
                 CurrentMotorValue = speedToSet;
                 MotorPwm.set(CurrentMotorValue);
+            }
+            if (speedToSet == BRAKE){
+
+//                pulseBrake();
             }
         }
     }
@@ -205,10 +196,14 @@ float MotorControl::convertHexToFloatSteer(uint8_t hexSteerValue){
 
     if (hexSteerValue == (uint8_t)COMMAND_STRAIGHT)
         convertedHexToFloat = (float)STRAIGHT;
-    if (hexSteerValue == (uint8_t)COMMAND_LEFT)
+    if (hexSteerValue == (uint8_t)COMMAND_FULL_LEFT)
         convertedHexToFloat = (float)FULL_LEFT;
-    if (hexSteerValue == (uint8_t)COMMAND_RIGHT)
+    if (hexSteerValue == (uint8_t)COMMAND_SOFT_LEFT)
+        convertedHexToFloat = (float)SOFT_LEFT;
+    if (hexSteerValue == (uint8_t)COMMAND_FULL_RIGHT)
         convertedHexToFloat = (float)FULL_RIGHT;
+    if (hexSteerValue == (uint8_t)COMMAND_SOFT_RIGHT)
+        convertedHexToFloat = (float)SOFT_RIGHT;
 
     return convertedHexToFloat;
 }

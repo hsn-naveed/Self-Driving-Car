@@ -62,15 +62,15 @@ int main(void)
     eint3_enable_port2(port2_6, eint_rising_edge, storeBeginTime);
 
 
-    while (1){
-        if (encoderInput.read() == true){
-            printf("Encoder detected line!\n");
-        }
-        else{
-            printf("Encoder detects black!\n");
-        }
-        delay_ms(500);
-    }
+//    while (1){
+//        if (encoderInput.read() == true){
+//            printf("Encoder detected line!\n");
+//        }
+//        else{
+//            printf("Encoder detects black!\n");
+//        }
+//        delay_ms(500);
+//    }
 
 
 

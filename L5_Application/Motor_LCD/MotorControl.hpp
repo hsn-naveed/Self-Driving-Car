@@ -37,16 +37,12 @@ static float FULL_LEFT_PWM_PERIOD_MS = 1, REVERSE_PWM_PERIOD_MS = 1;
  * and positive for back speed, as it is probably more likely
  * that the speeds are too fast
  */
-static float maxNegativeSlowSpeedOffset = -.81;
 static float MEDIUM_SPEED_OFFSET = 0;
-static float SLOW_SPEED_OFFSET = maxNegativeSlowSpeedOffset;//-2.38;
-static float BACK_SPEED_OFFSET = 0;
+static float SLOW_SPEED_OFFSET = -.81;//-2.38;
+static float BACK_SPEED_OFFSET = .81;
 
 class MotorControl{
     private:
-        /// Initialize globals
-        void initAllGlobalsForMotorControl();
-
         /// Objects used for setting PWM duty cycles
         PWM MotorPwm;
         PWM ServoPwm;
@@ -69,6 +65,8 @@ class MotorControl{
         void triggerForwardOrReverseThrottle(float maxOrMin,
                 double incrementAndDecrementSize,
                 int pwmDelay);
+        void pulseBrake();
+
         bool escHasBeenInitialized;
 
     public:
@@ -107,11 +105,15 @@ class MotorControl{
         float NEUTRAL = ((NEUTRAL_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
         float MEDIUM_SPEED = (FAST_SPEED+NEUTRAL)/2 + MEDIUM_SPEED_OFFSET;
         float SLOW_SPEED = (MEDIUM_SPEED+NEUTRAL)/2 + SLOW_SPEED_OFFSET;
-        float BACK_SPEED = (BRAKE+NEUTRAL)/2 + BACK_SPEED_OFFSET;
+        float tempBack = (BRAKE+NEUTRAL)/2;
+        float BACK_SPEED = (tempBack+NEUTRAL)/2 + BACK_SPEED_OFFSET;
 
         /// Steering direction
         float FULL_LEFT = (FULL_LEFT_PWM_PERIOD_MS/pwmFreqInMs) * 100;
         float FULL_RIGHT = (FULL_RIGHT_PWM_PERIOD_MS/pwmFreqInMs) * 100;
         float STRAIGHT = (STRAIGHT_PWM_PERIOD_MS/pwmFreqInMs) * 100;
+        float SOFT_LEFT = (FULL_LEFT + STRAIGHT)/2;
+        float SOFT_RIGHT = (FULL_RIGHT + STRAIGHT)/2;
+
 };
 #endif
