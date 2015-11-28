@@ -55,9 +55,17 @@ public class ConnectedThread extends Thread{
         }
     }
 
+    public void flush()
+    {
+        try {
+            mmOutStream.flush();
+        } catch (IOException e) { };
+    }
+
     /* Call this from the main activity to send data to the remote device */
     public void write(byte[] bytes) {
         try {
+            Log.d(APP_TAG + " write", bytes.toString() + "/ Length: " + bytes.length);
             mmOutStream.write(bytes);
         } catch (IOException e) {
             Log.d(APP_TAG, Log.getStackTraceString(e));

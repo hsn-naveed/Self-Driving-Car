@@ -123,40 +123,51 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
     @Override
     public void transmitPoints(List<LatLng> dirPoints) {
         List<LatLng> newDir = new ArrayList<LatLng>(dirPoints);
-
-        Log.d("IN transmitPoints", "Transmit Points");
+        byte[] Lat;
+        byte[] Long;
+        ConnectedThread connectedThread = new ConnectedThread(mmSocket);
 
         Log.d("ACTIVITY DIR SIZE", "" + newDir.size());
         for (int i = 0; i < newDir.size(); i++)
         {
-            Log.d("ACTIVITY DIR POINTS", "" + (float) newDir.get(i).latitude
-                    + ", " + (float) newDir.get(i).longitude);
+            // Put latitude and longitude into their own separate byte arrays.
+            Lat = ByteBuffer.allocate(4).putFloat((float) newDir.get(i).latitude).array();
+            Long = ByteBuffer.allocate(4).putFloat((float) newDir.get(i).longitude).array();
+
+            // used to test the Endianness and order of the bytes
+//            float f = ByteBuffer.wrap(Lat).order(ByteOrder.BIG_ENDIAN).getFloat();
+//            float g = ByteBuffer.wrap(Long).order(ByteOrder.BIG_ENDIAN).getFloat();
+//
+//            Log.d(APP_ID + " LAT", "" + f);
+//            Log.d(APP_ID + " LONG", "" + g);
+
+            synchronized (this) {
+                // Sends to thread to write. catArray(Lat, Long) concatenates Lat/Lng arrays to a single byte array.
+                connectedThread.write(catArray(Lat, Long));
+                connectedThread.flush();
+            }
         }
 
     }
 
     @Override
     public void goSignal(int i) {
-//        byte[] sendGo = "GO\n".getBytes();
-        byte[] sendGo = ByteBuffer.allocate(1).putInt(i).array();   // 1 byte, i = 1 for Go.
-        for (int j = 0; j < sendGo.length; j++)
-        {
-            Log.d(APP_ID + " GO", "" + sendGo[j]);
-        }
+        byte[] sendGo = "GO\n".getBytes();
+//        byte[] sendGo = ByteBuffer.allocate(1).putInt(i).array();   // 1 byte, i = 1 for Go.
+        Log.d(APP_ID + " GO", "" + sendGo);
         ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
         mConnectedThread.write(sendGo);
+        mConnectedThread.flush();
     }
 
     @Override
     public void stopSignal(int i) {
-//        byte [] sendStop = "STOP\n".getBytes();
-        byte [] sendStop = ByteBuffer.allocate(1).putInt(i).array();    // 1 byte, i = 0 for Stop.
-        for (int j = 0; j < sendStop.length; j++)
-        {
-            Log.d(APP_ID + " STOP", "" + sendStop[j]);
-        }
+        byte [] sendStop = "STOP\n".getBytes();
+//        byte [] sendStop = ByteBuffer.allocate(1).putInt(i).array();    // 1 byte, i = 0 for Stop.
+        Log.d(APP_ID + " STOP", "" + sendStop);
         ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
         mConnectedThread.write(sendStop);
+        mConnectedThread.flush();
     }
 
     @Override
@@ -167,4 +178,35 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
             mmSocket = socket;
         Log.d("NULL socket", "NULL");
     }
+
+    public byte[] catArray(byte[] Lat, byte[] Long)
+    {
+        byte[] cat = new byte[8];
+
+        System.arraycopy(Lat, 0, cat, 0, 4);
+        System.arraycopy(Long, 0, cat, 4, 4);
+        return cat;
+    }
+
+//    public void byteToFloatTest(byte[] Lat, byte[] Long)
+//    {
+//        byte[] bytes = catArray(Lat, Long);
+//        int asInt = ((bytes[0] & 0xFF) << 24)
+//                | ((bytes[1] & 0xFF) << 16)
+//                | ((bytes[2] & 0xFF) << 8)
+//                | ((bytes[3] & 0xFF));
+//        int asInt2 = ((bytes[4] & 0xFF) << 24)
+//                | ((bytes[5] & 0xFF) << 16)
+//                | ((bytes[6] & 0xFF) << 8)
+//                | ((bytes[7] & 0xFF));
+//
+//        float gg = Float.intBitsToFloat(asInt);
+//        float hh = Float.intBitsToFloat(asInt2);
+//
+//
+//        Log.d(APP_ID + " bytes", "" + gg);
+//        Log.d(APP_ID + " bytes", "" + hh);
+//
+//    }
+
 }
