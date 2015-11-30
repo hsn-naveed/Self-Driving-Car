@@ -87,6 +87,7 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
+    /// FIX set this
         if (CAN_is_bus_off(can1)){
             puts("====CAN BUS is off====\n");
             LE.on(led1);
