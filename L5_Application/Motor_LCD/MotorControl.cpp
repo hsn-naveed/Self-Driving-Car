@@ -156,8 +156,8 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
             //changeMotorDirection(speedToSet);
         }
         else{ // Normal operation
-             printf("Current motor value = %.5f\n", CurrentMotorValue);
             CurrentMotorValue = speedToSet;
+            printf("==Current motor value = %.5f\n\n", CurrentMotorValue);
             MotorPwm.set(CurrentMotorValue);
         }
     }

@@ -31,6 +31,6 @@ void CalculateSpeed();
  * returns 2 if speed has increased *Should not happen*
  * default return 0 if speed is within percent threshold
  */
-bool HasSpeedChanged();
+int HasSpeedChanged();
 
 #endif

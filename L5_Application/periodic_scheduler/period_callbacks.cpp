@@ -52,6 +52,8 @@ can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t {0};
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
+float incrementSpeedAmount = .5;
+
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
@@ -82,7 +84,36 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-//    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.SLOW_SPEED);
+////    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.SLOW_SPEED);
+    if (HasSpeedChanged() == 1){
+        /// Adjust motor speed offset accordingly
+        if ((motorObj.SLOW_SPEED + *SLOW_SPEED_OFFSET) <= motorObj.maxSlowSpeed){
+            *SLOW_SPEED_OFFSET += incrementSpeedAmount;
+            motorObj.SLOW_SPEED += *SLOW_SPEED_OFFSET;
+        }
+        printf("Inside hasSpeedChanged = 1\nMotorValue = %.5f\n\n", motorObj.SLOW_SPEED);
+
+        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
+        LE.off(led3);
+    }
+    else if (HasSpeedChanged() == 2){
+        // Anything below the max negative speed offset, it throws off the duty cycle
+        // and car motor is unpredictable
+        if (motorObj.SLOW_SPEED >= (motorObj.maxSlowSpeed - initialSlowSpeedOffset)){
+        //if (initialSlowSpeedOffset <= (*SLOW_SPEED_OFFSET - incrementSpeedAmount)){
+            *SLOW_SPEED_OFFSET -= incrementSpeedAmount;
+            motorObj.SLOW_SPEED += *SLOW_SPEED_OFFSET;
+            printf("Inside hasSpeedChanged = 2\nMotorValue = %.5f\n\n", motorObj.SLOW_SPEED);
+        }
+
+
+        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
+        LE.off(led3);
+    }
+    else{
+        LE.on(led3);
+        printf("no speed change \n");
+    }
 }
 
 void period_100Hz(void)
@@ -102,22 +133,9 @@ void period_100Hz(void)
         }
 }
 
-float incrementSpeedAmount = .5;
+
 void period_1000Hz(void)
 {
-    if (HasSpeedChanged() == 1){
-        /// Adjust motor speed offset accordingly
-        SLOW_SPEED_OFFSET += incrementSpeedAmount;
-        motorObj.SLOW_SPEED += SLOW_SPEED_OFFSET;
-        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
-    }
-    else if (HasSpeedChanged() == 2){
-        // Anything below the max negative speed offset, it throws off the duty cycle
-        // and car motor is unpredictable
-        if (SLOW_SPEED_OFFSET < ((-.81)- incrementSpeedAmount)){
-            SLOW_SPEED_OFFSET -= incrementSpeedAmount;
-        }
-        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
-    }
+
 
 }
