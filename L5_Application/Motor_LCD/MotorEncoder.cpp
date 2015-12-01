@@ -22,7 +22,7 @@ const int circumferenceOfTire = 31;
 const double distanceInMeters = circumferenceOfTire / 100;
 
 /// Done through excel sheet after logging speed
-double slowSpeedAverageTime = 62;
+double slowSpeedAverageTime = 163.8783784;
 double slowSpeedAverageRateInMetersPerMilliSecond = distanceInMeters/slowSpeedAverageTime;
 
 double percentDifferenceOfSpeed = .10;

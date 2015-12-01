@@ -56,27 +56,6 @@ extern MotorControl motorObj;
 
 int main(void)
 {
-    uint8_t port2_6 = 6;
-    encoderInput.setAsInput();
-
-    LD.clear();
-//    LD.setNumber(25);
-    eint3_enable_port2(port2_6, eint_rising_edge, storeBeginTime);
-
-
-//    while (1){
-//        if (encoderInput.read() == true){
-//            printf("Encoder detected line!\n");
-//        }
-//        else{
-//            printf("Encoder detects black!\n");
-//        }
-//        delay_ms(500);
-//    }
-
-
-
-
     /// Motor/Servo PWM initialization
     PWM motorPWM = PWM(PWM::pwm2, MOTOR_SERVO_PWM_FREQ);
     PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
@@ -99,6 +78,14 @@ int main(void)
             printf("motor set to %f\n", testDutyCycle);
         }
     } while(!SW.getSwitch(4));
+
+    uint8_t port2_6 = 6;
+    encoderInput.setAsInput();
+
+    LD.clear();
+    eint3_enable_port2(port2_6, eint_rising_edge, storeBeginTime);
+
+
 /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
