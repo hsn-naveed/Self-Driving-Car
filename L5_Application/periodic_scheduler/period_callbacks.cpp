@@ -33,21 +33,25 @@
  *
  *          MASTER CONTROLLER TEAM NOTES!!!
  *
- *          11/20/2015
- *            Marvin:
- *            removed the full_can msg_temp and used global pointers; initiated @ init() function
- *           cleaned up some code; just minor changes -> should not affect our logic
+ *         12/01 - Marvin's update
+ *              - changed all state cases to enum, removing a lot of arbitrary values
+ *              - generated can_message.c from db parser
+ *              - changed the code so that we won't be needing the can_storage.cpp,
+ *                  everything will be inside the periodic_callbacks.cpp
+ *                  I think this is necessary since conflicts happen when we include can_message.c
+ *                  in our can_storage.hpp, thus we could not instantiate our structs inside
+ *                  our can_storage. This also removes the overhead that we have every time we
+ *                  need to access our data. Having global variables is easier and more readable.
  *
- *          NOTE TO HASSAN:
- *              @ DEBUG_NO_CAN == 0
- *              When testing, make sure you press the FOURTH switch to enable FREERUN mode.
- *              SWITCH3 = AUTO MODE --> not yet implemented since we need GPS and ANDROID
- *              SWITCH4 - FREERUN MODE --> to test our logic; CAN integration; SENSORS and MOTOR communications
+ *              TO DO:
+ *                  - fix errors regarding sending and receiving CAN messages. Everything was changed due
+ *                     to implementation of dbc parser.
+ *                  - remove can_storage totally, we won't be needing this once we have the
+ *                      necessary global variables.
+ *                  - Test the logic for sensor and motor again. Since most things were changed, we need a
+ *                      couple of runs to make sure we didn't mess up the logic
+ *                  - Add implementation for the headings coming from the GPS team
  *
- *              @ DEBUG_NO_CAN == 1
- *              Debug mode used to simulate sensor values.
- *              The four switches acts as LEFT, MIDDLE, RIGHT, and BACK sensors
- *              CAN MESSAGES ARE OVERRIDDEN IN THIS MODE, THUS TO TEST THE SYSTEM USING CAN, set DEBUG_NO_CAN = 0
  *
  *
  */
@@ -61,7 +65,6 @@
 #include "tasks.hpp"
 #include <inttypes.h>
 
-#include "master_control.hpp"
 #include "can.h"
 
 // Include file for telemetry --> ALso need to turn on #define at sys_config.h (SYS_CFG_ENABLE_TLM)
@@ -69,7 +72,7 @@
 #include "tlm/c_tlm_var.h"
 
 //#include <L4_IO/can_definitions.hpp>
-#include "L4_IO/can_storage.hpp"
+//#include "L4_IO/can_storage.hpp"
 
 #include "243_can/CAN_structs.h"
 #include "243_can/iCAN.hpp"
@@ -81,12 +84,63 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 // set to 0 if you want to use CAN (normal mode)
 #define DEBUG_NO_CAN 0
 
+
+///////////////////////////LOGIC///////////////////////////
+
 //States
-static const int CHECK_SENSOR_VALUES = 0;
-static const int CONTROL_BASED_ON_SENSOR = 1;
-static const int CONTROL_BASED_ON_HEADING = 2;
-static const int SEND_CONTROL_TO_MOTOR = 3;
-static const int STATE_MACHINE_END = 4;
+enum MainStateMachine {
+    CHECK_SENSOR_VALUES,
+    CONTROL_BASED_ON_SENSOR,
+    CONTROL_BASED_ON_HEADING,
+    SEND_CONTROL_TO_MOTOR,
+    STATE_MACHINE_END,
+};
+
+//current state
+MainStateMachine g_current_state = CHECK_SENSOR_VALUES;
+
+//previous state
+//volatile int g_prev_state = 0;
+MainStateMachine g_prev_state = g_current_state;
+
+enum VehicleMode {
+    FREERUN,
+    AUTO,
+};
+
+//we initialize to freerun mode
+VehicleMode g_current_mode =  FREERUN;
+
+///////////////////////////----///////////////////////////
+
+
+///////////////////////////MOTOR///////////////////////////
+//Commands for motor
+enum MotorCommands {
+    COMMAND_MOTOR_STOP,
+    COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW,
+    COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM,
+    COMMAND_MOTOR_FORWARD_STRAIGHT_FAST,
+    COMMAND_MOTOR_FORWARD_SOFT_LEFT,
+    COMMAND_MOTOR_FORWARD_HARD_LEFT,
+    COMMAND_MOTOR_FORWARD_SOFT_RIGHT,
+    COMMAND_MOTOR_FORWARD_HARD_RIGHT,
+    COMMAND_MOTOR_REVERSE_STRAIGHT,
+    COMMAND_MOTOR_REVERSE_LEFT,
+    COMMAND_MOTOR_REVERSE_RIGHT,
+};
+
+MASTER_TX_MOTOR_CMD_t* g_motor_cmd_values;
+///////////////////////////----///////////////////////////
+
+
+///////////////////////////SENSOR///////////////////////////
+
+//for left and right sensors
+static int MINIMUM_LR_SENSOR_VALUE = 50;
+
+//for middle and back sensors
+static int MINIMUM_MB_SENSOR_VALUE = 30;
 
 //Sensor readings based on minimum values
 bool LEFT_BLOCKED = false;
@@ -97,31 +151,18 @@ bool BACK_BLOCKED = false;
 //if all three are clear
 bool FRONT_CLEAR = false;
 
-//Commands for motor
-static const int COMMAND_MOTOR_STOP = 0;
-static const int COMMAND_MOTOR_FORWARD_STRAIGHT = 1;
-static const int COMMAND_MOTOR_FORWARD_LEFT = 2;
-static const int COMMAND_MOTOR_FORWARD_RIGHT = 3;
-static const int COMMAND_MOTOR_REVERSE_LEFT = 4;
-static const int COMMAND_MOTOR_REVERSE_RIGHT = 5;
-static const int COMMAND_MOTOR_FORWARD_SOFT_LEFT = 6;
-static const int COMMAND_MOTOR_FORWARD_SOFT_RIGHT = 7;
+//sensor values
+uint8_t g_sensor_left_value = 0;
+uint8_t g_sensor_middle_value = 0;
+uint8_t g_sensor_right_value = 0;
+uint8_t g_sensor_back_value = 0;
 
-//for 7LED display
-static const int DISPLAY_FORWARD_STRAIGHT = 0;
-static const int DISPLAY_FORWARD_FULL_LEFT = 1;
-static const int DISPLAY_FORWARD_FULL_RIGHT = 2;
-static const int DISPLAY_STOP = 3;
-static const int DISPLAY_REVERSE = 4;
-static const int DISPLAY_ERROR = 99;
-static const int GPS_LOST = 98;
-static const int COMPASS_LOST = 97;
-static const int DISPLAY_FORWARD_SOFT_LEFT = 5;
-static const int DISPLAY_FORWARD_SOFT_RIGHT = 6;
+SENSOR_TX_INFO_SONARS_t* g_sensor_values;
 
-const int g_reset = 0;
-const int g_max_count_timer = 300; // we're running in 100Hz and we expect messages within 3Hz.
+///////////////////////////----///////////////////////////
 
+
+///////////////////////////COUNTERS///////////////////////////
 //counter for the receive sensor
 int g_sensor_receive_counter = 0;
 
@@ -131,62 +172,62 @@ int g_gps_receive_counter = 0;
 //counter for the Compass
 int g_compass_receive_counter = 0;
 
-//we initialize to freerun mode
-uint8_t g_current_mode = (uint8_t) FREERUN_MODE;
-
-//motor command values
-mast_mot_msg_t motor_commands =
-{ 0 };
-
-uint8_t g_motor_LR = 0;
-uint8_t g_motor_SPD = 0;
-
-//sensor values
-uint8_t g_sensor_left_value = 0;
-uint8_t g_sensor_middle_value = 0;
-uint8_t g_sensor_right_value = 0;
-uint8_t g_sensor_back_value = 0;
-
-can_fullcan_msg_t *g_sensor_msg;
-can_fullcan_msg_t *g_gps_msg;
-can_fullcan_msg_t *g_compass_msg;
-
-can_fullcan_msg_t *g_android_msg;
-
-//currently not used
-can_msg_t msg_rx =
-{ 0 };
-can_msg_t msg_tx =
-{ 0 };
-
-//Android
-bool g_receiving_checkpoints = false;
-
-//default values are all zero
-sen_msg_t *g_default_sensor_values;
-
-//current state
-volatile int g_current_state = CHECK_SENSOR_VALUES;
-
-//previous state
-volatile int g_prev_state = 0;
+const int g_reset = 0;
+const int g_max_count_timer = 300; // we're running in 100Hz and we expect messages within 3Hz.
 
 //use as heart beat monitor counter
 double g_heart_counter = 0;
+///////////////////////////----///////////////////////////
+
+
+///////////////////////////DISPLAY///////////////////////////
+//for 7LED display
+enum Display7LED {
+    DISPLAY_FORWARD_STRAIGHT,
+    DISPLAY_FORWARD_SOFT_LEFT,
+    DISPLAY_FORWARD_HARD_LEFT,
+    DISPLAY_FORWARD_SOFT_RIGHT,
+    DISPLAY_FORWARD_HARD_RIGHT,
+    DISPLAY_STOP,
+    DISPLAY_REVERSE_STRAIGHT,
+    DISPLAY_REVERSE_LEFT,
+    DISPLAY_REVERSE_RIGHT,
+    GPS_LOST,
+    COMPASS_LOST,
+    DISPLAY_ERROR,
+};
+///////////////////////////----///////////////////////////
+
+
+///////////////////////////CAN MESSAGES///////////////////////////
+can_fullcan_msg_t *g_sensor_msg;
+can_fullcan_msg_t *g_gps_msg;
+can_fullcan_msg_t *g_compass_msg;
+can_fullcan_msg_t *g_android_msg;
+
+//used for sending data
+can_msg_t msg_tx = { 0 };
+
+///////////////////////////----///////////////////////////
+
+///////////////////////////ANDROID///////////////////////////
+bool g_receiving_checkpoints = false;
+
+bool g_GO_signal = false;
+///////////////////////////----///////////////////////////
+
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
     //intialize our messages here
-    g_gps_msg = new can_fullcan_msg_t
-    { 0 };
-    g_compass_msg = new can_fullcan_msg_t
-    { 0 };
-    g_sensor_msg = new can_fullcan_msg_t
-    { 0 };
-    g_android_msg = new can_fullcan_msg_t
-    { 0 };
+    g_gps_msg = new can_fullcan_msg_t { 0 };
+    g_compass_msg = new can_fullcan_msg_t { 0 };
+    g_sensor_msg = new can_fullcan_msg_t { 0 };
+    g_android_msg = new can_fullcan_msg_t { 0 };
 
+    g_motor_cmd_values = new MASTER_TX_MOTOR_CMD_t {0};
+    g_sensor_values = new SENSOR_TX_INFO_SONARS_t {0};
     return true; // Must return true upon success
 
 }
@@ -207,13 +248,13 @@ bool period_reg_tlm(void)
     TLM_REG_VAR(master_cmp, g_sensor_back_value, tlm_uint);
 
     //motor commands
-    TLM_REG_VAR(master_cmp, g_motor_LR, tlm_uint);
-    TLM_REG_VAR(master_cmp, g_motor_SPD, tlm_uint);
+    TLM_REG_VAR(master_cmp, g_motor_cmd_values->MASTER_MOTOR_CMD_steer, tlm_uint);
+    TLM_REG_VAR(master_cmp, g_motor_cmd_values->MASTER_MOTOR_CMD_drive, tlm_uint);
 
     return true; // Must return true upon success
 }
 
-void disp_7LED(int val)
+void disp_7LED(Display7LED val)
 {
     switch (val)
     {
@@ -223,7 +264,7 @@ void disp_7LED(int val)
             LD.setRightDigit('1');
             break;
 
-            case DISPLAY_FORWARD_FULL_LEFT:
+            case DISPLAY_FORWARD_HARD_LEFT:
             LD.clear();
             LD.setLeftDigit('H');
             LD.setRightDigit('L');
@@ -235,7 +276,7 @@ void disp_7LED(int val)
             LD.setRightDigit('L');
             break;
 
-            case DISPLAY_FORWARD_FULL_RIGHT:
+            case DISPLAY_FORWARD_HARD_RIGHT:
             LD.clear();
             LD.setLeftDigit('H');
             LD.setRightDigit('R');
@@ -253,7 +294,7 @@ void disp_7LED(int val)
             LD.setRightDigit('S');
             break;
 
-            case DISPLAY_REVERSE:
+            case DISPLAY_REVERSE_STRAIGHT:
             LD.clear();
             LD.setLeftDigit('6');
             LD.setRightDigit('9');
@@ -284,7 +325,8 @@ void disp_7LED(int val)
 
     } //end disp_LED
 
-void printMotorCommand(int print_command)
+//this function is not used anymore because of telemetry
+void printMotorCommand(MotorCommands print_command)
 {
 
     switch (print_command)
@@ -293,25 +335,22 @@ void printMotorCommand(int print_command)
             // printf("COMMAND_MOTOR_STOP\n");
             break;
 
-        case COMMAND_MOTOR_FORWARD_STRAIGHT:
+        case COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW:
             //printf("COMMAND_MOTOR_FORWARD_STRAIGHT\n");
             break;
 
-        case COMMAND_MOTOR_FORWARD_LEFT:
+        case COMMAND_MOTOR_FORWARD_HARD_LEFT:
             // printf("COMMAND_MOTOR_FORWARD_LEFT\n");
             break;
 
-        case COMMAND_MOTOR_FORWARD_RIGHT:
+        case COMMAND_MOTOR_FORWARD_HARD_RIGHT:
             // printf("COMMAND_MOTOR_FORWARD_RIGHT\n");
             break;
 
-        case COMMAND_MOTOR_REVERSE_LEFT:
-            // printf("COMMAND_MOTOR_REVERSE_LEFT\n");
+        case COMMAND_MOTOR_REVERSE_STRAIGHT:
+             printf("COMMAND_MOTOR_REVERSE_STRAIGHT\n");
             break;
 
-        case COMMAND_MOTOR_REVERSE_RIGHT:
-            //printf("COMMAND_MOTOR_REVERSE_RIGHT\n");
-            break;
         default:
             // printf("COMMAND_MOTOR_REVERSE_RIGHT\n");
             break;
@@ -321,22 +360,22 @@ void printMotorCommand(int print_command)
 void parseSensorReading(sen_msg_t* data)
 {
 
-    if (data->L < MINIMUM_SENSOR_VALUE)
+    if (data->L < MINIMUM_LR_SENSOR_VALUE)
         LEFT_BLOCKED = true;
     else
         LEFT_BLOCKED = false;
 
-    if (data->M < MINIMUM_SENSOR_BLOCKED_VALUE)
+    if (data->M < MINIMUM_MB_SENSOR_VALUE)
         MIDDLE_BLOCKED = true;
     else
         MIDDLE_BLOCKED = false;
 
-    if (data->R < MINIMUM_SENSOR_VALUE)
+    if (data->R < MINIMUM_LR_SENSOR_VALUE)
         RIGHT_BLOCKED = true;
     else
         RIGHT_BLOCKED = false;
 
-    if (data->B < MINIMUM_SENSOR_BLOCKED_VALUE)
+    if (data->B < MINIMUM_MB_SENSOR_VALUE)
         BACK_BLOCKED = true;
     else
         BACK_BLOCKED = false;
@@ -353,76 +392,156 @@ void parseSensorReading(sen_msg_t* data)
  * If there is common code, such as: void generateMotorCommands(int command)
  * Move it to its own header and C file
  */
-void generateMotorCommands(int command)
+//void generateMotorCommands(MotorCommands command)
+//{
+//    switch (command)
+//        {
+//            //All these cases should be enum values
+//            case COMMAND_MOTOR_STOP:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_STOP;
+//                disp_7LED(DISPLAY_STOP);
+//                break;
+//
+//            case COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;
+//                disp_7LED(DISPLAY_FORWARD_STRAIGHT);
+//                break;
+//
+//            case COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_MEDIUM;
+//                disp_7LED(DISPLAY_FORWARD_STRAIGHT);
+//                break;
+//
+//            case COMMAND_MOTOR_FORWARD_STRAIGHT_FAST:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_FAST;
+//                disp_7LED(DISPLAY_FORWARD_STRAIGHT);
+//                break;
+//
+//            case COMMAND_MOTOR_FORWARD_HARD_LEFT:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_LEFT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;
+//                disp_7LED(DISPLAY_FORWARD_HARD_LEFT);
+//                break;
+//
+//            case COMMAND_MOTOR_FORWARD_HARD_RIGHT:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_RIGHT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;
+//                disp_7LED(DISPLAY_FORWARD_HARD_RIGHT);
+//                break;
+//
+//            case COMMAND_MOTOR_REVERSE_LEFT:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_LEFT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_REVERSE;//change this for reverse!
+//                disp_7LED(DISPLAY_REVERSE_LEFT);
+//                break;
+//
+//            case COMMAND_MOTOR_REVERSE_RIGHT:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_RIGHT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_STOP;//change this for reverse!
+//                disp_7LED(DISPLAY_REVERSE_RIGHT);
+//                break;
+//
+//            case COMMAND_MOTOR_FORWARD_SOFT_LEFT:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_SOFT_LEFT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;//change this for reverse!
+//                disp_7LED(DISPLAY_FORWARD_SOFT_LEFT);
+//
+//                break;
+//
+//            case COMMAND_MOTOR_FORWARD_SOFT_RIGHT:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_SOFT_RIGHT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;//change this for reverse!
+//                disp_7LED(DISPLAY_FORWARD_SOFT_RIGHT);
+//                break;
+//
+//            default:
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+//                CAN_ST.motor_data->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_STOP;
+//                disp_7LED(DISPLAY_STOP);
+//                break;
+//        }
+//    //printMotorCommand(command);
+//}
+
+
+void generateMotorCommands(MotorCommands command)
 {
-
     switch (command)
-    {
-        //All these cases should be enum values
-        case COMMAND_MOTOR_STOP:
+        {
+            //All these cases should be enum values
+            case COMMAND_MOTOR_STOP:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_STOP;
+                disp_7LED(DISPLAY_STOP);
+                break;
 
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_STRAIGHT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_STOP;
-            disp_7LED(DISPLAY_STOP);
-            break;
+            case COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;
+                disp_7LED(DISPLAY_FORWARD_STRAIGHT);
+                break;
 
-            case COMMAND_MOTOR_FORWARD_STRAIGHT:
+            case COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_MEDIUM;
+                disp_7LED(DISPLAY_FORWARD_STRAIGHT);
+                break;
 
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_STRAIGHT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_SLOW;
-            disp_7LED(DISPLAY_FORWARD_STRAIGHT);
-            break;
+            case COMMAND_MOTOR_FORWARD_STRAIGHT_FAST:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_FAST;
+                disp_7LED(DISPLAY_FORWARD_STRAIGHT);
+                break;
 
-            case COMMAND_MOTOR_FORWARD_LEFT:
+            case COMMAND_MOTOR_FORWARD_HARD_LEFT:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_LEFT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;
+                disp_7LED(DISPLAY_FORWARD_HARD_LEFT);
+                break;
 
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_FULL_LEFT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_SLOW;
-            disp_7LED(DISPLAY_FORWARD_FULL_LEFT);
-            break;
-
-            case COMMAND_MOTOR_FORWARD_RIGHT:
-
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_FULL_RIGHT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_SLOW;
-            disp_7LED(DISPLAY_FORWARD_FULL_RIGHT);
-            break;
+            case COMMAND_MOTOR_FORWARD_HARD_RIGHT:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_RIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;
+                disp_7LED(DISPLAY_FORWARD_HARD_RIGHT);
+                break;
 
             case COMMAND_MOTOR_REVERSE_LEFT:
-
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_FULL_LEFT;
-            //CAN_ST.motor_data->SPD = (uint8_t) COMMAND_STOP; //change this for reverse!
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_REVERSE;//change this for reverse!
-            disp_7LED(DISPLAY_REVERSE);
-            break;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_LEFT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_REVERSE;//change this for reverse!
+                disp_7LED(DISPLAY_REVERSE_LEFT);
+                break;
 
             case COMMAND_MOTOR_REVERSE_RIGHT:
-
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_FULL_RIGHT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_STOP;//change this for reverse!
-            disp_7LED(DISPLAY_REVERSE);
-            break;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_RIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_STOP;//change this for reverse!
+                disp_7LED(DISPLAY_REVERSE_RIGHT);
+                break;
 
             case COMMAND_MOTOR_FORWARD_SOFT_LEFT:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_SOFT_LEFT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;//change this for reverse!
+                disp_7LED(DISPLAY_FORWARD_SOFT_LEFT);
 
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_SOFT_LEFT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_SLOW;//change this for reverse!
-            disp_7LED(DISPLAY_FORWARD_SOFT_LEFT);
-            break;
+                break;
+
             case COMMAND_MOTOR_FORWARD_SOFT_RIGHT:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_SOFT_RIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;//change this for reverse!
+                disp_7LED(DISPLAY_FORWARD_SOFT_RIGHT);
+                break;
 
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_SOFT_RIGHT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_SLOW;//change this for reverse!
-            disp_7LED(DISPLAY_FORWARD_SOFT_RIGHT);
-            break;
             default:
-
-            CAN_ST.motor_data->LR = (uint8_t) COMMAND_STRAIGHT;
-            CAN_ST.motor_data->SPD = (uint8_t) COMMAND_STOP;
-            disp_7LED(DISPLAY_STOP);
-            break;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_STOP;
+                disp_7LED(DISPLAY_STOP);
+                break;
         }
-        //printMotorCommand(command);
-    }
+    //printMotorCommand(command);
+}
 
 void period_1Hz(void)
 {
@@ -445,19 +564,20 @@ void period_100Hz(void)
 
     /*
      * RECEIVE AND SAVE FULL_CAN MESSAGES
-     * We parse all new messages in one 100Hz -> THIS NEEDS TO BE TESTED!
+     *
      */
-    if (iCAN_rx(g_sensor_msg, (uint16_t) SENSOR_MASTER_REG))
+    //SENSOR_TX_INFO_SONARS_decode(SENSOR_TX_INFO_SONARS_t *to, const uint64_t *from, const msg_hdr_t *hdr)
+    if (iCAN_rx(g_sensor_msg, SENSOR_TX_INFO_SONARS_decode(g_sensor_values, g_sensor_msg, &SENSOR_TX_INFO_SONARS_HDR))
     {
 
         portDISABLE_INTERRUPTS();
 
         //  CAN_ST.sensor_data = (sen_msg_t*) & temp_rx->data.bytes[0];
         //if this ^ does not work try to uncomment these:
-        CAN_ST.sensor_data->L = (uint8_t) g_sensor_msg->data.bytes[0];
-        CAN_ST.sensor_data->M =(uint8_t) g_sensor_msg->data.bytes[1];
-        CAN_ST.sensor_data->R = (uint8_t) g_sensor_msg->data.bytes[2];
-        CAN_ST.sensor_data->B = (uint8_t) g_sensor_msg->data.bytes[3];
+        //CAN_ST.sensor_data->L = (uint8_t) g_sensor_msg->data.bytes[0];
+       // CAN_ST.sensor_data->M =(uint8_t) g_sensor_msg->data.bytes[1];
+        //CAN_ST.sensor_data->R = (uint8_t) g_sensor_msg->data.bytes[2];
+      // CAN_ST.sensor_data->B = (uint8_t) g_sensor_msg->data.bytes[3];
 
         portENABLE_INTERRUPTS();
 
@@ -650,29 +770,43 @@ void period_100Hz(void)
 #if !DEBUG_NO_CAN
     //setting modes
     int sw_value = SW.getSwitchValues();
-    switch (sw_value)
-    {
-        case 4:
-            g_current_mode = (uint8_t) AUTO_MODE;
-            LE.setAll(0);
-            LE.set(3, true);
-            break;
-            case 8:
-            g_current_mode = (uint8_t) FREERUN_MODE;
-            LE.setAll(0);
-            LE.set(4, true);
-            break;
+    if (sw_value != 0)  {
+        switch (sw_value)
+        {
+            case 1:
+                g_current_mode =  AUTO;
+                LE.setAll(0);
+                LE.set(3, true);
+                break;
+            case 2:
+                g_current_mode =  AUTO;
+                LE.setAll(0);
+                LE.set(3, true);
+                break;
+            case 4:
+                g_current_mode =  AUTO;
+                LE.setAll(0);
+                LE.set(3, true);
+                break;
 
-            default:
-            //g_current_mode = (uint8_t) AUTO_MODE;
-            break;
+            case 8:
+                g_current_mode = FREERUN;
+                LE.setAll(0);
+                LE.set(4, true);
+                break;
+
+                default:
+
+                break;
 
         }
+    }
+
 
 #endif
 
-        ///////////////////////////////////////////////////////////////
-    sen_msg_t *l_sensor_values;
+     ///////////////////////////////////////////////////////////////
+    sen_msg_t *l_sensor_values; //THIS NEEDS TO BE CHANGED OR REMOVED
 
     portDISABLE_INTERRUPTS();
     //copy our global values to local values
@@ -682,37 +816,35 @@ void period_100Hz(void)
     //printf("COPY TOOK PLACE %d %d %d %d\n", (int) CAN_ST.sensor_data->L, (int) CAN_ST.sensor_data->M, (int) CAN_ST.sensor_data->R, (int) CAN_ST.sensor_data->B );
     portENABLE_INTERRUPTS();
 
-    CAN_ST.motor_data = (mast_mot_msg_t*) & msg_tx.data.bytes[0];
+    g_motor_cmd_values = (MASTER_TX_MOTOR_CMD_t*) & msg_tx.data.bytes[0];
 
     // we send STOP command while we wait for GO signal from Android
-    if (!CAN_ST.getGoSignal() && (g_current_mode == (uint8_t) AUTO_MODE))
+    if (!g_GO_signal && (g_current_mode ==  AUTO))
     {
         //prepare our message id
-        msg_tx.msg_id = (uint32_t) MASTER_MOTOR_COMMANDS;
+        //msg_tx.msg_id = (uint32_t) MASTER_MOTOR_COMMANDS;
+        msg_tx.msg_id = (uint32_t) MASTER_TX_MOTOR_CMD_HDR.mid;
         //send our message
         generateMotorCommands(COMMAND_MOTOR_STOP);
-        if(iCAN_tx(&msg_tx, (uint16_t) MASTER_MOTOR_COMMANDS))
+       // if(iCAN_tx(&msg_tx, MASTER_TX_MOTOR_CMD_encode(msg_tx, CAN_ST.motor_data))
         {
             //printf("Stop Message sent to motor, Waiting for Android!\n");
 
         }
+        //we reset our state, since we have to start over once we receive the GO signal
+        g_current_state = CHECK_SENSOR_VALUES;
     }
     //if we're in FREERUN or we receive a GO signal
-    else if ( (g_current_mode == (uint8_t) FREERUN_MODE) || (CAN_ST.getGoSignal() && g_current_mode == (uint8_t) AUTO_MODE) )
+    else if ( (g_current_mode == FREERUN) || (g_GO_signal && g_current_mode ==  AUTO) )
     {
 
-        //we reset the state in the beginning of the STATE MACHINE
-        g_current_state = CHECK_SENSOR_VALUES;
-//This While loop should be removed. (Preet)
-        while(g_current_state != STATE_MACHINE_END)
+    //we reset the state in the beginning of the STATE MACHINE
+    //g_current_state = CHECK_SENSOR_VALUES;
+
+        switch(g_current_state)
         {
-            //for testing
-            uint8_t temp[4];
-
-            switch(g_current_state)
-            {
-
-                case CHECK_SENSOR_VALUES:
+            //First State is to check our sensor values
+            case CHECK_SENSOR_VALUES:
                 g_prev_state = g_current_state;
 
                 //testing
@@ -732,7 +864,8 @@ void period_100Hz(void)
 
                 break;
 
-                case CONTROL_BASED_ON_SENSOR:
+            //Second State is to control based on sensor when one of the sensors is blocked
+            case CONTROL_BASED_ON_SENSOR:
                 g_prev_state = g_current_state;
 
                 // only left is blocked         !l m r = -->
@@ -757,14 +890,14 @@ void period_100Hz(void)
                 //if left and middle is blocked
                 else if (LEFT_BLOCKED && MIDDLE_BLOCKED && !RIGHT_BLOCKED)
                 {
-                    generateMotorCommands(COMMAND_MOTOR_FORWARD_RIGHT); //turn FULL right
+                    generateMotorCommands(COMMAND_MOTOR_FORWARD_HARD_RIGHT); //turn FULL right
                     //generateMotorCommands(COMMAND_MOTOR_STOP);
 
                 }
                 //if right and middle is blocked
                 else if (RIGHT_BLOCKED && MIDDLE_BLOCKED && !LEFT_BLOCKED)
                 {
-                    generateMotorCommands(COMMAND_MOTOR_FORWARD_LEFT); //turn FULL left
+                    generateMotorCommands(COMMAND_MOTOR_FORWARD_HARD_LEFT); //turn FULL left
                     //generateMotorCommands(COMMAND_MOTOR_STOP);
 
                 }
@@ -802,7 +935,8 @@ void period_100Hz(void)
 
                 break;
 
-                case CONTROL_BASED_ON_HEADING:
+            //If all sensors are clear, we then control the motor based on the heading
+            case CONTROL_BASED_ON_HEADING:
                 g_prev_state = g_current_state;
 
                 //this is where we command based on the heading
@@ -810,24 +944,19 @@ void period_100Hz(void)
 
                 // now we're testing without GPS
                 // so we go straight
-                generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT);
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW);
 
                 //send our commands
                 g_current_state = SEND_CONTROL_TO_MOTOR;
 
                 break;
 
-                case SEND_CONTROL_TO_MOTOR:
+            //we send the command to the motor
+            case SEND_CONTROL_TO_MOTOR:
                 g_prev_state = g_current_state;
 
-                //for debugging
-                // printf("SENDING FRS:%2x LR:%2x SPD:%2x\n", msg_tx.data.bytes[0],  msg_tx.data.bytes[1],  msg_tx.data.bytes[2] );
-
                 //prepare our message id
-                msg_tx.msg_id = (uint32_t) MASTER_MOTOR_COMMANDS;
-
-                g_motor_LR = msg_tx.data.bytes[0];
-                g_motor_SPD = msg_tx.data.bytes[1];
+                msg_tx.msg_id = (uint32_t) MASTER_TX_MOTOR_CMD_HDR.mid;
 
                 //send our message
                 if(iCAN_tx(&msg_tx, (uint16_t) MASTER_MOTOR_COMMANDS))
@@ -835,31 +964,27 @@ void period_100Hz(void)
                     //printf("Message sent to motor, In Free run mode!\n");
 
                 }
-
                 //reset our state
                 g_current_state = STATE_MACHINE_END;
 
                 break;
 
-                default:
-                g_current_state = STATE_MACHINE_END;
+            default:
+            g_current_state = STATE_MACHINE_END;
 
-                break;
+            break;
 
-            } //end switch(g_current_state)
+        } //end switch(g_current_state)
 
-        } //end while
+
 
     } //end else if
-    else if (g_receiving_checkpoints)
-    {
-        //TO DO: Receive checkpoint logic
-    }
 
     ///////////////////////////////////////////////////////////////
 
-    // delete temp_rx;
-    //delete default_sensor_msg;
+    //if we reached the end of the state machine, we start over
+    if(g_current_state == STATE_MACHINE_END) g_current_state = CHECK_SENSOR_VALUES;
+
 
 } //end 100Hz
 

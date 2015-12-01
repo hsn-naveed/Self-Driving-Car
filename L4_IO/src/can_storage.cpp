@@ -5,7 +5,6 @@
  *      Author: Marvin
  */
 
-#include <can_definitions.hpp>
 #include <stdint.h>
 #include "can_storage.hpp"
 
@@ -24,10 +23,10 @@ CAN_STORAGE::CAN_STORAGE()  {
 
     //Sensor
     sensor_data = new sen_msg_t;
-    sensor_data->L = (uint8_t) MINIMUM_SENSOR_VALUE;
-    sensor_data->M = (uint8_t) MINIMUM_SENSOR_VALUE;
-    sensor_data->R = (uint8_t) MINIMUM_SENSOR_VALUE;
-    sensor_data->B = (uint8_t) MINIMUM_SENSOR_VALUE;
+    sensor_data->L = (uint8_t) 0;
+    sensor_data->M = (uint8_t) 0;
+    sensor_data->R = (uint8_t) 0;
+    sensor_data->B = (uint8_t) 0;
 
     //Motor
     motor_data = new mast_mot_msg_t;
