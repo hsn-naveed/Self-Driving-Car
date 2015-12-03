@@ -29,7 +29,7 @@ CAN_STORAGE::CAN_STORAGE()  {
     sensor_data->B = (uint8_t) 0;
 
     //Motor
-    motor_data = new mast_mot_msg_t;
+   // motor_data = new mast_mot_msg_t;
 
 //    for (int i = 0; i < (int)SIZE_OF_SENSOR_ARRAY; i++){
 //           mSensorValues[i] += i ;
@@ -47,7 +47,7 @@ CAN_STORAGE::CAN_STORAGE()  {
 CAN_STORAGE::~CAN_STORAGE() {
 
     delete sensor_data;
-    delete motor_data;
+    //delete motor_data;
     delete gps_coords_curr;
     delete gps_coords_dest;
 

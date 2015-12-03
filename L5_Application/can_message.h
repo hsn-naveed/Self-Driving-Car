@@ -1,5 +1,12 @@
 /// DBC file: 243.dbc    Self node: MASTER
 /// This file should be included by a source file, for example: #include "generated.c"
+
+#ifndef CAN_MESSAGE_H__
+#define CAN_MESSAGE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -21,8 +28,7 @@ typedef struct {
 static const msg_hdr_t MASTER_TX_HEARTBEAT_HDR =              {  100, 1 };
 static const msg_hdr_t SENSOR_TX_INFO_SONARS_HDR =            {  600, 4 };
 static const msg_hdr_t MASTER_TX_MOTOR_CMD_HDR =              {  604, 2 };
-static const msg_hdr_t ANDROID_TX_STOP_CMD_HDR =              {  700, 1 };
-static const msg_hdr_t ANDROID_TX_GO_CMD_HDR =                {  704, 1 };
+static const msg_hdr_t ANDROID_TX_STOP_GO_CMD_HDR =           {  700, 1 };
 static const msg_hdr_t ANDROID_TX_INFO_CHECKPOINTS_HDR =      {  708, 1 };
 static const msg_hdr_t ANDROID_TX_INFO_COORDINATES_HDR =      {  712, 8 };
 static const msg_hdr_t GPS_TX_INFO_HEADING_HDR =              {  716, 4 };
@@ -57,20 +63,12 @@ typedef struct {
 } MASTER_TX_MOTOR_CMD_t;
 
 
-/// Message: STOP_CMD from 'ANDROID', DLC: 1 byte(s), MID: 700
+/// Message: STOP_GO_CMD from 'ANDROID', DLC: 1 byte(s), MID: 700
 typedef struct {
     uint8_t ANDROID_STOP_CMD_signal;     ///< B7:0   Destination: MASTER,GPS
 
     mia_info_t mia_info;
-} ANDROID_TX_STOP_CMD_t;
-
-
-/// Message: GO_CMD from 'ANDROID', DLC: 1 byte(s), MID: 704
-typedef struct {
-    uint8_t ANDROID_GO_CMD_signal;       ///< B7:0   Destination: MASTER,GPS
-
-    mia_info_t mia_info;
-} ANDROID_TX_GO_CMD_t;
+} ANDROID_TX_STOP_GO_CMD_t;
 
 
 /// Message: INFO_CHECKPOINTS from 'ANDROID', DLC: 1 byte(s), MID: 708
@@ -110,10 +108,8 @@ typedef struct {
 /// These 'externs' need to be defined in a source file of your project
 extern const uint32_t INFO_SONARS__MIA_MS;
 extern const SENSOR_TX_INFO_SONARS_t INFO_SONARS__MIA_MSG;
-extern const uint32_t STOP_CMD__MIA_MS;
-extern const ANDROID_TX_STOP_CMD_t STOP_CMD__MIA_MSG;
-extern const uint32_t GO_CMD__MIA_MS;
-extern const ANDROID_TX_GO_CMD_t GO_CMD__MIA_MSG;
+extern const uint32_t STOP_GO_CMD__MIA_MS;
+extern const ANDROID_TX_STOP_GO_CMD_t STOP_GO_CMD__MIA_MSG;
 extern const uint32_t INFO_CHECKPOINTS__MIA_MS;
 extern const ANDROID_TX_INFO_CHECKPOINTS_t INFO_CHECKPOINTS__MIA_MSG;
 extern const uint32_t INFO_COORDINATES__MIA_MS;
@@ -162,9 +158,7 @@ static msg_hdr_t MASTER_TX_MOTOR_CMD_encode(uint64_t *to, MASTER_TX_MOTOR_CMD_t 
 }
 
 
-/// Not generating code for ANDROID_TX_STOP_CMD_encode() since the sender is ANDROID and we are MASTER
-
-/// Not generating code for ANDROID_TX_GO_CMD_encode() since the sender is ANDROID and we are MASTER
+/// Not generating code for ANDROID_TX_STOP_GO_CMD_encode() since the sender is ANDROID and we are MASTER
 
 /// Not generating code for ANDROID_TX_INFO_CHECKPOINTS_encode() since the sender is ANDROID and we are MASTER
 
@@ -215,12 +209,12 @@ static inline bool SENSOR_TX_INFO_SONARS_decode(SENSOR_TX_INFO_SONARS_t *to, con
 
 /// Not generating code for MASTER_TX_MOTOR_CMD_decode() since we are not the recipient of any of its signals
 
-/// Decode ANDROID's 'STOP_CMD' message
+/// Decode ANDROID's 'STOP_GO_CMD' message
 /// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
-static inline bool ANDROID_TX_STOP_CMD_decode(ANDROID_TX_STOP_CMD_t *to, const uint64_t *from, const msg_hdr_t *hdr)
+static inline bool ANDROID_TX_STOP_GO_CMD_decode(ANDROID_TX_STOP_GO_CMD_t *to, const uint64_t *from, const msg_hdr_t *hdr)
 {
     const bool success = true;
-    if (NULL != hdr && (hdr->dlc != ANDROID_TX_STOP_CMD_HDR.dlc || hdr->mid != ANDROID_TX_STOP_CMD_HDR.mid)) {
+    if (NULL != hdr && (hdr->dlc != ANDROID_TX_STOP_GO_CMD_HDR.dlc || hdr->mid != ANDROID_TX_STOP_GO_CMD_HDR.mid)) {
         return !success;
     }
     uint64_t raw_signal;
@@ -231,28 +225,6 @@ static inline bool ANDROID_TX_STOP_CMD_decode(ANDROID_TX_STOP_CMD_t *to, const u
     bits_from_byte = ((bytes[0] >> 0) & 0xff); ///< 8 bit(s) from B0
     raw_signal    |= (bits_from_byte << 0);
     to->ANDROID_STOP_CMD_signal = (raw_signal * 1.0) + (0);
-
-    to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
-    return success;
-}
-
-
-/// Decode ANDROID's 'GO_CMD' message
-/// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
-static inline bool ANDROID_TX_GO_CMD_decode(ANDROID_TX_GO_CMD_t *to, const uint64_t *from, const msg_hdr_t *hdr)
-{
-    const bool success = true;
-    if (NULL != hdr && (hdr->dlc != ANDROID_TX_GO_CMD_HDR.dlc || hdr->mid != ANDROID_TX_GO_CMD_HDR.mid)) {
-        return !success;
-    }
-    uint64_t raw_signal;
-    uint64_t bits_from_byte;
-    const uint8_t *bytes = (const uint8_t*) from;
-
-    raw_signal = 0;
-    bits_from_byte = ((bytes[0] >> 0) & 0xff); ///< 8 bit(s) from B0
-    raw_signal    |= (bits_from_byte << 0);
-    to->ANDROID_GO_CMD_signal = (raw_signal * 1.0) + (0);
 
     to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
     return success;
@@ -397,47 +369,23 @@ static inline bool SENSOR_TX_INFO_SONARS_handle_mia(SENSOR_TX_INFO_SONARS_t *msg
     return mia_occurred;
 }
 
-/// Handle the MIA for ANDROID's 'STOP_CMD' message
+/// Handle the MIA for ANDROID's 'STOP_GO_CMD' message
 /// @param   time_incr_ms  The time to increment the MIA counter with
 /// @returns true if the MIA just occurred
 /// @post    If the MIA counter is not reset, and goes beyond the MIA value, the MIA flag is set
-static inline bool ANDROID_TX_STOP_CMD_handle_mia(ANDROID_TX_STOP_CMD_t *msg, uint32_t time_incr_ms)
+static inline bool ANDROID_TX_STOP_GO_CMD_handle_mia(ANDROID_TX_STOP_GO_CMD_t *msg, uint32_t time_incr_ms)
 {
     bool mia_occurred = false;
     const mia_info_t old_mia = msg->mia_info;
-    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= STOP_CMD__MIA_MS);
+    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= STOP_GO_CMD__MIA_MS);
 
     if (!msg->mia_info.is_mia) { 
         msg->mia_info.mia_counter_ms += time_incr_ms;
     }
     else if(!old_mia.is_mia)   { 
         // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
-        *msg = STOP_CMD__MIA_MSG;
-        msg->mia_info.mia_counter_ms = STOP_CMD__MIA_MS;
-        msg->mia_info.is_mia = true;
-        mia_occurred = true;
-    }
-
-    return mia_occurred;
-}
-
-/// Handle the MIA for ANDROID's 'GO_CMD' message
-/// @param   time_incr_ms  The time to increment the MIA counter with
-/// @returns true if the MIA just occurred
-/// @post    If the MIA counter is not reset, and goes beyond the MIA value, the MIA flag is set
-static inline bool ANDROID_TX_GO_CMD_handle_mia(ANDROID_TX_GO_CMD_t *msg, uint32_t time_incr_ms)
-{
-    bool mia_occurred = false;
-    const mia_info_t old_mia = msg->mia_info;
-    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= GO_CMD__MIA_MS);
-
-    if (!msg->mia_info.is_mia) { 
-        msg->mia_info.mia_counter_ms += time_incr_ms;
-    }
-    else if(!old_mia.is_mia)   { 
-        // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
-        *msg = GO_CMD__MIA_MSG;
-        msg->mia_info.mia_counter_ms = GO_CMD__MIA_MS;
+        *msg = STOP_GO_CMD__MIA_MSG;
+        msg->mia_info.mia_counter_ms = STOP_GO_CMD__MIA_MS;
         msg->mia_info.is_mia = true;
         mia_occurred = true;
     }
@@ -540,3 +488,8 @@ static inline bool GPS_TX_DESTINATION_REACHED_handle_mia(GPS_TX_DESTINATION_REAC
 
     return mia_occurred;
 }
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* CAN_MESSAGE_H__ */

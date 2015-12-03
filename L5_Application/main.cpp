@@ -23,7 +23,7 @@
  * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
  *
  */
-#include <full_can.cpp>
+
 #include <243_can/iCAN.hpp>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
@@ -33,7 +33,6 @@
 #include "can.h"
 #include <inttypes.h>
 
-#include "master_control.hpp"
 
 
 /**
@@ -66,8 +65,31 @@ int main(void)
      * @endcode
      */
 
-    uint16_t accepted_msg_ids[] = {SENSOR_MASTER_REG, MASTER_MOTOR_COMMANDS};
-    iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids) / sizeof(*accepted_msg_ids));
+
+
+    /*
+     * static const msg_hdr_t MASTER_TX_HEARTBEAT_HDR =              {  100, 1 };
+    static const msg_hdr_t SENSOR_TX_INFO_SONARS_HDR =            {  600, 4 };
+    static const msg_hdr_t MASTER_TX_MOTOR_CMD_HDR =              {  604, 2 };
+    static const msg_hdr_t ANDROID_TX_STOP_GO_CMD_HDR =           {  700, 1 };
+    static const msg_hdr_t ANDROID_TX_INFO_CHECKPOINTS_HDR =      {  708, 1 };
+    static const msg_hdr_t ANDROID_TX_INFO_COORDINATES_HDR =      {  712, 8 };
+    static const msg_hdr_t GPS_TX_INFO_HEADING_HDR =              {  716, 4 };
+    static const msg_hdr_t GPS_TX_DESTINATION_REACHED_HDR =       {  720, 1 };
+     // uint16_t accepted_msg_ids[] = {SENSOR_MASTER_REG, MASTER_MOTOR_COMMANDS};
+    //iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids) / sizeof(*accepted_msg_ids));
+     */
+
+     uint32_t accepted_msg_ids[] = {(uint32_t) MASTER_TX_HEARTBEAT_HDR.mid,
+             (uint32_t) SENSOR_TX_INFO_SONARS_HDR.mid,
+             (uint32_t) MASTER_TX_MOTOR_CMD_HDR.mid,
+             (uint32_t) ANDROID_TX_STOP_GO_CMD_HDR.mid,
+             (uint32_t) ANDROID_TX_INFO_CHECKPOINTS_HDR.mid,
+             (uint32_t) ANDROID_TX_INFO_COORDINATES_HDR.mid,
+             (uint32_t) GPS_TX_INFO_HEADING_HDR.mid,
+             (uint32_t) GPS_TX_DESTINATION_REACHED_HDR.mid
+     };
+       iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids) / sizeof(*accepted_msg_ids));
 
     //initialize our switches, LE, and CAN_ST
         //initialize switches
