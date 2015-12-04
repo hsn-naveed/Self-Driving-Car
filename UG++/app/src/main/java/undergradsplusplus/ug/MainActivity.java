@@ -133,6 +133,7 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
             // Put latitude and longitude into their own separate byte arrays.
             Lat = ByteBuffer.allocate(4).putFloat((float) newDir.get(i).latitude).array();
             Long = ByteBuffer.allocate(4).putFloat((float) newDir.get(i).longitude).array();
+            byte[] latlng = catArray(Lat,Long);
 
             // used to test the Endianness and order of the bytes
 //            float f = ByteBuffer.wrap(Lat).order(ByteOrder.BIG_ENDIAN).getFloat();
@@ -143,7 +144,7 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
 
             synchronized (this) {
                 // Sends to thread to write. catArray(Lat, Long) concatenates Lat/Lng arrays to a single byte array.
-                connectedThread.write(catArray(Lat, Long));
+                connectedThread.write(latlng);
                 connectedThread.flush();
             }
         }
