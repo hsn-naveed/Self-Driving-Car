@@ -8,7 +8,7 @@
 int main(void)
 {
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
-    scheduler_add_task(new bluetoothRecieve(PRIORITY_MEDIUM)/);
+//    scheduler_add_task(new bluetoothRecieve(PRIORITY_MEDIUM));
 
     scheduler_add_task(new periodicSchedulerTask());
 
