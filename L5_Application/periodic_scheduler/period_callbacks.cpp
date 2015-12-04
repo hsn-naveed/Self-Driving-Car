@@ -33,13 +33,12 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
-#include "can.h"
+#include "iCAN.hpp"
+#include "CAN_structs.h"
 
-#define tx_android_src (1 << 3)
-#define rx_android_dest (1 << 0)
-#define dest_gps_id (1 << 2)
-#define android_msg (0x8 << 10)
-
+void canBusError1(){
+    CAN_reset_bus(can1);
+}
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -48,6 +47,11 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    uint16_t sglist[] = {0x70A, 0x70C, 0x70E};
+    size_t sizeOfArray = (sizeof(sglist) / sizeof(*sglist));
+
+    iCAN_init_FULLCAN(sglist, sizeOfArray);
+
     return true; // Must return true upon success
 }
 

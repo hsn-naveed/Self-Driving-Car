@@ -46,6 +46,30 @@
 #include "c_tlm_var.h"
 
 
+CMD_HANDLER_FUNC(bluetooth)
+{
+    if (cmdParams == "GO")
+    {
+       //GO
+    }
+
+    else if (cmdParams == "STOP")
+    {
+        //STOP
+    }
+
+    else if (cmdParams == "read")
+    {
+        // add read from Android stuff here
+    }
+
+    else if (cmdParams == "write")
+    {
+        // write from android
+    }
+
+    return true;
+}
 
 CMD_HANDLER_FUNC(taskListHandler)
 {

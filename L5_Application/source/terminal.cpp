@@ -166,7 +166,7 @@ bool terminalTask::taskEntry()
     help = "help";
     mCmdProc.handleCommand(help, uart0);
 
-/* bluetooth initialization */
+/* BLuetooth U2 Initialization */
     Uart2& u2 = Uart2::getInstance();
     u2.init(38400);
 
@@ -180,6 +180,10 @@ bool terminalTask::taskEntry()
     u2.putline("\r\n+INQ=1\r\n");
     delay_ms(2000);
     printf("\nDONE setup!\n");
+    addCommandChannel(&u2, true);   // This will allow Bluetooth to be used in command terminal
+
+    /*  Add Bluetooth terminal commands here    */
+    cp.addHandler(bluetooth, "bluetooth", "Bluetooth Parse");
 
     return success;
 }

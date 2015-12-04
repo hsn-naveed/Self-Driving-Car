@@ -123,6 +123,7 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
     @Override
     public void transmitPoints(List<LatLng> dirPoints) {
         List<LatLng> newDir = new ArrayList<LatLng>(dirPoints);
+        String bluetooth_read = "bluetooth_read";
         byte[] Lat;
         byte[] Long;
         ConnectedThread connectedThread = new ConnectedThread(mmSocket);
