@@ -128,6 +128,10 @@ bool terminalTask::taskEntry()
                                                  "'telemetry get <comp. name> <name>' to get variable value\n");
     #endif
 
+    /*  Add Bluetooth terminal commands here    */
+    CMD_HANDLER_FUNC(bluetooth);
+    cp.addHandler(bluetooth, "bluetooth", "Bluetooth Parse");
+
     // Initialize Interrupt driven version of getchar & putchar
     Uart0& uart0 = Uart0::getInstance();
     bool success = uart0.init(SYS_CFG_UART0_BPS, 32, SYS_CFG_UART0_TXQ_SIZE);
@@ -169,7 +173,6 @@ bool terminalTask::taskEntry()
 /* BLuetooth U2 Initialization */
     Uart2& u2 = Uart2::getInstance();
     u2.init(38400);
-
     printf("Initializing UART to bluetooth");
     u2.putline("\r\n+STWMOD=0\r\n");
     u2.putline("\r\n+STNA=Undergrad++\r\n");
@@ -180,10 +183,10 @@ bool terminalTask::taskEntry()
     u2.putline("\r\n+INQ=1\r\n");
     delay_ms(2000);
     printf("\nDONE setup!\n");
+    u2.setReady(true);
+    sys_set_inchar_func(u2.getcharIntrDriven);
+    sys_set_outchar_func(u2.putcharIntrDriven);
     addCommandChannel(&u2, true);   // This will allow Bluetooth to be used in command terminal
-
-    /*  Add Bluetooth terminal commands here    */
-    cp.addHandler(bluetooth, "bluetooth", "Bluetooth Parse");
 
     return success;
 }

@@ -45,6 +45,20 @@ class Uart2 : public UartDev, public SingletonTemplate<Uart2>
          * @param txQSize   The size of the transmit queue (optional, defaults to 64)
          */
         bool init(unsigned int baudRate, int rxQSize=32, int txQSize=64);
+        /**
+         * @{ \name Static functions to use for printf/scanf redirection.
+         */
+        static char getcharIntrDriven(char unused)
+        {
+            char c = 0;
+            Uart2::getInstance().getChar(&c);
+            return c;
+        }
+        static char putcharIntrDriven(char thechar)
+        {
+            return Uart2::getInstance().putChar(thechar);
+        }
+        /** @} */
 
     private:
         Uart2();  ///< Private constructor of this Singleton class

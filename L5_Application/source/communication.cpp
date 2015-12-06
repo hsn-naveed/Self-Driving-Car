@@ -10,18 +10,12 @@
 
 bool bluetoothRecieve::run(void *p)
 {
-    char input;
-    if (bluetoothUart.getChar(&input, 100))
+    char input[100];
+    if (bluetoothUart.gets(input, sizeof(input), 100))
     {
-        bluetooth_list.push_back(input);
+        printf("%s\n", input);
     }
-    float x1;
 
-    if (bluetooth_list.size() == 4)
-    {
-        x1 = bluetooth_list[0] << 0 | bluetooth_list[1] << 8 | bluetooth_list[2] << 16 | bluetooth_list[3] << 24;
-        printf("%f \n", x1);
-    }
 
     /*char tempChar;
     bluetoothUart.getChar(&tempChar, portMAX_DELAY);

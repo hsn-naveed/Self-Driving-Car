@@ -45,27 +45,35 @@
 #include "c_tlm_stream.h"
 #include "c_tlm_var.h"
 
+typedef union{
+        uint32_t vint;
+        float vfloat;
+        uint8_t byte[4];
+        struct{
+             uint8_t b0, b1, b2, b3;
+        };
+}data_type_t;
 
 CMD_HANDLER_FUNC(bluetooth)
 {
-    if (cmdParams == "GO")
+    if (cmdParams == "GO" | cmdParams.beginsWithIgnoreCase("GO"))
     {
        //GO
+        printf("\n\nGO\n\n");
     }
 
     else if (cmdParams == "STOP")
     {
         //STOP
+        printf("\n\nSTOP\n\n");
     }
 
     else if (cmdParams == "read")
     {
         // add read from Android stuff here
-    }
 
-    else if (cmdParams == "write")
-    {
-        // write from android
+        // static QueueHandle_t gps_data_q = scheduler_task::addSharedObject("gps_data", go);
+
     }
 
     return true;
