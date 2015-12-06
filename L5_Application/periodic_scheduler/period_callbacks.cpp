@@ -33,8 +33,8 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "file_logger.h"
-#include "iCAN.hpp"
-#include "CAN_structs.h"
+#include "243_can/iCAN.hpp"
+#include "243_can/CAN_structs.h"
 
 void canBusError1(){
     CAN_reset_bus(can1);
@@ -47,7 +47,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    uint16_t sglist[] = {0x70A, 0x70C, 0x70E};
+    uint32_t sglist[] = {0x700, 0x708, 0x712};
     size_t sizeOfArray = (sizeof(sglist) / sizeof(*sglist));
 
     iCAN_init_FULLCAN(sglist, sizeOfArray);
@@ -69,7 +69,7 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-    LE.toggle(2);
+
 }
 
 void period_100Hz(void)
