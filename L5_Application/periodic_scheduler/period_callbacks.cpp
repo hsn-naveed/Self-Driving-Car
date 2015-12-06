@@ -35,6 +35,20 @@
 #include "file_logger.h"
 #include "243_can/iCAN.hpp"
 #include "243_can/CAN_structs.h"
+#include "can.h"
+
+/***************** ANDROID *****************/
+ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
+ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_values;
+ANDROID_TX_INFO_COORDINATES_t *android_coordinates_values;
+
+/***************** CAN MESSAGE *****************/
+can_msg_t *msg_tx;
+
+/***************** CAN MESSAGE ID *****************/
+msg_hdr_t android_stop_go_cmd_hdr = ANDROID_TX_STOP_GO_CMD_HDR;
+msg_hdr_t android_info_checkpoint_hdr = ANDROID_TX_INFO_CHECKPOINTS_HDR;
+msg_hdr_t android_info_coordinates_hdr = ANDROID_TX_INFO_COORDINATES_HDR;
 
 void canBusError1(){
     CAN_reset_bus(can1);
@@ -43,12 +57,13 @@ void canBusError1(){
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
-
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
     uint32_t sglist[] = {0x700, 0x708, 0x712};
     size_t sizeOfArray = (sizeof(sglist) / sizeof(*sglist));
+
+    msg_tx = new can_msg_t {0};
 
     iCAN_init_FULLCAN(sglist, sizeOfArray);
 
@@ -69,6 +84,23 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
+    /*static QueueHandle_t sg_data_q = scheduler_task::getSharedObject("gs_queue");
+
+    if (NULL == sg_data_q)
+    {
+        puts("No data recieved\n");
+    }
+    else if (xQueueReceive(sg_data_q,_&android_stop_go_values, 0))
+    {*/
+
+    android_stop_go_values->ANDROID_STOP_CMD_signal = 1;
+    msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
+    msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx->data.qword, android_stop_go_values);
+
+    if (iCAN_tx(msg_tx, &encoded_message))
+    {
+        printf("GO_STOP message sent to master\n");
+    }
 
 }
 
