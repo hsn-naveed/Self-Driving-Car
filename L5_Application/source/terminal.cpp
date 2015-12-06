@@ -29,6 +29,7 @@
 #include "lpc_sys.h"        // Set input/output char functions
 #include "utilities.h"      // PRINT_EXECUTION_SPEED()
 #include "handlers.hpp"     // Command-line handlers
+#include "printf_lib.h"
 
 #include "file_logger.h"
 #include "io.hpp"           // Board IO
@@ -128,9 +129,6 @@ bool terminalTask::taskEntry()
                                                  "'telemetry get <comp. name> <name>' to get variable value\n");
     #endif
 
-    /*  Add Bluetooth terminal commands here    */
-    CMD_HANDLER_FUNC(bluetooth);
-    cp.addHandler(bluetooth, "bluetooth", "Bluetooth Parse");
 
     // Initialize Interrupt driven version of getchar & putchar
     Uart0& uart0 = Uart0::getInstance();
@@ -170,23 +168,32 @@ bool terminalTask::taskEntry()
     help = "help";
     mCmdProc.handleCommand(help, uart0);
 
-/* BLuetooth U2 Initialization */
+    /*  Add Bluetooth terminal commands here    */
+    CMD_HANDLER_FUNC(bluetooth);
+    cp.addHandler(bluetooth, "bluetooth", "Bluetooth Parse");
+
+    /* BLuetooth U2 Initialization */
     Uart2& u2 = Uart2::getInstance();
-    u2.init(38400);
-    printf("Initializing UART to bluetooth");
-    u2.putline("\r\n+STWMOD=0\r\n");
-    u2.putline("\r\n+STNA=Undergrad++\r\n");
-    u2.putline("\r\n+STOAUT=1\r\n");
-    u2.putline("\r\n+STAUTO=0\r\n");
-    u2.putline("\r\n +STPIN=0000\r\n");
-    delay_ms(2000); // This delay is required.
-    u2.putline("\r\n+INQ=1\r\n");
-    delay_ms(2000);
-    printf("\nDONE setup!\n");
-    u2.setReady(true);
-    sys_set_inchar_func(u2.getcharIntrDriven);
-    sys_set_outchar_func(u2.putcharIntrDriven);
-    addCommandChannel(&u2, true);   // This will allow Bluetooth to be used in command terminal
+    if(u2.init(115200, 128, 256))
+    {
+        printf("Initializing UART to bluetooth");
+        u2.putline("\r\n+STWMOD=0\r\n");
+        u2.putline("\r\n+STNA=Undergrad++\r\n");
+        u2.putline("\r\n+STOAUT=1\r\n");
+        u2.putline("\r\n+STAUTO=0\r\n");
+        u2.putline("\r\n +STPIN=0000\r\n");
+        delay_ms(2000); // This delay is required.
+        u2.putline("\r\n+INQ=1\r\n");
+        delay_ms(2000);
+        printf("\nDONE setup!\n");
+        u2.setReady(true);
+        sys_set_inchar_func(u2.getcharIntrDriven);
+        sys_set_outchar_func(u2.putcharIntrDriven);
+        addCommandChannel(&u2, true);   // This will allow Bluetooth to be used in command terminal
+    }
+    else {
+        u0_dbg_printf("UART2 CONNECT FAILED\n");
+    }
 
     return success;
 }

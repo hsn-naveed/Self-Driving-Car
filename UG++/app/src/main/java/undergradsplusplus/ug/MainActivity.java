@@ -166,7 +166,7 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
 
     @Override
     public void stopSignal(int i) {
-        byte [] sendStop = "bluetooth STOP".getBytes();
+        byte [] sendStop = "bluetooth".getBytes();
 //        byte [] sendStop = ByteBuffer.allocate(1).putInt(i).array();    // 1 byte, i = 0 for Stop.
         Log.d(APP_ID + " STOP", "" + sendStop);
         ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);

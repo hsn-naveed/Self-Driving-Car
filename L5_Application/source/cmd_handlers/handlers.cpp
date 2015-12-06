@@ -33,6 +33,7 @@
 #include "fat/disk/spi_flash.h"
 #include "spi_sem.h"
 #include "file_logger.h"
+#include "printf_lib.h"
 
 #include "uart0.hpp"
 #include "wireless.h"
@@ -56,6 +57,7 @@ typedef union{
 
 CMD_HANDLER_FUNC(bluetooth)
 {
+    printf ("INSIDE BLUETOOTH");
     if (cmdParams == "GO" | cmdParams.beginsWithIgnoreCase("GO"))
     {
        //GO
