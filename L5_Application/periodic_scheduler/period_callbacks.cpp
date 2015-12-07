@@ -28,7 +28,6 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
-#include <gps_car.hpp>
 #include <stdio.h>
 #include <stdint.h>
 #include "io.hpp"
@@ -36,19 +35,48 @@
 #include "file_logger.h"
 #include "243_can/CAN_structs.h"
 #include "243_can/iCAN.hpp"
+#include "globalVars.h"
 
+#define CANtest 0
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+const uint32_t ANDROID_GO_CMD__MIA_MS = 0;
+const ANDROID_TX_ANDROID_GO_CMD_t ANDROID_GO_CMD__MIA_MSG = {0};
+const uint32_t ANDROID_INFO_CHECKPOINTS__MIA_MS = 0;
+const ANDROID_TX_ANDROID_INFO_CHECKPOINTS_t ANDROID_INFO_CHECKPOINTS__MIA_MSG = {0};
+const uint32_t ANDROID_INFO_COORDINATES__MIA_MS = 0;
+const ANDROID_TX_ANDROID_INFO_COORDINATES_t ANDROID_INFO_COORDINATES__MIA_MSG = {0};
+can_msg_t msg = {0};
+
+/// Called once before the RTOS is started, this is a good place to initialize things once
+bool period_init(void)
+{
+    currentDest = 0;
+    uint32_t slist[] = {ANDROID_TX_ANDROID_GO_CMD_HDR.mid,
+                            ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR.mid,
+                            ANDROID_TX_ANDROID_INFO_COORDINATES_HDR.mid};
+    iCAN_init_FULLCAN(slist, sizeof(slist) / sizeof(*slist));
+    return true; // Must return true upon success
+}
+
+/// Register any telemetry variables
+bool period_reg_tlm(void)
+{
+    // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+    return true; // Must return true upon success
+}
 
 void period_1Hz(void)
 {
+#if CANtest
     LE.toggle(1);
     can_msg_t msg = {0};
     msg.msg_id = 0x200;
     msg.frame = 0;
     msg.frame_fields.is_29bit = 0;
     msg.frame_fields.data_len = 8;
+    GPS_TX_GPS_INFO_COORDINATES_encode(&msg.data, )
     msg.data.bytes[0] = 1;
 //    can_fullcan_msg_t *fc1 = CAN_fullcan_get_entry_ptr(CAN_gen_sid(can2, 0x200));
 //    gps_car_send_heading(); /// XXX: This should probably be 10 or 100Hz
@@ -89,6 +117,7 @@ void period_1Hz(void)
         printf("data: %i\n\n\n", fc.data.bytes[0]);
 
     }
+#endif
 }
 
 void period_10Hz(void)
@@ -98,6 +127,9 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
+
+    headingToTx.GPS_INFO_HEADING_current = MS.getHeading();
+    iCAN_tx(&msg, GPS_TX_GPS_INFO_HEADING_encode(&(msg.data.qword), &headingToTx));
     LE.toggle(3);
 }
 

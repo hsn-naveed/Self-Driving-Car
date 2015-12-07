@@ -23,7 +23,7 @@
  * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
  *
  */
-#include <gps_car.hpp>
+#include "GPS.hpp"
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include <stdio.h>
@@ -49,20 +49,15 @@
 
 int main(void)
 {
-    uint16_t slist0[] = {0x100, 0x101, 0x102, 0x103, 0x104, 0x105};
-    size_t num_std_ids = sizeof(slist0) / sizeof(*slist0);
-    printf("size of list1: %u\n", num_std_ids);
-    uint16_t slist[] = {0x200, 0x202, 0x204, 0x210, 0x211, 0x212};
-    size_t num_std_ids1 = sizeof(slist) / sizeof(*slist);
-    printf("size of list2: %u\n", num_std_ids1);
-    iCAN_init_FULLCAN(slist0, num_std_ids);
-    iCAN_init_FULLCAN(slist, num_std_ids1);
-
-
-//    const can_std_id_t slist[]      = { CAN_gen_sid(can1, 0x100), CAN_gen_sid(can1, 0x102),   // 2 entries
-//            CAN_gen_sid(can2, 0x204), CAN_gen_sid(can2, 0x210)    // 2 entries
-//    };
-//    iCAN_init(slist);
+//    uint16_t slist0[] = {0x100, 0x101, 0x102, 0x103, 0x104, 0x105};
+//    size_t num_std_ids = sizeof(slist0) / sizeof(*slist0);
+//    printf("size of list1: %u\n", num_std_ids);
+//    uint16_t slist[] = {0x200, 0x202, 0x204, 0x210, 0x211, 0x212};
+//    size_t num_std_ids1 = sizeof(slist) / sizeof(*slist);
+//    printf("size of list2: %u\n", num_std_ids1);
+//    iCAN_init_FULLCAN(slist0, num_std_ids);
+//    iCAN_init_FULLCAN(slist, num_std_ids1);
+    scheduler_add_task(new GPS_parser(PRIORITY_MEDIUM));
 #if 0
     scheduler_add_task(new Magnetometer(PRIORITY_MEDIUM));
 #endif

@@ -7,16 +7,13 @@
 
 #include "Uart3.hpp"
 #include "scheduler_task.hpp"
+#include "243_can\iCAN.hpp"
+#include "globalVars.h"
 
 #ifndef L4_IO_GPS_HPP_
 #define L4_IO_GPS_HPP_
 
 #define NMEA_MAX_LENGTH 200
-
-typedef struct {
-        float latitude = 0;
-        float longitude = 0;
-}gps_data_t;
 
 class GPS_parser : public scheduler_task{
     public:
@@ -28,11 +25,12 @@ class GPS_parser : public scheduler_task{
         bool init(void);
         bool run(void *p);
         bool verifyChecksum();
-        gps_data_t parseCood(const char *longitude, const char *latitude,
+        ANDROID_TX_ANDROID_INFO_COORDINATES_t parseCood(const char *longitude, const char *latitude,
                                 const char *nORs, const char *eORw);
+        uint32_t calculateCorrectHeading();
     private:
         Uart3 &gps_uart;
-        gps_data_t currentGPS;
+        ANDROID_TX_ANDROID_INFO_COORDINATES_t currentGPS;
         int gps_uart_rx_size = NMEA_MAX_LENGTH;
         char nmeaSentence[NMEA_MAX_LENGTH];
 };

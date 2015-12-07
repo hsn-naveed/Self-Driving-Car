@@ -10,11 +10,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <cstdlib> //atof
+#include <cmath>
+#include "io.hpp"
 
 
 bool GPS_parser::init(void){
     gps_uart.init(9600, 256, 0);
-//    QueueHandle_t myQueue = xQueueCreate(1, sizeof());
     return true;
 }
 
@@ -60,6 +61,8 @@ bool GPS_parser::run(void *p){
 
             currentGPS = parseCood(latitude, longitude, nORs, eORw);
         }
+
+        headingToTx.GPS_INFO_HEADING_dst = calculateCorrectHeading();
     }
     else printf("Nothing received from GPS");
 //    printf("%s\n\n", nmeaSentence);
@@ -72,23 +75,38 @@ bool GPS_parser::verifyChecksum(){
     return valid;
 }
 
-gps_data_t GPS_parser::parseCood(const char *latitude, const char *longitude,
+ANDROID_TX_ANDROID_INFO_COORDINATES_t GPS_parser::parseCood(const char *latitude, const char *longitude,
                                     const char *nORs, const char *eORw){
     //longitude
-    gps_data_t temp;
+    ANDROID_TX_ANDROID_INFO_COORDINATES_t temp;
     char degLat[2] = {0};
     char degLong[3] = {0};
     strncpy(degLat, latitude, 2);
-    temp.latitude = atof(degLat) + ((atof(latitude) - (atof(degLat)*100)) / 60);
+    temp.GPS_INFO_COORDINATES_lat = atof(degLat) + ((atof(latitude) - (atof(degLat)*100)) / 60);
     if(*nORs == 'S'){
-        temp.latitude *= -1;
+        temp.GPS_INFO_COORDINATES_lat *= -1;
     }
-    printf("Latitude: %f\n", temp.latitude);
+    printf("Latitude: %f\n", temp.GPS_INFO_COORDINATES_lat);
     strncpy(degLong, longitude, 3);
-    temp.longitude = atof(degLong) + ((atof(longitude) - (atof(degLong)*100)) / 60);
+    temp.GPS_INFO_COORDINATES_long = atof(degLong) + ((atof(longitude) - (atof(degLong)*100)) / 60);
     if(*eORw == 'W'){
-        temp.longitude *= -1;
+        temp.GPS_INFO_COORDINATES_long *= -1;
     }
-    printf("Longitude: %f", temp.longitude);
+    printf("Longitude: %f", temp.GPS_INFO_COORDINATES_long);
     return temp;
+}
+
+uint32_t GPS_parser::calculateCorrectHeading(){
+    static int i = 0;
+    const float pi = 3.1415;
+    int16_t correctHeading = 0;
+    if(dest[i].GPS_INFO_COORDINATES_lat == 0 & dest[i].GPS_INFO_COORDINATES_long == 0){
+        printf("Destination has been reached or no more destinations in path! \n");
+    }
+    else{
+        int x = dest[i].GPS_INFO_COORDINATES_lat - currentGPS.GPS_INFO_COORDINATES_lat;
+        int y = dest[i].GPS_INFO_COORDINATES_long - currentGPS.GPS_INFO_COORDINATES_long;
+        correctHeading = int16_t(((atan2(y, x) * 180 / pi)) + 0.5);
+    }
+    return correctHeading;
 }
