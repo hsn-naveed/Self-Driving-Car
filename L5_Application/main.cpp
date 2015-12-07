@@ -26,8 +26,7 @@
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "sensor.hpp"
-
-
+#include "can_message.h"
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -48,19 +47,6 @@ uint16_t accepted_msg_ids[] = {0x100, 0x102, 0x104, 0x200};
 
 int main(void)
 {
-//*******************TESTING DBC CODE*****************************
-
-    SENSOR_TX_SONAR_t to_can = {0};
-    uint64_t data;
-
-    to_can.SONAR_left = L;
-    to_can.SONAR_middle = M;
-    to_can.SONAR_right = R;
-    to_can.SONAR_rear = B;
-
-    marshal_SENSOR_TX_SONAR_t(&data, to_can);
-
-//*****************************************************************/
 
     iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids)/sizeof(*accepted_msg_ids));// sizeof(*accepted_msg_ids);
 

@@ -1,10 +1,10 @@
 /// DBC file: 243.dbc    Self node: SENSOR
 /// This file should be included by a source file, for example: #include "generated.c"
-#include <stdbool.h>
-#include <stdint.h>
-#include <stddef.h>
-
-
+#ifndef CAN_MESSAGE_H__
+#define CAN_MESSAGE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// Missing in Action structure
 typedef struct {
@@ -139,9 +139,14 @@ static inline bool MASTER_TX_MASTER_HEARTBEAT_handle_mia(MASTER_TX_MASTER_HEARTB
         // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
         *msg = MASTER_HEARTBEAT__MIA_MSG;
         msg->mia_info.mia_counter_ms = MASTER_HEARTBEAT__MIA_MS;
-        msg->mia_info.is_mia = true;
+        msg->mia_info.is_mia = truetx;
         mia_occurred = true;
     }
 
     return mia_occurred;
 }
+
+#ifdef __cplusplus
+}
+#endif
+#endif // CAN_MESSAGE_H__
