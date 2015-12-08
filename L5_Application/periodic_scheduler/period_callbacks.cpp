@@ -92,8 +92,7 @@ void period_10Hz(void)
     }
     else if (xQueueReceive(sg_data_q,_&android_stop_go_values, 0))
     {*/
-
-
+#if 0
     msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
     msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx->data.qword, android_stop_go_values);
 
@@ -101,7 +100,7 @@ void period_10Hz(void)
     {
         printf("GO_STOP message sent to master\n");
     }
-
+#endif
 }
 
 void period_100Hz(void)
