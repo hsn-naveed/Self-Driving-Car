@@ -36,6 +36,7 @@
 #include "printf_lib.h"
 
 #include "uart0.hpp"
+#include "uart2.hpp"
 #include "wireless.h"
 #include "nrf_stream.hpp"
 
@@ -55,9 +56,10 @@ typedef union{
         };
 }data_type_t;
 
-CMD_HANDLER_FUNC(bluetooth)
+Uart2& uart2 = Uart2::getInstance();
+
+CMD_HANDLER_FUNC(bluetoothHandler)
 {
-    printf ("INSIDE BLUETOOTH");
     if (cmdParams == "GO" | cmdParams.beginsWithIgnoreCase("GO"))
     {
        //GO
@@ -66,12 +68,13 @@ CMD_HANDLER_FUNC(bluetooth)
 
     else if (cmdParams == "STOP")
     {
-        //STOP
         printf("\n\nSTOP\n\n");
     }
 
     else if (cmdParams == "read")
     {
+        printf("INSIDE READ\n");
+        printf("%s",cmdParams.c_str());
         // add read from Android stuff here
 
         // static QueueHandle_t gps_data_q = scheduler_task::addSharedObject("gps_data", go);

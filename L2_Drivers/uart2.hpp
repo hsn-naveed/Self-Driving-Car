@@ -26,6 +26,7 @@
 
 #include "uart_dev.hpp"            // Base class
 #include "singleton_template.hpp"  // Singleton Template
+#include "uart0.hpp"
 
 
 

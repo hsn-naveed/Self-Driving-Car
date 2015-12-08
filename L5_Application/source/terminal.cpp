@@ -169,31 +169,41 @@ bool terminalTask::taskEntry()
     mCmdProc.handleCommand(help, uart0);
 
     /*  Add Bluetooth terminal commands here    */
-    CMD_HANDLER_FUNC(bluetooth);
-    cp.addHandler(bluetooth, "bluetooth", "Bluetooth Parse");
+    CMD_HANDLER_FUNC(bluetoothHandler);
+    cp.addHandler(bluetoothHandler, "bluetooth", "Bluetooth Parse");
 
     /* BLuetooth U2 Initialization */
     Uart2& u2 = Uart2::getInstance();
+
+
     if(u2.init(115200, 128, 256))
     {
-        printf("Initializing UART to bluetooth");
-        u2.putline("\r\n+STWMOD=0\r\n");
-        u2.putline("\r\n+STNA=Undergrad++\r\n");
-        u2.putline("\r\n+STOAUT=1\r\n");
-        u2.putline("\r\n+STAUTO=0\r\n");
-        u2.putline("\r\n +STPIN=0000\r\n");
-        delay_ms(2000); // This delay is required.
-        u2.putline("\r\n+INQ=1\r\n");
-        delay_ms(2000);
-        printf("\nDONE setup!\n");
+//        u2.setReady(false);
+//        printf("Initializing UART to bluetooth");
+//        u2.putline("\r\n+STWMOD=0\r\n");
+//        u2.putline("\r\n+STNA=Undergrad++\r\n");
+//        u2.putline("\r\n+STOAUT=1\r\n");
+//        u2.putline("\r\n+STAUTO=0\r\n");
+//        u2.putline("\r\n +STPIN=0000\r\n");
+//        delay_ms(2000); // This delay is required.
+//        u2.putline("\r\n+INQ=1\r\n");
+//        delay_ms(2000);
         u2.setReady(true);
+        printf("\nDONE setup!\n");
+        printf("isReady = %d\n", u2.isReady());
+
         sys_set_inchar_func(u2.getcharIntrDriven);
-        sys_set_outchar_func(u2.putcharIntrDriven);
+        //sys_set_outchar_func(u2.putcharIntrDriven);
         addCommandChannel(&u2, true);   // This will allow Bluetooth to be used in command terminal
     }
-    else {
-        u0_dbg_printf("UART2 CONNECT FAILED\n");
+    else
+    {
+        u0_dbg_printf("Couldn't connect uart2!\n");
     }
+
+//    /*  Add Bluetooth terminal commands here    */
+//    CMD_HANDLER_FUNC(bluetoothHandler);
+//    cp.addHandler(bluetoothHandler, "bluetooth", "Bluetooth Parse");
 
     return success;
 }

@@ -46,6 +46,21 @@ class Uart3 : public UartDev, public SingletonTemplate<Uart3>
          */
         bool init(unsigned int baudRate, int rxQSize=32, int txQSize=64);
 
+        /**
+         * @{ \name Static functions to use for printf/scanf redirection.
+         */
+        static char getcharIntrDriven(char unused)
+        {
+            char c = 0;
+            Uart3::getInstance().getChar(&c);
+            return c;
+        }
+        static char putcharIntrDriven(char thechar)
+        {
+            return Uart3::getInstance().putChar(thechar);
+        }
+        /** @} */
+
     private:
         Uart3();  ///< Private constructor of this Singleton class
         friend class SingletonTemplate<Uart3>;  ///< Friend class used for Singleton Template

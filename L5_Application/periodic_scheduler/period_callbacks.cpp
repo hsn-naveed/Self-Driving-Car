@@ -93,7 +93,7 @@ void period_10Hz(void)
     else if (xQueueReceive(sg_data_q,_&android_stop_go_values, 0))
     {*/
 
-    android_stop_go_values->ANDROID_STOP_CMD_signal = 1;
+
     msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
     msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx->data.qword, android_stop_go_values);
 
