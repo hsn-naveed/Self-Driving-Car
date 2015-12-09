@@ -71,8 +71,12 @@ int main(void)
             motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
             printf("motor set to %f\n", testDutyCycle);
         }
-
         if (SW.getSwitch(2)){
+            testDutyCycle = motorObj.BRAKE;
+            motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
+            printf("motor set to %f\n", testDutyCycle);
+        }
+        if (SW.getSwitch(3)){
             testDutyCycle = motorObj.BACK_SPEED;
             motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
             printf("motor set to %f\n", testDutyCycle);

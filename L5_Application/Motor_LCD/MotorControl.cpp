@@ -32,22 +32,27 @@ void MotorControl::changeMotorDirection(float speedToSet){
 //        MotorPwm.set(FAST_SPEED);
 //        delay_us(850);
 //    }
-if (CurrentMotorValue == BACK_SPEED){
+if (CurrentMotorValue < NEUTRAL){
         MotorPwm.set(FAST_SPEED);
         printf("Setting to fast speed to brake\n");
-        delay_ms(500);
+        delay_us(10);
     }
 else if (CurrentMotorValue > NEUTRAL){
-    printf("Setting brake to stop");
+    printf("Setting brake to stop\n");
     MotorPwm.set(BRAKE);
-    delay_us(500);
+    delay_us(10);
 }
     MotorPwm.set(NEUTRAL);
-    delay_ms(500);
+    delay_us(10);
 
-    CurrentMotorValue = speedToSet;
-    printf("motor value in change direction = %.5f\n", CurrentMotorValue);
-    MotorPwm.set(CurrentMotorValue);
+    if (CurrentMotorValue < NEUTRAL && speedToSet < NEUTRAL){
+        CurrentMotorValue = speedToSet;
+    }
+    else{
+        CurrentMotorValue = speedToSet;
+        printf("motor value in change direction = %.5f\n", CurrentMotorValue);
+        MotorPwm.set(CurrentMotorValue);
+    }
 }
 #endif
 
@@ -158,7 +163,10 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
             CurrentMotorValue = NEUTRAL;
             MotorPwm.set(NEUTRAL);
         }
-        else {
+        else if (CurrentMotorValue < NEUTRAL){
+            changeMotorDirection(speedToSet);
+        }
+        else{
             CurrentMotorValue = speedToSet;
             MotorPwm.set(CurrentMotorValue);
         }
