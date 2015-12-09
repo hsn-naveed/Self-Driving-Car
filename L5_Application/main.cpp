@@ -82,6 +82,7 @@ int main(void)
 
     LD.clear();
     uint8_t port2_6 = 6;
+
     encoderInput.setAsInput();
     eint3_enable_port2(port2_6, eint_rising_edge, storeBeginTime);
 

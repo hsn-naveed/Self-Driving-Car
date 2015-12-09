@@ -107,7 +107,7 @@ class MotorControl{
         float MEDIUM_SPEED = (FAST_SPEED+NEUTRAL)/2 + MEDIUM_SPEED_OFFSET;
 
         const float maxSlowSpeed = (MEDIUM_SPEED+NEUTRAL)/2;
-        float SLOW_SPEED =  MEDIUM_SPEED + *SLOW_SPEED_OFFSET;//maxSlowSpeed + *SLOW_SPEED_OFFSET;
+        float SLOW_SPEED =  MEDIUM_SPEED + *SLOW_SPEED_OFFSET;
 
         const float maxBackSpeed = (BRAKE+NEUTRAL)/2;
         float BACK_SPEED = (maxBackSpeed+NEUTRAL)/2 + BACK_SPEED_OFFSET;

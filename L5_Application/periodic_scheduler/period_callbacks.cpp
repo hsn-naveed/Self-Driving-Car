@@ -77,14 +77,53 @@ bool period_reg_tlm(void){
     return true; // Must return true upon success
 }
 
+int count = 0;
+void setSpeedAndIncrementCount(float speedToSet){
+    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, speedToSet);
+    printf("\nCount = %i, speed = %.5f\n\n",count++, speedToSet);
+}
+
 void period_1Hz(void)
 {
 
+
+//    switch(count){
+//        case 0:
+//            setSpeedAndIncrementCount(motorObj.MEDIUM_SPEED);
+//            //delay_ms(50);
+//            setSpeedAndIncrementCount(motorObj.BACK_SPEED);
+//            break;
+////        case 1:
+////            setSpeedAndIncrementCount(motorObj.BACK_SPEED);
+////            break;
+////        case 2:
+//////            setSpeedAndIncrementCount(motorObj.NEUTRAL);
+////            break;
+////        case 3:
+////            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
+////            break;
+////        case 4:
+////            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
+////            break;
+//        default:
+//            count = 0;
+//            break;
+//    }
 }
+
 
 void period_10Hz(void)
 {
-////    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.SLOW_SPEED);
+    if (SW.getSwitch(1)){
+                setSpeedAndIncrementCount(motorObj.MEDIUM_SPEED);
+            }
+            if (SW.getSwitch(2)){
+                setSpeedAndIncrementCount(motorObj.NEUTRAL);
+            }
+            if (SW.getSwitch(3)){
+                setSpeedAndIncrementCount(motorObj.BACK_SPEED);
+            }
+
 //    if (HasSpeedChanged() == 1){
 //        /// Adjust motor speed offset accordingly
 //        if ((motorObj.SLOW_SPEED + *SLOW_SPEED_OFFSET) <= motorObj.maxSlowSpeed){
@@ -118,19 +157,21 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
-    /// FIX set this
-        if (CAN_is_bus_off(can1)){
-            puts("====CAN BUS is off====\n");
-            LE.on(led1);
-        }
-        else if (iCAN_rx(canMsgForMotor, motorMsgId)){
-            motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
-            motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
-            LE.off(led1);
-        }
-        else{
-            LE.on(led1);
-        }
+
+
+//    /// FIX set this
+//        if (CAN_is_bus_off(can1)){
+//            puts("====CAN BUS is off====\n");
+//            LE.on(led1);
+//        }
+//        else if (iCAN_rx(canMsgForMotor, motorMsgId)){
+//            motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
+//            motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
+//            LE.off(led1);
+//        }
+//        else{
+//            LE.on(led1);
+//        }
 }
 
 

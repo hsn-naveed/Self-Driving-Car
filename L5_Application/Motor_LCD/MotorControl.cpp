@@ -28,21 +28,25 @@ void MotorControl::triggerForwardOrReverseThrottle(float maxOrMin,
 }
 
 void MotorControl::changeMotorDirection(float speedToSet){
-    /// FIX THIS
-    // This is necessary in order for motor to be able to change from
-    // forward to reverse, or reverse to forward
-    if (speedToSet != BACK_SPEED)
-        MotorPwm.set(BRAKE);
-    else{
+//    if (CurrentMotorValue == BACK_SPEED){
+//        MotorPwm.set(FAST_SPEED);
+//        delay_us(850);
+//    }
+if (CurrentMotorValue == BACK_SPEED){
         MotorPwm.set(FAST_SPEED);
+//        printf("Here changing direction\n");
+//        delay_ms(500);
     }
-    //delay_us(10);
+else if (CurrentMotorValue > NEUTRAL){\
+//    printf("Current motor value = %.5f", CurrentMotorValue);
+    MotorPwm.set(BRAKE);
+//    delay_us(850);
+}
     MotorPwm.set(NEUTRAL);
-    CurrentMotorValue = speedToSet;
+//    delay_ms(650);
 
-   // printf("Current motor value(changeMotorDirection) = %.5f\n", CurrentMotorValue);
-    MotorPwm.set(CurrentMotorValue);
-    MotorPwm.set(NEUTRAL);
+    CurrentMotorValue = speedToSet;
+//    printf("motor value in change direction = %.5f\n", CurrentMotorValue);
     MotorPwm.set(CurrentMotorValue);
 }
 #endif
@@ -66,7 +70,7 @@ MotorControl::MotorControl(){
 void MotorControl::initESC(){
     puts("Setting throttle to neutral\n");
     MotorPwm.set(NEUTRAL);
-    delay_ms(2500);
+    delay_ms(500);
 
     puts("------Initializing PWM/ESC-------");
     puts("Will begin count down for programming ESC!\n");
@@ -142,25 +146,65 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
     ServoPwm.set(CurrentServoValue);
 
     if (speedToSet == BACK_SPEED){
-        // FIX THIS
-    }
-    else if ((speedToSet == BRAKE) && (CurrentMotorValue == NEUTRAL)){
-        CurrentMotorValue = NEUTRAL;
-        MotorPwm.set(NEUTRAL);
-    }
-    else{
-        // If previously was moving going reverse, change speed to move forward
-        if (CurrentMotorValue == BACK_SPEED && (speedToSet == SLOW_SPEED || speedToSet == MEDIUM_SPEED
-                || speedToSet == FAST_SPEED)){
-            // FIX THIS
-            //changeMotorDirection(speedToSet);
-        }
-        else{ // Normal operation
+        if ((CurrentMotorValue == BRAKE) || (CurrentMotorValue > NEUTRAL))
+            changeMotorDirection(BACK_SPEED);
+        else{
             CurrentMotorValue = speedToSet;
-            printf("==Current motor value = %.5f\n\n", CurrentMotorValue);
             MotorPwm.set(CurrentMotorValue);
         }
     }
+    else if (speedToSet == BRAKE){
+        if (CurrentMotorValue == NEUTRAL){
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(NEUTRAL);
+        }
+        else {
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(CurrentMotorValue);
+        }
+    }
+    else{
+        if (CurrentMotorValue < NEUTRAL){
+            changeMotorDirection(speedToSet);
+        }else{
+            CurrentMotorValue = speedToSet;
+//            printf("got here\n");
+            MotorPwm.set(CurrentMotorValue);
+        }
+    }
+//    delay_ms(50);
+
+//    if (speedToSet == BACK_SPEED){
+//        //        if ((CurrentMotorValue != BACK_SPEED) && (CurrentMotorValue != NEUTRAL)){
+//        //            changeMotorDirection(speedToSet);
+//        //        }
+//        MotorPwm.set(NEUTRAL);
+//        delay_ms(1);
+//
+//        CurrentMotorValue = speedToSet;
+//        printf("==Current motor value = %.5f\n", CurrentMotorValue);
+//        MotorPwm.set(CurrentMotorValue);
+//    }
+//    else if ((speedToSet == BRAKE) &&
+//            ((CurrentMotorValue == NEUTRAL) || CurrentMotorValue == BACK_SPEED)){
+//        CurrentMotorValue = NEUTRAL;
+//        MotorPwm.set(NEUTRAL);
+//    }
+//    else{
+//        // If previously was moving going reverse, change speed to move forward
+////        if (CurrentMotorValue == BACK_SPEED && (speedToSet == SLOW_SPEED || speedToSet == MEDIUM_SPEED
+////                || speedToSet == FAST_SPEED)){
+////            // FIX THIS
+////            //changeMotorDirection(speedToSet);
+////            CurrentMotorValue = speedToSet;
+////                        printf("==Current motor value = %.5f\n", CurrentMotorValue);
+////                        MotorPwm.set(CurrentMotorValue);
+////        }
+////        else{ // Normal operation
+//            CurrentMotorValue = speedToSet;
+//            printf("==Current motor value = %.5f\n", CurrentMotorValue);
+//            MotorPwm.set(CurrentMotorValue);
+////        }
 }
 
 
