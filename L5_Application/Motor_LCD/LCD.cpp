@@ -1,3 +1,10 @@
+/*
+ * LCD.cpp
+ *
+ * Created by Jashan and Hector
+ *
+ *
+ */
 #include "LCD.hpp"
 #include "utilities.h"
 #include "stdio.h"
@@ -11,11 +18,11 @@
  *          when high, send data
  * R/W  -  read / write (send commands here , read to check for a busy flag) If pin D7 is high then the LCD is
 
-busy,
+ busy,
  *         to check D7 the RW pin must be high
  * E    -  "Light switch of the LCD" allows the LCD to see the state of other pins. When flashed high and then low
 
-again,
+ again,
  *         the LCD can see the state of the other pins so it can execute the proper instructions
  * D0   -  D0 - D7: 8 bit parrallel data port
  * D1   -
@@ -31,6 +38,8 @@ again,
  *
  *
  */
+
+
 
 LCD::LCD()
 {
@@ -50,21 +59,30 @@ void LCD::initLCD()
     lcd.putChar(initChar, portMAX_DELAY);
     delay_ms(100);
     printf("LCD initialized\n");
+    initVariables();
+
 }
-void LCD::writetoLCD(char *datatoDisplay)
+void LCD::initVariables(){
+   sprintf(FULL_LEFT_LCD, "%f", motorObj.FULL_LEFT);
+   sprintf(STRAIGHT_LCD, "%f", motorObj.STRAIGHT);
+   sprintf(FULL_RIGHT_LCD, "%f", motorObj.FULL_RIGHT);
+}
+void LCD::writetoLCD(char *steerVal, char *speedVal)
 {
 
     //if (){ //if LCD is not busy
-
+    lcd.putline(steerVal, portMAX_DELAY);
     //}
 }
-void LCD::getCANmessageData(can_fullcan_msg_t *fullCanMessage,
-        mast_mot_msg_t *motorControlStructToUse)
+void LCD::getMessageDataFromMotor(mast_mot_msg_t *DataforLCD_motorControlStruct)
 {
-    if (fullCanMessage != NULL)
     {
-        motorControlStructToUse->LR = (uint8_t) fullCanMessage->data.bytes[0];
-        motorControlStructToUse->SPD = (uint8_t) fullCanMessage->data.bytes[1];
+        if (DataforLCD_motorControlStruct != NULL)
+        {
+            uint8_t steeringVal = (uint8_t) DataforLCD_motorControlStruct->LR;
+            uint8_t speedVal = (uint8_t) DataforLCD_motorControlStruct->SPD;
+            writetoLCD(&convertHextoCharSteer(&steeringVal), &convertHextoCharSpeed(&speedVal));
+        }
     }
 }
 void LCD::clearLCD()
@@ -74,4 +92,27 @@ void LCD::clearLCD()
 void LCD::moveCursor(int row, int column)
 {
 
+}
+char LCD::convertHextoCharSpeed(uint8_t *hexSpeedValue)
+{
+    char *convertedSpeedValue = 0;
+    if(hexSpeedValue == (uint8_t)COMMAND_FAST)
+        convertedSpeedValue = (char) motorObj.FAST_SPEED;
+
+    if(hexSpeedValue == (uint8_t)COMMAND_MEDIUM)
+        convertedSpeedValue = (char) motorObj.MEDIUM_SPEED;
+    if (hexSpeedValue == (uint8_t)COMMAND_REVERSE)
+        convertedSpeedValue = (char) motorObj.BACK_SPEED;
+    return convertedSpeedValue;
+}
+char LCD::convertHextoCharSteer(uint8_t *hexSteerValue)
+{
+    char *convertedSteerValue = 0;
+    if (hexSteerValue == (uint8_t) COMMAND_STRAIGHT)
+        convertedSteerValue = (char)STRAIGHT_LCD;
+    if (hexSteerValue == (uint8_t) COMMAND_LEFT)
+        convertedSteerValue = (char)FULL_LEFT_LCD;
+    if (hexSteerValue == (uint8_t) COMMAND_RIGHT)
+        convertedSteerValue = (char)FULL_RIGHT_LCD;
+    return convertedSteerValue;
 }
