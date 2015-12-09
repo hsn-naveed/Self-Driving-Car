@@ -85,35 +85,35 @@ void period_1Hz(void)
 void period_10Hz(void)
 {
 ////    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.SLOW_SPEED);
-    if (HasSpeedChanged() == 1){
-        /// Adjust motor speed offset accordingly
-        if ((motorObj.SLOW_SPEED + *SLOW_SPEED_OFFSET) <= motorObj.maxSlowSpeed){
-            *SLOW_SPEED_OFFSET += incrementSpeedAmount;
-            motorObj.SLOW_SPEED += *SLOW_SPEED_OFFSET;
-        }
-        printf("Inside hasSpeedChanged = 1\nMotorValue = %.5f\n\n", motorObj.SLOW_SPEED);
-
-        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
-        LE.off(led3);
-    }
-    else if (HasSpeedChanged() == 2){
-        // Anything below the max negative speed offset, it throws off the duty cycle
-        // and car motor is unpredictable
-        if (motorObj.SLOW_SPEED >= (motorObj.maxSlowSpeed - initialSlowSpeedOffset)){
-        //if (initialSlowSpeedOffset <= (*SLOW_SPEED_OFFSET - incrementSpeedAmount)){
-            *SLOW_SPEED_OFFSET -= incrementSpeedAmount;
-            motorObj.SLOW_SPEED += *SLOW_SPEED_OFFSET;
-            printf("Inside hasSpeedChanged = 2\nMotorValue = %.5f\n\n", motorObj.SLOW_SPEED);
-        }
-
-
-        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
-        LE.off(led3);
-    }
-    else{
-        LE.on(led3);
-        printf("no speed change \n");
-    }
+//    if (HasSpeedChanged() == 1){
+//        /// Adjust motor speed offset accordingly
+//        if ((motorObj.SLOW_SPEED + *SLOW_SPEED_OFFSET) <= motorObj.maxSlowSpeed){
+//            *SLOW_SPEED_OFFSET += incrementSpeedAmount;
+//            motorObj.SLOW_SPEED += *SLOW_SPEED_OFFSET;
+//        }
+//        printf("Inside hasSpeedChanged = 1\nMotorValue = %.5f\n\n", motorObj.SLOW_SPEED);
+//
+//        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
+//        LE.off(led3);
+//    }
+//    else if (HasSpeedChanged() == 2){
+//        // Anything below the max negative speed offset, it throws off the duty cycle
+//        // and car motor is unpredictable
+//        if (motorObj.SLOW_SPEED >= (motorObj.maxSlowSpeed - initialSlowSpeedOffset)){
+//        //if (initialSlowSpeedOffset <= (*SLOW_SPEED_OFFSET - incrementSpeedAmount)){
+//            *SLOW_SPEED_OFFSET -= incrementSpeedAmount;
+//            motorObj.SLOW_SPEED += *SLOW_SPEED_OFFSET;
+//            printf("Inside hasSpeedChanged = 2\nMotorValue = %.5f\n\n", motorObj.SLOW_SPEED);
+//        }
+//
+//
+//        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
+//        LE.off(led3);
+//    }
+//    else{
+//        LE.on(led3);
+//        printf("no speed change \n");
+//    }
 }
 
 void period_100Hz(void)
