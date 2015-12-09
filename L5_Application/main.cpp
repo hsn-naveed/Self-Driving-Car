@@ -67,14 +67,14 @@ int main(void)
     float testDutyCycle = 0;
     do{
         if (SW.getSwitch(1)){
-            testDutyCycle = motorObj.SLOW_SPEED;
-            motorPWM.set(testDutyCycle);
+            testDutyCycle = motorObj.MEDIUM_SPEED;
+            motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
             printf("motor set to %f\n", testDutyCycle);
         }
 
         if (SW.getSwitch(2)){
-            testDutyCycle = motorObj.BRAKE;
-            motorPWM.set(testDutyCycle);
+            testDutyCycle = motorObj.BACK_SPEED;
+            motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
             printf("motor set to %f\n", testDutyCycle);
         }
     } while(!SW.getSwitch(4));
