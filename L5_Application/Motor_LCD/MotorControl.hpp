@@ -67,6 +67,9 @@ class MotorControl{
                 double incrementAndDecrementSize,
                 int pwmDelay);
         void pulseBrake();
+        void SetSpeedToForwardOrReverse(float speedToSet);
+        void SetSpeedToReverseOrForward(float speedToSet,
+                float brakeOrBack);
 
         bool escHasBeenInitialized;
 

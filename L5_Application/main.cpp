@@ -66,21 +66,25 @@ int main(void)
     /// For initial testing of the motor and brake functionality prior to starting
     float testDutyCycle = 0;
     do{
-        if (SW.getSwitch(1)){
-            testDutyCycle = motorObj.MEDIUM_SPEED;
-            motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
-            printf("motor set to %f\n", testDutyCycle);
-        }
-        if (SW.getSwitch(2)){
-            testDutyCycle = motorObj.BRAKE;
-            motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
-            printf("motor set to %f\n", testDutyCycle);
-        }
-        if (SW.getSwitch(3)){
-            testDutyCycle = motorObj.BACK_SPEED;
-            motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
-            printf("motor set to %f\n", testDutyCycle);
-        }
+        testDutyCycle = motorObj.MEDIUM_SPEED;
+        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
+        printf("motor set to %f\n", testDutyCycle);
+        delay_ms(1500);
+
+        testDutyCycle = motorObj.BRAKE;
+                        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
+                        printf("motor set to %f\n", testDutyCycle);
+                        delay_ms(1000);
+
+        testDutyCycle = motorObj.BACK_SPEED;
+        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
+        printf("motor set to %f\n", testDutyCycle);
+        delay_ms(1000);
+
+        testDutyCycle = motorObj.BRAKE;
+                motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
+                printf("motor set to %f\n", testDutyCycle);
+                delay_ms(1000);
     } while(!SW.getSwitch(4));
 
 
