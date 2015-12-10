@@ -114,15 +114,29 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-//    if (SW.getSwitch(1)){
-//                setSpeedAndIncrementCount(motorObj.MEDIUM_SPEED);
-//            }
-//            if (SW.getSwitch(2)){
-//                setSpeedAndIncrementCount(motorObj.NEUTRAL);
-//            }
-//            if (SW.getSwitch(3)){
-//                setSpeedAndIncrementCount(motorObj.BACK_SPEED);
-//            }
+    switch(count){
+        case 0:
+            setSpeedAndIncrementCount(motorObj.MEDIUM_SPEED);
+            //delay_ms(5);
+            //setSpeedAndIncrementCount(motorObj.BACK_SPEED);
+            break;
+        case 1:
+            setSpeedAndIncrementCount(motorObj.BACK_SPEED);
+            //delay_ms(5);
+            break;
+//        case 2:
+////            setSpeedAndIncrementCount(motorObj.NEUTRAL);
+//            break;
+//        case 3:
+//            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
+//            break;
+//        case 4:
+//            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
+//            break;
+        default:
+            count = 0;
+            break;
+    }
 
 //    if (HasSpeedChanged() == 1){
 //        /// Adjust motor speed offset accordingly
@@ -157,29 +171,7 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
-        switch(count){
-            case 0:
-                setSpeedAndIncrementCount(motorObj.MEDIUM_SPEED);
-                delay_ms(5);
-                //setSpeedAndIncrementCount(motorObj.BACK_SPEED);
-                break;
-            case 1:
-                setSpeedAndIncrementCount(motorObj.BACK_SPEED);
-                delay_ms(5);
-                break;
-    //        case 2:
-    ////            setSpeedAndIncrementCount(motorObj.NEUTRAL);
-    //            break;
-    //        case 3:
-    //            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
-    //            break;
-    //        case 4:
-    //            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
-    //            break;
-            default:
-                count = 0;
-                break;
-        }
+
 
 //    /// FIX set this
 //        if (CAN_is_bus_off(can1)){
