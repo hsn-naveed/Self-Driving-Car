@@ -86,16 +86,35 @@ void setSpeedAndIncrementCount(float speedToSet){
 void period_1Hz(void)
 {
 
+}
+
+
+void period_10Hz(void)
+{
+        /// FIX set this
+            if (CAN_is_bus_off(can1)){
+                puts("====CAN BUS is off====\n");
+                LE.on(led1);
+            }
+            else if (iCAN_rx(canMsgForMotor, motorMsgId)){
+                motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
+                motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
+                LE.off(led1);
+            }
+            else{
+                LE.on(led1);
+            }
 
 //    switch(count){
 //        case 0:
 //            setSpeedAndIncrementCount(motorObj.MEDIUM_SPEED);
-//            //delay_ms(50);
-//            setSpeedAndIncrementCount(motorObj.BACK_SPEED);
+//            //delay_ms(5);
+//            //setSpeedAndIncrementCount(motorObj.BACK_SPEED);
 //            break;
-////        case 1:
-////            setSpeedAndIncrementCount(motorObj.BACK_SPEED);
-////            break;
+//        case 1:
+//            setSpeedAndIncrementCount(motorObj.BACK_SPEED);
+//            //delay_ms(5);
+//            break;
 ////        case 2:
 //////            setSpeedAndIncrementCount(motorObj.NEUTRAL);
 ////            break;
@@ -109,34 +128,6 @@ void period_1Hz(void)
 //            count = 0;
 //            break;
 //    }
-}
-
-
-void period_10Hz(void)
-{
-    switch(count){
-        case 0:
-            setSpeedAndIncrementCount(motorObj.MEDIUM_SPEED);
-            //delay_ms(5);
-            //setSpeedAndIncrementCount(motorObj.BACK_SPEED);
-            break;
-        case 1:
-            setSpeedAndIncrementCount(motorObj.BACK_SPEED);
-            //delay_ms(5);
-            break;
-//        case 2:
-////            setSpeedAndIncrementCount(motorObj.NEUTRAL);
-//            break;
-//        case 3:
-//            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
-//            break;
-//        case 4:
-//            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
-//            break;
-        default:
-            count = 0;
-            break;
-    }
 
 //    if (HasSpeedChanged() == 1){
 //        /// Adjust motor speed offset accordingly
@@ -172,25 +163,10 @@ void period_10Hz(void)
 void period_100Hz(void)
 {
 
-
-//    /// FIX set this
-//        if (CAN_is_bus_off(can1)){
-//            puts("====CAN BUS is off====\n");
-//            LE.on(led1);
-//        }
-//        else if (iCAN_rx(canMsgForMotor, motorMsgId)){
-//            motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
-//            motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
-//            LE.off(led1);
-//        }
-//        else{
-//            LE.on(led1);
-//        }
 }
 
 
 void period_1000Hz(void)
 {
-
 
 }
