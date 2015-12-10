@@ -47,15 +47,16 @@ const uint32_t ANDROID_INFO_CHECKPOINTS__MIA_MS = 0;
 const ANDROID_TX_ANDROID_INFO_CHECKPOINTS_t ANDROID_INFO_CHECKPOINTS__MIA_MSG = {0};
 const uint32_t ANDROID_INFO_COORDINATES__MIA_MS = 0;
 const ANDROID_TX_ANDROID_INFO_COORDINATES_t ANDROID_INFO_COORDINATES__MIA_MSG = {0};
-can_msg_t msg = {0};
+can_msg_t tx_msg = {0};
+can_fullcan_msg_t rx_msg = {0};
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    currentDest = 0;
     uint32_t slist[] = {ANDROID_TX_ANDROID_GO_CMD_HDR.mid,
-                            ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR.mid,
-                            ANDROID_TX_ANDROID_INFO_COORDINATES_HDR.mid};
+                        ANDROID_TX_ANDROID_BEGIN_CMD_HDR.mid,
+                        ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR.mid,
+                        ANDROID_TX_ANDROID_INFO_COORDINATES_HDR.mid};
     iCAN_init_FULLCAN(slist, sizeof(slist) / sizeof(*slist));
     return true; // Must return true upon success
 }
@@ -127,9 +128,27 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
-
+    if(iCAN_rx(&rx_msg, ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR)){
+        /** If Android is sending a new number of checkpoints then we are receiving a new
+         *  final destination point. We need to receive a new array of checkpoints.
+         */
+        currentDest = 0;
+        num_rx_checkpoints = 0;
+        ANDROID_TX_ANDROID_INFO_CHECKPOINTS_decode(&lastDest, &(rx_msg.data.qword),
+                                                    &ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR);
+    }
+    if(iCAN_rx(&rx_msg, ANDROID_TX_ANDROID_INFO_COORDINATES_HDR)){
+        if(num_rx_checkpoints > lastDest.ANDROID_INFO_CHECKPOINTS_count - 1){
+            printf("Something is wrong!!! Too many checkpoints!!!");
+        }
+        else{
+            ANDROID_TX_ANDROID_INFO_COORDINATES_decode(&dest[num_rx_checkpoints], &(rx_msg.data.qword),
+                                                        &ANDROID_TX_ANDROID_INFO_COORDINATES_HDR);
+            num_rx_checkpoints++;
+        }
+    }
     headingToTx.GPS_INFO_HEADING_current = MS.getHeading();
-    iCAN_tx(&msg, GPS_TX_GPS_INFO_HEADING_encode(&(msg.data.qword), &headingToTx));
+    iCAN_tx(&tx_msg, GPS_TX_GPS_INFO_HEADING_encode(&(tx_msg.data.qword), &headingToTx));
     LE.toggle(3);
 }
 

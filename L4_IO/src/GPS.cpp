@@ -92,21 +92,34 @@ ANDROID_TX_ANDROID_INFO_COORDINATES_t GPS_parser::parseCood(const char *latitude
     if(*eORw == 'W'){
         temp.GPS_INFO_COORDINATES_long *= -1;
     }
-    printf("Longitude: %f", temp.GPS_INFO_COORDINATES_long);
+    printf("Longitude: %f\n", temp.GPS_INFO_COORDINATES_long);
     return temp;
 }
 
 uint32_t GPS_parser::calculateCorrectHeading(){
-    static int i = 0;
     const float pi = 3.1415;
-    int16_t correctHeading = 0;
-    if(dest[i].GPS_INFO_COORDINATES_lat == 0 & dest[i].GPS_INFO_COORDINATES_long == 0){
+    float correctHeading = 0;
+    dest[currentDest] = {37.362283, -122.129720};
+    if(dest[currentDest].GPS_INFO_COORDINATES_lat == 0 && dest[currentDest].GPS_INFO_COORDINATES_long == 0){
         printf("Destination has been reached or no more destinations in path! \n");
     }
-    else{
-        int x = dest[i].GPS_INFO_COORDINATES_lat - currentGPS.GPS_INFO_COORDINATES_lat;
-        int y = dest[i].GPS_INFO_COORDINATES_long - currentGPS.GPS_INFO_COORDINATES_long;
-        correctHeading = int16_t(((atan2(y, x) * 180 / pi)) + 0.5);
+    else if(fabs(currentGPS.GPS_INFO_COORDINATES_lat - dest[currentDest].GPS_INFO_COORDINATES_lat) < 0.000005 &
+            fabs(currentGPS.GPS_INFO_COORDINATES_long - dest[currentDest].GPS_INFO_COORDINATES_long) < 0.000005){
+        currentDest++;
     }
+    else{
+        float dx = dest[currentDest].GPS_INFO_COORDINATES_lat - currentGPS.GPS_INFO_COORDINATES_lat;
+        printf("dx = %f\n", dx);
+        float dy = dest[currentDest].GPS_INFO_COORDINATES_long - currentGPS.GPS_INFO_COORDINATES_long;
+        printf("dy = %f\n", dy);
+        correctHeading = atan2(dy, dx) * 180 / pi;
+        if(correctHeading < 0){
+            correctHeading += 360;
+        }
+        else if(correctHeading > 360){
+            correctHeading -= 360;
+        }
+    }
+    printf("The correct heading is: %f\n", correctHeading);
     return correctHeading;
 }
