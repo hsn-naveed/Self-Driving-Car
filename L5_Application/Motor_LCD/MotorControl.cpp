@@ -28,19 +28,24 @@ void MotorControl::triggerForwardOrReverseThrottle(float maxOrMin,
 }
 
 void MotorControl::changeMotorDirection(float speedToSet){
+    /// Enter here if wanting to brake, going either forward or reverse
     if (speedToSet == BRAKE){
+        /// If currently moving forward, just set pwm to BRAKE, as the BRAKE is
+        // the full reverse, which is brake for the esc until you go back to neutral
         if (CurrentMotorValue == MEDIUM_SPEED || CurrentMotorValue == SLOW_SPEED){
             CurrentMotorValue = speedToSet;
             MotorPwm.set(CurrentMotorValue);
         }
+        /// If moving backwards, and wanting to stop, send a FOWARD_BRAKE; this
+        // is a full forward throttle, which will instantly stop the wheels, and won't move forward
+        // until you return to neutral
         else if (CurrentMotorValue == BACK_SPEED){
             MotorPwm.set(FOWARD_BRAKE);
             delay_ms(10);
-
-//            CurrentMotorValue = NEUTRAL;
-//            MotorPwm.set(CurrentMotorValue);
+            CurrentMotorValue = speedToSet;
         }
     }
+    /// Enter here if wanting to go reverse
     if (speedToSet == BACK_SPEED){
         if (CurrentMotorValue == MEDIUM_SPEED || CurrentMotorValue == SLOW_SPEED){
             MotorPwm.set(BRAKE);
@@ -52,6 +57,8 @@ void MotorControl::changeMotorDirection(float speedToSet){
             CurrentMotorValue = speedToSet;
             MotorPwm.set(CurrentMotorValue);
         }
+        /// If already stopped, and want to go reverse, you must first go to neutral,
+        // then reverse; ESC will then know that the reverse is now reverse, instead of a brake
         else if (CurrentMotorValue == BRAKE){
             MotorPwm.set(NEUTRAL);
             delay_ms(10);
@@ -174,6 +181,7 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
     ServoPwm.set(CurrentServoValue);
 
     if (CurrentMotorValue == NEUTRAL){
+        /// Used to prevent shooting forward or reverse in case "brakes" were recevied from CAN
         if (speedToSet == BACK_SPEED || speedToSet == SLOW_SPEED || speedToSet == MEDIUM_SPEED){
             CurrentMotorValue = speedToSet;
             MotorPwm.set(CurrentMotorValue);
@@ -184,7 +192,6 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
             changeMotorDirection(speedToSet);
     }
 }
-
 
 
 
@@ -204,6 +211,13 @@ void MotorControl::convertFromHexAndApplyMotorAndServoSettings(mast_mot_msg_t *h
     }
 }
 
+/*@about Takes hex value passed in from mast_mot_msg_t in CAN_STRUCTS.h
+ *          and converts to a float value (duty cycle %) for the PWM
+ *          output
+ *
+ *@param hexSpeedValue - passed in hex value from mast_mot_msg_t
+ *@output convertedHexToFloat - duty cycle % as float for PWM output
+ */
 float MotorControl::convertHexToFloatSpeed(uint8_t hexSpeedValue){
     float convertedHexToFloat = 0;
 

@@ -104,31 +104,6 @@ void period_10Hz(void)
             else{
                 LE.on(led1);
             }
-
-//    switch(count){
-//        case 0:
-//            setSpeedAndIncrementCount(motorObj.MEDIUM_SPEED);
-//            //delay_ms(5);
-//            //setSpeedAndIncrementCount(motorObj.BACK_SPEED);
-//            break;
-//        case 1:
-//            setSpeedAndIncrementCount(motorObj.BACK_SPEED);
-//            //delay_ms(5);
-//            break;
-////        case 2:
-//////            setSpeedAndIncrementCount(motorObj.NEUTRAL);
-////            break;
-////        case 3:
-////            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
-////            break;
-////        case 4:
-////            setSpeedAndIncrementCount(motorObj.FAST_SPEED);
-////            break;
-//        default:
-//            count = 0;
-//            break;
-//    }
-
 //    if (HasSpeedChanged() == 1){
 //        /// Adjust motor speed offset accordingly
 //        if ((motorObj.SLOW_SPEED + *SLOW_SPEED_OFFSET) <= motorObj.maxSlowSpeed){
