@@ -27,7 +27,7 @@ static float MOTOR_SERVO_PWM_FREQ = 100;
 /// For dynamically calculating
 static float ONE_SECOND_MS = 1000;
 static float STRAIGHT_PWM_PERIOD_MS = 1.5, NEUTRAL_PWM_PERIOD_MS = 1.5;
-static float FULL_RIGHT_PWM_PERIOD_MS = 1.85, FORWARD_PWM_PERIOD_MS = 1.75;
+static float FULL_RIGHT_PWM_PERIOD_MS = 1.85, FORWARD_PWM_PERIOD_MS = 1.75, FOWARD_BRAKE_PWM_PERIOD_MS = 2;
 static float FULL_LEFT_PWM_PERIOD_MS = 1.15, REVERSE_PWM_PERIOD_MS = 1;
 
 /*
@@ -67,9 +67,6 @@ class MotorControl{
                 double incrementAndDecrementSize,
                 int pwmDelay);
         void pulseBrake();
-        void SetSpeedToForwardOrReverse(float speedToSet);
-        void SetSpeedToReverseOrForward(float speedToSet,
-                float brakeOrBack);
 
         bool escHasBeenInitialized;
 
@@ -102,13 +99,14 @@ class MotorControl{
 
 
         /// Speed setting
-        float pwmFreqInMs = (ONE_SECOND_MS)/MOTOR_SERVO_PWM_FREQ;
+        const float pwmFreqInMs = (ONE_SECOND_MS)/MOTOR_SERVO_PWM_FREQ;
 
-        float FAST_SPEED = ((FORWARD_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
-        float BRAKE = ((REVERSE_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
-        float NEUTRAL = ((NEUTRAL_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
+        const float FOWARD_BRAKE = ((FOWARD_BRAKE_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
+        const float FAST_SPEED = ((FORWARD_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
+        const float BRAKE = ((REVERSE_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
+        const float NEUTRAL = ((NEUTRAL_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
+
         float MEDIUM_SPEED = (FAST_SPEED+NEUTRAL)/2 + MEDIUM_SPEED_OFFSET;
-
         const float maxSlowSpeed = (MEDIUM_SPEED+NEUTRAL)/2;
         float SLOW_SPEED =  MEDIUM_SPEED + *SLOW_SPEED_OFFSET;
 

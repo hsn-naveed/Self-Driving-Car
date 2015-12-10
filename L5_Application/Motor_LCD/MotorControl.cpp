@@ -28,33 +28,54 @@ void MotorControl::triggerForwardOrReverseThrottle(float maxOrMin,
 }
 
 void MotorControl::changeMotorDirection(float speedToSet){
-if (CurrentMotorValue < NEUTRAL){
-        MotorPwm.set(FAST_SPEED);
-//        printf("Setting to fast speed to brake\n");
-        delay_ms(10);
-    }
-if (CurrentMotorValue > NEUTRAL){
-//    printf("Setting brake to stop\n");
-    MotorPwm.set(BRAKE);
-    delay_ms(10);
-}
-else{
-    MotorPwm.set(NEUTRAL);
-    delay_ms(10);
-}
-    if (CurrentMotorValue < NEUTRAL && speedToSet == BRAKE){
-        CurrentMotorValue = NEUTRAL;
-    }
-    else if (speedToSet < NEUTRAL){
-        CurrentMotorValue = speedToSet;
-        MotorPwm.set(CurrentMotorValue)
-    }
-    else{
-        CurrentMotorValue = speedToSet;
-//        printf("motor value in change direction = %.5f\n", CurrentMotorValue);
-        MotorPwm.set(CurrentMotorValue);
-    }
+    if (speedToSet == BRAKE){
+        if (CurrentMotorValue == MEDIUM_SPEED || CurrentMotorValue == SLOW_SPEED){
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(CurrentMotorValue);
+        }
+        else if (CurrentMotorValue == BACK_SPEED){
+            MotorPwm.set(FOWARD_BRAKE);
+            delay_ms(10);
 
+//            CurrentMotorValue = NEUTRAL;
+//            MotorPwm.set(CurrentMotorValue);
+        }
+    }
+    if (speedToSet == BACK_SPEED){
+        if (CurrentMotorValue == MEDIUM_SPEED || CurrentMotorValue == SLOW_SPEED){
+            MotorPwm.set(BRAKE);
+            delay_ms(10);
+
+            MotorPwm.set(NEUTRAL);
+            delay_ms(10);
+
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(CurrentMotorValue);
+        }
+        else if (CurrentMotorValue == BRAKE){
+            MotorPwm.set(NEUTRAL);
+            delay_ms(10);
+
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(CurrentMotorValue);
+        }
+        else{   /// Currently in neutral, and want to reverse
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(CurrentMotorValue);
+        }
+    }
+    if (speedToSet == MEDIUM_SPEED || speedToSet == SLOW_SPEED){
+        if (CurrentMotorValue < NEUTRAL){
+            MotorPwm.set(FOWARD_BRAKE);
+            delay_ms(10);
+
+            MotorPwm.set(NEUTRAL);
+            delay_ms(10);
+
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(CurrentMotorValue);
+        }
+    }
 }
 #endif
 
@@ -147,61 +168,20 @@ void MotorControl::pulseBrake()
 //    MotorPwm.set(NEUTRAL);
 }
 
-void MotorControl::SetSpeedToForwardOrReverse(float speedToSet)
-{
-    if (speedToSet == BACK_SPEED)
-        changeMotorDirection(speedToSet);
-    else
-        CurrentMotorValue = speedToSet;
-
-    MotorPwm.set(CurrentMotorValue);
-}
-
-void MotorControl::SetSpeedToReverseOrForward(float speedToSet,
-        float brakeOrBack)
-{
-    if (speedToSet == brakeOrBack || speedToSet > NEUTRAL){
-//        printf("Before changing from reverse to forward\n");
-        changeMotorDirection(speedToSet);
-    }
-    else
-        CurrentMotorValue = speedToSet;
-
-    MotorPwm.set(CurrentMotorValue);
-}
-
 void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet){
     // Set steering prior to changing motor speed
     CurrentServoValue = steeringDirectionToSet;
     ServoPwm.set(CurrentServoValue);
 
-    float brakeOrBack;
-    if (CurrentMotorValue == SLOW_SPEED){
-        SetSpeedToForwardOrReverse(speedToSet);
-    }
-    if (CurrentMotorValue == MEDIUM_SPEED){
-        SetSpeedToForwardOrReverse(speedToSet);
-    }
-    if (CurrentMotorValue == FAST_SPEED){
-        SetSpeedToForwardOrReverse(speedToSet);
-    }
     if (CurrentMotorValue == NEUTRAL){
-        if (speedToSet == BRAKE){
-            CurrentMotorValue = NEUTRAL;
-        }
-        else
+        if (speedToSet == BACK_SPEED || speedToSet == SLOW_SPEED || speedToSet == MEDIUM_SPEED){
             CurrentMotorValue = speedToSet;
-        MotorPwm.set(CurrentMotorValue);
+            MotorPwm.set(CurrentMotorValue);
+        }
     }
-    if (CurrentMotorValue == BACK_SPEED){
-        brakeOrBack = BRAKE;
-
-        SetSpeedToReverseOrForward(speedToSet, brakeOrBack);
-    }
-    if (CurrentMotorValue == BRAKE){
-        brakeOrBack = BACK_SPEED;
-
-        SetSpeedToReverseOrForward(speedToSet, brakeOrBack);
+    else{
+        if(speedToSet != CurrentMotorValue)
+            changeMotorDirection(speedToSet);
     }
 }
 

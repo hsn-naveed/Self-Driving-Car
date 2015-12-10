@@ -69,22 +69,22 @@ int main(void)
         testDutyCycle = motorObj.MEDIUM_SPEED;
         motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
         printf("motor set to %f\n", testDutyCycle);
-        delay_ms(1500);
+        delay_ms(75);
 
-        testDutyCycle = motorObj.BRAKE;
-                        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
-                        printf("motor set to %f\n", testDutyCycle);
-                        delay_ms(1000);
+//        testDutyCycle = motorObj.BRAKE;
+//        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
+//        printf("motor set to %f\n", testDutyCycle);
+//        delay_ms(1000);
 
         testDutyCycle = motorObj.BACK_SPEED;
         motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
         printf("motor set to %f\n", testDutyCycle);
-        delay_ms(1000);
+        delay_ms(75);
 
-        testDutyCycle = motorObj.BRAKE;
-                motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
-                printf("motor set to %f\n", testDutyCycle);
-                delay_ms(1000);
+//        testDutyCycle = motorObj.BRAKE;
+//        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, testDutyCycle);
+//        printf("motor set to %f\n", testDutyCycle);
+//        delay_ms(1000);
     } while(!SW.getSwitch(4));
 
 
