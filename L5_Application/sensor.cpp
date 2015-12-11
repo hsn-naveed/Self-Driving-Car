@@ -30,18 +30,18 @@ can_msg_t *sonarMsg = new can_msg_t ;
 void Range(){
 
     Range_right();
-    delay_ms(20); //changed from 50ms delay to 20ms for the 5hz Ranging
+    delay_ms(50);
 
     Range_middle();
-    delay_ms(20);
+    delay_ms(50);
 
     Range_left();
-    delay_ms(20);
+    delay_ms(50);
 
-/*
+
     Range_rear();
     delay_ms(50);
-*/
+
     CAN_send();
     test();
 }

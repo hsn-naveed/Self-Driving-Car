@@ -46,6 +46,26 @@
 
 uint16_t accepted_msg_ids[] = {0x100, 0x102, 0x104, 0x200};
 
+void foo()
+{
+    /*    while(1){
+
+     Range_left();
+     delay_ms(1000);
+     }*/
+    /**
+     * A few basic tasks for this bare-bone system :
+     *      1.  Terminal task provides gateway to interact with the board through UART terminal.
+     *      2.  Remote task allows you to use remote control to interact with the board.
+     *      3.  Wireless task responsible to receive, retry, and handle mesh network.
+     *
+     * Disable remote task if you are not using it.  Also, it needs SYS_CFG_ENABLE_TLM
+     * such that it can save remote control codes to non-volatile memory.  IR remote
+     * control codes can be learned by typing the "learn" terminal command.
+     */
+    scheduler_add_task(new terminalTask(PRIORITY_HIGH));
+}
+
 int main(void)
 {
     iCAN_init_FULLCAN(accepted_msg_ids, sizeof(accepted_msg_ids)/sizeof(*accepted_msg_ids));// sizeof(*accepted_msg_ids);
@@ -80,7 +100,7 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
-    scheduler_add_task(new terminalTask(PRIORITY_HIGH));
+    foo();
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
