@@ -38,9 +38,9 @@
 #include "can.h"
 
 /***************** ANDROID *****************/
-ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
-ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_values;
-ANDROID_TX_INFO_COORDINATES_t *android_coordinates_values;
+extern ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
+extern ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_values;
+extern ANDROID_TX_INFO_COORDINATES_t *android_coordinates_values;
 
 /***************** CAN MESSAGE *****************/
 can_msg_t *msg_tx;
@@ -63,8 +63,10 @@ bool period_init(void)
     uint32_t sglist[] = {0x700, 0x708, 0x712};
     size_t sizeOfArray = (sizeof(sglist) / sizeof(*sglist));
 
+    android_stop_go_values = new ANDROID_TX_STOP_GO_CMD_t {0};
+    android_checkpoints_values = new ANDROID_TX_INFO_CHECKPOINTS_t {0};
+    android_coordinates_values = new ANDROID_TX_INFO_COORDINATES_t {0};
     msg_tx = new can_msg_t {0};
-
     iCAN_init_FULLCAN(sglist, sizeOfArray);
 
     return true; // Must return true upon success
@@ -84,23 +86,23 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-    /*static QueueHandle_t sg_data_q = scheduler_task::getSharedObject("gs_queue");
 
-    if (NULL == sg_data_q)
+    if (android_stop_go_values->ANDROID_STOP_CMD_signal == 0)
     {
-        puts("No data recieved\n");
+        printf("%d %f %f\n", android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count,
+                             android_coordinates_values->GPS_INFO_COORDINATES_lat,
+                             android_coordinates_values->GPS_INFO_COORDINATES_long);
     }
-    else if (xQueueReceive(sg_data_q,_&android_stop_go_values, 0))
-    {*/
-#if 0
-    msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
-    msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx->data.qword, android_stop_go_values);
+    else
+    {
+        msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
+        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx->data.qword, android_stop_go_values);
 
-    if (iCAN_tx(msg_tx, &encoded_message))
-    {
-        printf("GO_STOP message sent to master\n");
+        if (iCAN_tx(msg_tx, &encoded_message))
+        {
+            printf("GO_STOP message sent to master\n");
+        }
     }
-#endif
 }
 
 void period_100Hz(void)

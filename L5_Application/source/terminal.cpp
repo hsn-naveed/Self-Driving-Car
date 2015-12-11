@@ -44,7 +44,6 @@
 #define MAX_COMMANDLINE_INPUT   128              ///< Max characters for command-line input
 #define CMD_TIMEOUT_DISK_VARS   (2 * 60 * 1000)  ///< Disk variables are saved if no command comes in for this duration
 
-
 terminalTask::terminalTask(uint8_t priority) :
         scheduler_task("terminal", 1024*4, priority),
         mCmdIface(2), /* 2 interfaces can be added without memory reallocation */
@@ -129,6 +128,9 @@ bool terminalTask::taskEntry()
                                                  "'telemetry get <comp. name> <name>' to get variable value\n");
     #endif
 
+    /*  Add Bluetooth terminal commands here    */
+    CMD_HANDLER_FUNC(bluetoothHandler);
+    cp.addHandler(bluetoothHandler, "bluetooth", "Bluetooth Parse");
 
     // Initialize Interrupt driven version of getchar & putchar
     Uart0& uart0 = Uart0::getInstance();
@@ -168,42 +170,19 @@ bool terminalTask::taskEntry()
     help = "help";
     mCmdProc.handleCommand(help, uart0);
 
-    /*  Add Bluetooth terminal commands here    */
-    CMD_HANDLER_FUNC(bluetoothHandler);
-    cp.addHandler(bluetoothHandler, "bluetooth", "Bluetooth Parse");
 
+    Uart2& uart2 = Uart2::getInstance();
     /* BLuetooth U2 Initialization */
-    Uart2& u2 = Uart2::getInstance();
-
-
-    if(u2.init(115200, 128, 256))
+    if(uart2.init(115200, 128, 256))
     {
-//        u2.setReady(false);
-//        printf("Initializing UART to bluetooth");
-//        u2.putline("\r\n+STWMOD=0\r\n");
-//        u2.putline("\r\n+STNA=Undergrad++\r\n");
-//        u2.putline("\r\n+STOAUT=1\r\n");
-//        u2.putline("\r\n+STAUTO=0\r\n");
-//        u2.putline("\r\n +STPIN=0000\r\n");
-//        delay_ms(2000); // This delay is required.
-//        u2.putline("\r\n+INQ=1\r\n");
-//        delay_ms(2000);
-        u2.setReady(true);
-        printf("\nDONE setup!\n");
-        printf("isReady = %d\n", u2.isReady());
-
-        sys_set_inchar_func(u2.getcharIntrDriven);
-        //sys_set_outchar_func(u2.putcharIntrDriven);
-        addCommandChannel(&u2, true);   // This will allow Bluetooth to be used in command terminal
+        uart2.setReady(true);
+        sys_set_inchar_func(uart2.getcharIntrDriven);
+        addCommandChannel(&uart2, true);   // This will allow Bluetooth to be used in command terminal
     }
     else
     {
         u0_dbg_printf("Couldn't connect uart2!\n");
     }
-
-//    /*  Add Bluetooth terminal commands here    */
-//    CMD_HANDLER_FUNC(bluetoothHandler);
-//    cp.addHandler(bluetoothHandler, "bluetooth", "Bluetooth Parse");
 
     return success;
 }

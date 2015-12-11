@@ -47,20 +47,28 @@
 #include "c_tlm_stream.h"
 #include "c_tlm_var.h"
 
-typedef union{
+#include "ANDROID_message.h"
+
+ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
+ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_values;
+ANDROID_TX_INFO_COORDINATES_t *android_coordinates_values;
+
+union{
         uint32_t vint;
         float vfloat;
         uint8_t byte[4];
-        struct{
-             uint8_t b0, b1, b2, b3;
-        };
 }data_type_t;
-
-Uart2& uart2 = Uart2::getInstance();
 
 CMD_HANDLER_FUNC(bluetoothHandler)
 {
-    if (cmdParams == "GO" | cmdParams.beginsWithIgnoreCase("GO"))
+
+    Uart2& uart2 = Uart2::getInstance();
+    char *lat, *lon;
+    lat = new char{0};
+    lon = new char{0};
+    float temp;
+
+    if (cmdParams.beginsWithIgnoreCase("GO"))
     {
        //GO
         printf("\n\nGO\n\n");
@@ -73,6 +81,15 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
     else if (cmdParams == "read")
     {
+        cmdParams.scanf("%s %s", lat, lon);
+
+        data_type_t.vint = (lat[0] & 0xFF) << 24 | (lat[1] & 0xFF) << 16 | (lat[2] & 0xFF) << 8 | (lat[3] & 0xFF);
+        temp = (float)data_type_t.vfloat;
+
+        android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)0;
+        android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count = (uint8_t)3;
+        android_coordinates_values->GPS_INFO_COORDINATES_lat = 33.661;
+        android_coordinates_values->GPS_INFO_COORDINATES_long = -124.669;
         printf("INSIDE READ\n");
         printf("%s",cmdParams.c_str());
         // add read from Android stuff here
