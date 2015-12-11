@@ -29,15 +29,14 @@ can_msg_t *sonarMsg = new can_msg_t ;
 
 void Range(){
 
-    Range_right();
+    Range_left();
     delay_ms(50);
 
     Range_middle();
     delay_ms(50);
 
-    Range_left();
+    Range_right();
     delay_ms(50);
-
 
     Range_rear();
     delay_ms(50);
@@ -52,28 +51,6 @@ void test(void){
            left_dist, middle_dist, right_dist, rear_dist);
 }
 
-
-/*
-void store(int in)
-{
-    if(i<2)
-    {
-        distL[i] = in;
-        i++;
-    }
-    i = 0;//reset
-}
-*/
-
-/*
-void filter(int in, int out)
-{
-
-    if()
-
-}
-
-*/
 
 void CAN_send(void)
 {
