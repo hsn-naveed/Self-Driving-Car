@@ -97,7 +97,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 // set to 1 if you want to test motor controls using switches
 // set to 0 if you want to use CAN (normal mode)
-#define DEBUG_NO_CAN 0
+#define DEBUG_NO_CAN 1
 
 
 ///////////////////////////LOGIC///////////////////////////
@@ -320,6 +320,12 @@ bool period_reg_tlm(void)
     return true; // Must return true upon success
 }
 
+void setDirectionBasedHeading() {
+
+   // g_heading_values->GPS_INFO_HEADING_current;
+
+}
+
 void disp_7LED(Display7LED val)
 {
     switch (val)
@@ -479,6 +485,7 @@ void generateMotorCommands(MotorCommands command)
 
             case COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW:
                 g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+
                 g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_SLOW;
                 disp_7LED(DISPLAY_FORWARD_STRAIGHT);
                 break;
@@ -823,7 +830,7 @@ void period_100Hz(void)
 
             // now we're testing without GPS
             // so we go straight
-            generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW);
+            generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM);
         }
         //drive motor based on sensor
         else {
@@ -842,13 +849,18 @@ void period_100Hz(void)
             //only middle is blocked
             else if(MIDDLE_BLOCKED && !LEFT_BLOCKED && !RIGHT_BLOCKED)
             {
-                  generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT); //turn right
-               // generateMotorCommands(COMMAND_MOTOR_STOP);
+                //turn based on left and right sensor values
+                if(g_sensor_left_value > g_sensor_right_value) {
+                    generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT); //turn left
+                } else {
+                    generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT); //turn right
+                }
 
             }
             //if left and middle is blocked
             else if (LEFT_BLOCKED && MIDDLE_BLOCKED && !RIGHT_BLOCKED)
             {
+
                 generateMotorCommands(COMMAND_MOTOR_FORWARD_HARD_RIGHT); //turn FULL right
 
             }
@@ -896,14 +908,20 @@ void period_100Hz(void)
 
         g_motor_cmd_steer_value = (uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_steer;
         g_motor_cmd_drive_value = (uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_drive;
-        //>>>>>>>>>>>>>>>>>SEND COMMANDS TO THE MOTOR
+        //>>>>>>>>>>>>>>>>>SEND COMM1ANDS TO THE MOTOR
         //prepare our message id
         msg_tx->msg_id = (uint32_t) MASTER_TX_MOTOR_CMD_HDR.mid;
-        msg_hdr_t encoded_message = MASTER_TX_MOTOR_CMD_encode((uint64_t*)&msg_tx->data.qword, g_motor_cmd_values);
+
+        msg_hdr_t encoded_message = MASTER_TX_MOTOR_CMD_encode((uint64_t*)&(msg_tx->data.qword), g_motor_cmd_values);
         //send our message
         if(iCAN_tx(msg_tx, &encoded_message))
-       {            //printf("Message sent to motor, In Free run mode!\n");
+       {           // printf("Message sent to motor\n");
+            printf("Steer value: %i\n",msg_tx->data.bytes[0]);
+            //printf("byte 0 = %i\n",g_motor_cmd_values->MASTER_MOTOR_CMD_steer);
+            //printf("byte 1 = %i\n",(uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_drive);
 
+       } else {
+           printf("\nNo message sent\n");
        }
 
 

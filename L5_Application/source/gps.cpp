@@ -9,13 +9,11 @@
 #include "io.hpp"
 #include "math.h"
 #include <stdlib.h>
+#include "L5_Application/gps.hpp"
 
-#define Pi 3.14159265
-
-void generateMotorCommands(int command);
 
 uint32_t des_heading(){
-    float degrees = atan((CAN_ST.gps_coords_dest->y_coordinate - CAN_ST.gps_coords_curr->y_coordinate)/(CAN_ST.gps_coords_dest->x_coordinate - CAN_ST.gps_coords_curr->x_coordinate)) * 180/Pi;
+    float degrees = atan((CAN_ST.gps_coords_dest->y_coordinate - CAN_ST.gps_coords_curr->y_coordinate)/(CAN_ST.gps_coords_dest->x_coordinate - CAN_ST.gps_coords_curr->x_coordinate)) * 180/PI;
 
 
     //First quadrant (dest.y-curr.y)>0 and (dest.x-curr.x)>0
