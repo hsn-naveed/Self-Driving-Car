@@ -93,6 +93,7 @@ float Magnetometer_Sensor::getHeading()
         }
         headingDegrees = (tempheading * 180 / pi);
     }
+
 //    headingDegrees += 35;
     return headingDegrees;
 }

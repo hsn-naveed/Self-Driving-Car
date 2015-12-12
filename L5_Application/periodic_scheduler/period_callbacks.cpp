@@ -50,6 +50,8 @@ const ANDROID_TX_ANDROID_INFO_COORDINATES_t ANDROID_INFO_COORDINATES__MIA_MSG = 
 can_msg_t tx_msg = {0};
 can_fullcan_msg_t rx_msg = {0};
 
+extern GPS_TX_GPS_INFO_HEADING_t headingToTx;
+
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
@@ -123,6 +125,8 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
+    headingToTx.GPS_INFO_HEADING_current = MS.getHeading();
+    printf("Encoded current heading value: %i\n", headingToTx.GPS_INFO_HEADING_current);
     LE.toggle(2);
 }
 
@@ -147,8 +151,16 @@ void period_100Hz(void)
             num_rx_checkpoints++;
         }
     }
-    headingToTx.GPS_INFO_HEADING_current = MS.getHeading();
-    iCAN_tx(&tx_msg, GPS_TX_GPS_INFO_HEADING_encode(&(tx_msg.data.qword), &headingToTx));
+//    tx_msg.msg_id = (uint32_t)716;
+    if(iCAN_tx(&tx_msg, GPS_TX_GPS_INFO_HEADING_encode(&(tx_msg.data.qword), &headingToTx))){
+        printf("CAN message sent!\n");
+    }
+    else{
+        printf("\n\nCould not send can message!!\n\n");
+    }
+//    printf("Encoded current heading value: %i\n", tx_msg.data.dwords[0]);
+//    printf("Encoded destination heading value: %i\n", tx_msg.data.dwords[1]);
+
     LE.toggle(3);
 }
 
