@@ -43,7 +43,7 @@
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
 
-uint16_t accepted_msg_ids[] = {0x100, 0x102, 0x104, 0x200};
+uint32_t accepted_msg_ids[] = {MASTER_TX_MASTER_HEARTBEAT_HDR.mid};
 
 int main(void)
 {

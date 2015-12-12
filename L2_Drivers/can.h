@@ -46,7 +46,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <stdint.h>
+#include <stdint.h> // gives uint8,16,32,64_t
 #include <stdbool.h>
 
 

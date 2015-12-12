@@ -139,7 +139,7 @@ static inline bool MASTER_TX_MASTER_HEARTBEAT_handle_mia(MASTER_TX_MASTER_HEARTB
         // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
         *msg = MASTER_HEARTBEAT__MIA_MSG;
         msg->mia_info.mia_counter_ms = MASTER_HEARTBEAT__MIA_MS;
-        msg->mia_info.is_mia = truetx;
+        msg->mia_info.is_mia = true;
         mia_occurred = true;
     }
 

@@ -65,8 +65,15 @@ periodicSchedulerTask::periodicSchedulerTask(void) :
     xTaskCreate(period_task_1000Hz, "1000Hz", PERIOD_TASKS_STACK_SIZE_BYTES/4, NULL, PRIORITY_CRITICAL + 4, NULL);
 }
 
+bool periodicSchedulerTask::init(void)
+{
+    return period_init();
+}
 
-
+bool periodicSchedulerTask::regTlm(void)
+{
+    return period_reg_tlm();
+}
 
 bool periodicSchedulerTask::run(void *p)
 {
@@ -89,6 +96,7 @@ bool periodicSchedulerTask::handlePeriodicSemaphore(const uint8_t index, const u
     SemaphoreHandle_t sem = sems[index];
     static uint8_t counters[prd_total] = { 0 };
     static const char * overrunMsg[] = { "1Hz task overrun", "10Hz task overrun", "100Hz task overrun", "1000Hz task overrun" };
+
 
     if (++counters[index] == frequency) {
         counters[index] = 0;

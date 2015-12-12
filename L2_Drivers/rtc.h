@@ -38,8 +38,8 @@ extern "C" {
  */
 typedef struct {
     /*    - Data -----     - Padding --- */
-    uint32_t sec  : 6;      uint32_t : 2;
-    uint32_t min  : 6;      uint32_t : 2;
+    uint32_t sec  : 6;      uint32_t : 2; // no name variables in bit fields is padding
+    uint32_t min  : 6;      uint32_t : 2; // aligins mem read
     uint32_t hour : 5;      uint32_t : 3;
     uint32_t dow  : 3;      uint32_t : 5;
 

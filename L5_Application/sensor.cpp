@@ -1,3 +1,10 @@
+/*
+ * sensor.c
+ *
+ *  Created Dec 11, 2015
+ *      Author: Onyema
+ **/
+
 #include <sensor.hpp>
 #include "can.h"
 #include "can_message.h"
@@ -40,15 +47,17 @@ void test(void){
 
 void CAN_send(void)
 {
-    SENSOR_TX_SENSOR_SONARS_t* sensor_values_tx;
-    uint64_t msg_tx;
+    SENSOR_TX_SENSOR_SONARS_t* sensor_values_tx = NULL;
+    can_msg_t msg_tx = { 0 };
 
     sensor_values_tx->SENSOR_SONARS_left = (uint8_t) left_dist;
     sensor_values_tx->SENSOR_SONARS_middle = (uint8_t) middle_dist;
     sensor_values_tx->SENSOR_SONARS_right = (uint8_t) right_dist;
     sensor_values_tx->SENSOR_SONARS_rear = (uint8_t) rear_dist;
 
-    msg_hdr_t encoded_msg =  SENSOR_TX_SENSOR_SONARS_encode((uint64_t*)&msg_tx , &sensor_values_tx); // might need to change
+    msg_hdr_t encoded_msg =  SENSOR_TX_SENSOR_SONARS_encode((uint64_t*)&msg_tx.data.qword , sensor_values_tx); // might need to change
+
+    msg_tx.msg_id = SENSOR_TX_SENSOR_SONARS_HDR.mid;
 
     iCAN_tx(&msg_tx, &encoded_msg); // this too
     printf("\nCAN sent\n");
