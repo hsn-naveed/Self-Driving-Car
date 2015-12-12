@@ -199,6 +199,9 @@ const uint32_t INFO_SONARS__MIA_MS = 1000;
 GPS_TX_INFO_HEADING_t* g_heading_values;
 GPS_TX_DESTINATION_REACHED_t* g_dest_reached_value;
 
+double g_heading_current_value = 0;
+double g_heading_destination_value = 0;
+
 ///////////////////////////----///////////////////////////
 
 
@@ -318,6 +321,10 @@ bool period_reg_tlm(void)
     //motor commands
     TLM_REG_VAR(master_cmp,g_motor_cmd_steer_value, tlm_uint);
     TLM_REG_VAR(master_cmp, g_motor_cmd_drive_value, tlm_uint);
+
+    //heading values
+    TLM_REG_VAR(master_cmp,g_heading_current_value, tlm_double);
+       TLM_REG_VAR(master_cmp, g_heading_destination_value, tlm_double);
 
     return true; // Must return true upon success
 }
@@ -574,6 +581,7 @@ void generateMotorCommands(MotorCommands command)
     //printMotorCommand(command);
 }
 
+
 void period_1Hz(void)
 {
     LE.toggle(1);
@@ -621,17 +629,23 @@ void period_100Hz(void)
     }
     //Compass sending current heading
     //TO DO @hsn_naveed
-    if (iCAN_rx(g_compass_msg, &gps_info_heading_hdr))
+    else if (iCAN_rx(g_compass_msg, &gps_info_heading_hdr))
     {
         portDISABLE_INTERRUPTS();
-        GPS_TX_INFO_HEADING_decode(g_heading_values,(uint64_t*) &g_compass_msg->data.qword, &GPS_TX_INFO_HEADING_HDR);
+        GPS_TX_INFO_HEADING_decode(g_heading_values,(uint64_t*) &(g_compass_msg->data.qword), &GPS_TX_INFO_HEADING_HDR);
         portENABLE_INTERRUPTS();
+
+        printf("HEADING current %" PRIu32 "\n", (uint32_t) g_heading_values->GPS_INFO_HEADING_current);
+        printf("HEADING dest %" PRIu32 "\n", (uint32_t) g_heading_values->GPS_INFO_HEADING_dst);
+
+        g_heading_current_value = (double) g_heading_values->GPS_INFO_HEADING_current;
+        g_heading_destination_value = (double) g_heading_values->GPS_INFO_HEADING_dst;
 
         g_compass_receive_counter = g_reset;
 
     }
     //Parse STOP&GO signal message
-    if (iCAN_rx(g_android_msg, &android_stop_go_cmd_hdr))
+    else if (iCAN_rx(g_android_msg, &android_stop_go_cmd_hdr))
     {
         portDISABLE_INTERRUPTS();
         ANDROID_TX_STOP_GO_CMD_decode(g_android_stop_go_value, (uint64_t*) &g_android_msg->data.qword, &ANDROID_TX_STOP_GO_CMD_HDR);
@@ -702,7 +716,7 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
-        CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
+
         portENABLE_INTERRUPTS();
         break;
 
@@ -712,7 +726,7 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
-        CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
+
         portENABLE_INTERRUPTS();
         break;
 
@@ -722,7 +736,7 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
-        CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
+
         portENABLE_INTERRUPTS();
         break;
 
@@ -732,7 +746,7 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
-        CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
+
         portENABLE_INTERRUPTS();
         break;
 
@@ -742,7 +756,7 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
-        CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
+
         portENABLE_INTERRUPTS();
         break;
 
@@ -752,7 +766,7 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
-        CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
+
         portENABLE_INTERRUPTS();
         break;
 
@@ -762,7 +776,7 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
-        CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
+
         portENABLE_INTERRUPTS();
         break;
 
@@ -772,12 +786,15 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
-        CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
+
         portENABLE_INTERRUPTS();
         break;
     }
 
-
+    //for heading simulation
+//    g_compass_msg->data.dwords[0] = (uint32_t) abs(AS.getX())/3;
+//    g_compass_msg->data.dwords[1] = (uint32_t) abs(AS.getY())/3;
+    //printf("x: %" PRIu32 "\n" ,(uint32_t) g_compass_msg->data.dwords[0] );
 #endif
 
     //NO MESSAGE RECEIVE LOGIC
@@ -822,6 +839,11 @@ void period_100Hz(void)
 
 
 #endif
+
+   // g_heading_values = (GPS_TX_INFO_HEADING_t*) &g_compass_msg->data.dwords[0];
+
+  //  printf("%" PRIu32 " " ,(uint32_t) g_heading_values->GPS_INFO_HEADING_current );
+   // printf("%" PRIu32 " \n" ,(uint32_t) g_heading_values->GPS_INFO_HEADING_dst );
 
     g_sensor_values =(SENSOR_TX_INFO_SONARS_t*) & g_sensor_msg->data.bytes[0];
     //prepare our motor commands container
@@ -941,14 +963,16 @@ void period_100Hz(void)
         msg_hdr_t encoded_message = MASTER_TX_MOTOR_CMD_encode((uint64_t*)&(msg_tx->data.qword), g_motor_cmd_values);
         //send our message
         if(iCAN_tx(msg_tx, &encoded_message))
-       {           // printf("Message sent to motor\n");
-            //printf("Steer value: %i\n",msg_tx->data.bytes[0]);
+        {
+            // printf("Message sent to motor\n");
+            // printf("Steer value: %i\n",msg_tx->data.bytes[0]);
+            // printf("drive value: %i\n",msg_tx->data.bytes[1]);
             //printf("byte 0 = %i\n",g_motor_cmd_values->MASTER_MOTOR_CMD_steer);
             //printf("byte 1 = %i\n",(uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_drive);
 
-       } else {
-           printf("\nNo message sent\n");
-       }
+        } else {
+            //printf("\nNo message sent\n");
+        }
 
 
     } //else if ( (g_current_mode == FREERUN) || (g_GO_signal && g_current_mode ==  AUTO) )
