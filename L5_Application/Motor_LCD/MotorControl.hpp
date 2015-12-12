@@ -19,6 +19,7 @@
 #include "utilities.h"
 #include "CAN_structs.h"
 #include "periodic_scheduler/periodic_callback.h"
+#include "L5_Application/can_message.h"
 
 
 /// Used for PWM
@@ -55,8 +56,8 @@ class MotorControl{
 
         /// Sets the currentMotorValue, and currentServo value to
         // appropriate settings based on HEX values received
-        float convertHexToFloatSpeed(uint8_t hexSpeedValue);
-        float convertHexToFloatSteer(uint8_t hexSteerValue);
+        float convertIntegerToFloatSpeed(uint8_t integerSpeedValue);
+        float convertIntegerToFloatSteer(uint8_t integerSteerValue);
 
         /// Used for changing between forward and reverse direction
         void changeMotorDirection(float speedToSet);
@@ -71,8 +72,9 @@ class MotorControl{
         bool escHasBeenInitialized;
 
     public:
-        /// Message structure from master_controller to motor
-        mast_mot_msg_t *motorControlStruct = new mast_mot_msg_t {0};
+        /// Struct containing the motor commands from the CAN message
+        MASTER_TX_MOTOR_CMD_t *receivedMotorCommands = new MASTER_TX_MOTOR_CMD_t {0};
+
 
         // Constructor to deal with scope issues
         // Pwm must be initialized outside (globally; e.g. in main.cpp) and passed in
@@ -84,7 +86,6 @@ class MotorControl{
             this->ServoPwm = obj->ServoPwm;
             this->CurrentMotorValue = obj->CurrentMotorValue;
             this->CurrentServoValue = obj->CurrentServoValue;
-            this->motorControlStruct = obj->motorControlStruct;
             this->escHasBeenInitialized = obj->escHasBeenInitialized;
         }
 
@@ -93,8 +94,8 @@ class MotorControl{
 
 
         /// Functions for using CAN message, and setting appropriate duty cycles and sending those pwm signals
-        void getCANMessageData(can_fullcan_msg_t *fc1, mast_mot_msg_t *motorControlStruct);
-        void convertFromHexAndApplyMotorAndServoSettings(mast_mot_msg_t *hexMotorControl);
+        void getCANMessageData(can_fullcan_msg_t *fullCanMessage, MASTER_TX_MOTOR_CMD_t *motorControlStructToUse);
+        void convertFromIntegerAndApplyServoAndMotorSettings(MASTER_TX_MOTOR_CMD_t *integerMotorControl);
         void setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet);
 
 

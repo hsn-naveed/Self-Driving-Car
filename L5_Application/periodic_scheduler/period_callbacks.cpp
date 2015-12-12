@@ -39,6 +39,7 @@
 #include "iCAN.hpp"
 #include "Motor_LCD/MotorControl.hpp"
 #include "Motor_LCD/MotorEncoder.hpp"
+#include "L5_Application/can_message.h"
 
 /// Object that will be used for calling all functions
    // related to motor and servo
@@ -46,7 +47,9 @@ MotorControl motorObj;
 
 /// These variables are used for CAN bus communication
 uint16_t motorMsgId = 0x704;
-can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t {0};
+can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t;
+msg_hdr_t motorMessage = MASTER_TX_MOTOR_CMD_HDR;
+//MASTER_TX_MOTOR_CMD_t *receivedMotorCommands = new MASTER_TX_MOTOR_CMD_t;
 
 
 /// This is the stack size used for each of the period tasks
@@ -58,7 +61,7 @@ float incrementSpeedAmount = .5;
 bool period_init(void)
 {
     /// CAN bus initialization
-    uint16_t std_list_arr[] = {0x704};
+    uint32_t std_list_arr[] = {(uint32_t)MASTER_TX_MOTOR_CMD_HDR.mid};
     size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
 
     iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
@@ -86,24 +89,36 @@ void setSpeedAndIncrementCount(float speedToSet){
 void period_1Hz(void)
 {
 
+
 }
 
 
 void period_10Hz(void)
 {
-        /// FIX set this
-            if (CAN_is_bus_off(can1)){
-                puts("====CAN BUS is off====\n");
-                LE.on(led1);
-            }
-            else if (iCAN_rx(canMsgForMotor, motorMsgId)){
-                motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
-                motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
-                LE.off(led1);
-            }
-            else{
-                LE.on(led1);
-            }
+    if (CAN_is_bus_off(can1)){
+        puts("====CAN BUS is off====\n");
+        LE.on(led1);
+    }
+    else if (iCAN_rx(canMsgForMotor, &motorMessage)){
+        MASTER_TX_MOTOR_CMD_decode(motorObj.receivedMotorCommands, &(canMsgForMotor->data.qword), &MASTER_TX_MOTOR_CMD_HDR);
+
+//        printf("received steer = %i\n", receivedMotorCommands->MASTER_MOTOR_CMD_steer);
+//                printf("received drive = %i\n", receivedMotorCommands->MASTER_MOTOR_CMD_drive);
+
+
+        motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
+
+
+
+//                motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
+//                motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
+        LE.off(led1);
+    }
+    else{
+        LE.on(led1);
+    }
+
+
 //    if (HasSpeedChanged() == 1){
 //        /// Adjust motor speed offset accordingly
 //        if ((motorObj.SLOW_SPEED + *SLOW_SPEED_OFFSET) <= motorObj.maxSlowSpeed){

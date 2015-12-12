@@ -194,20 +194,23 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
 }
 
 
-
-void MotorControl::getCANMessageData(can_fullcan_msg_t *fullCanMessage, mast_mot_msg_t *motorControlStructToUse){
+/// NOT NEEDED ANYMORE DUE TO DECODE
+void MotorControl::getCANMessageData(can_fullcan_msg_t *fullCanMessage, MASTER_TX_MOTOR_CMD_t *motorControlStructToUse){
     if (fullCanMessage != NULL){
-        motorControlStructToUse->LR =  (uint8_t)fullCanMessage->data.bytes[0];
-        motorControlStructToUse->SPD = (uint8_t) fullCanMessage->data.bytes[1];
+        motorControlStructToUse->MASTER_MOTOR_CMD_steer =  (uint8_t)fullCanMessage->data.bytes[0];
+        motorControlStructToUse->MASTER_MOTOR_CMD_drive = (uint8_t) fullCanMessage->data.bytes[1];
     }
 }
 
-void MotorControl::convertFromHexAndApplyMotorAndServoSettings(mast_mot_msg_t *hexMotorControl){
-    if (hexMotorControl != NULL){
-        uint8_t steeringHexVal = (uint8_t) hexMotorControl->LR;
-        uint8_t speedHexVal = (uint8_t) hexMotorControl->SPD;
+void MotorControl::convertFromIntegerAndApplyServoAndMotorSettings(MASTER_TX_MOTOR_CMD_t *receviedMotorCommandsToUse){
+    if (receviedMotorCommandsToUse != NULL){
+        uint8_t steeringIntVal = (uint8_t) receviedMotorCommandsToUse->MASTER_MOTOR_CMD_steer;
+        uint8_t speedIntVal = (uint8_t) receviedMotorCommandsToUse->MASTER_MOTOR_CMD_drive;
 
-        setSteeringDirectionAndSpeed(convertHexToFloatSteer(steeringHexVal), convertHexToFloatSpeed(speedHexVal));
+//        printf("received steer = %i\n", steeringIntVal);
+//        printf("received drive = %i\n", speedIntVal);
+
+        setSteeringDirectionAndSpeed(convertIntegerToFloatSteer(steeringIntVal), convertIntegerToFloatSpeed(speedIntVal));
     }
 }
 
@@ -218,37 +221,37 @@ void MotorControl::convertFromHexAndApplyMotorAndServoSettings(mast_mot_msg_t *h
  *@param hexSpeedValue - passed in hex value from mast_mot_msg_t
  *@output convertedHexToFloat - duty cycle % as float for PWM output
  */
-float MotorControl::convertHexToFloatSpeed(uint8_t hexSpeedValue){
-    float convertedHexToFloat = 0;
+float MotorControl::convertIntegerToFloatSpeed(uint8_t integerSpeedValue){
+    float convertedIntegerToFloat = 0;
 
-    if (hexSpeedValue == (uint8_t)COMMAND_FAST)
-        convertedHexToFloat = FAST_SPEED;
-    if (hexSpeedValue == (uint8_t)COMMAND_MEDIUM)
-        convertedHexToFloat = MEDIUM_SPEED;
-    if (hexSpeedValue == (uint8_t)COMMAND_SLOW)
-        convertedHexToFloat = SLOW_SPEED;
-    if (hexSpeedValue == (uint8_t)COMMAND_REVERSE)
-        convertedHexToFloat = BACK_SPEED;
-    if (hexSpeedValue == (uint8_t)COMMAND_STOP)
-        convertedHexToFloat = BRAKE;
+    if (integerSpeedValue == (uint8_t)COMMAND_FAST)
+        convertedIntegerToFloat = FAST_SPEED;
+    if (integerSpeedValue == (uint8_t)COMMAND_MEDIUM)
+        convertedIntegerToFloat = MEDIUM_SPEED;
+    if (integerSpeedValue == (uint8_t)COMMAND_SLOW)
+        convertedIntegerToFloat = SLOW_SPEED;
+    if (integerSpeedValue == (uint8_t)COMMAND_REVERSE)
+        convertedIntegerToFloat = BACK_SPEED;
+    if (integerSpeedValue == (uint8_t)COMMAND_STOP)
+        convertedIntegerToFloat = BRAKE;
 
-    return convertedHexToFloat;
+    return convertedIntegerToFloat;
 }
 
-float MotorControl::convertHexToFloatSteer(uint8_t hexSteerValue){
-    float convertedHexToFloat = 0;
+float MotorControl::convertIntegerToFloatSteer(uint8_t integerSteerValue){
+    float convertedIntegerToFloat = 0;
 
-    if (hexSteerValue == (uint8_t)COMMAND_STRAIGHT)
-        convertedHexToFloat = (float)STRAIGHT;
-    if (hexSteerValue == (uint8_t)COMMAND_FULL_LEFT)
-        convertedHexToFloat = (float)FULL_LEFT;
-    if (hexSteerValue == (uint8_t)COMMAND_SOFT_LEFT)
-        convertedHexToFloat = (float)SOFT_LEFT;
-    if (hexSteerValue == (uint8_t)COMMAND_FULL_RIGHT)
-        convertedHexToFloat = (float)FULL_RIGHT;
-    if (hexSteerValue == (uint8_t)COMMAND_SOFT_RIGHT)
-        convertedHexToFloat = (float)SOFT_RIGHT;
+    if (integerSteerValue == (uint8_t)COMMAND_STRAIGHT)
+        convertedIntegerToFloat = (float)STRAIGHT;
+    if (integerSteerValue == (uint8_t)COMMAND_HARD_LEFT)
+        convertedIntegerToFloat = (float)FULL_LEFT;
+    if (integerSteerValue == (uint8_t)COMMAND_SOFT_LEFT)
+        convertedIntegerToFloat = (float)SOFT_LEFT;
+    if (integerSteerValue == (uint8_t)COMMAND_HARD_RIGHT)
+        convertedIntegerToFloat = (float)FULL_RIGHT;
+    if (integerSteerValue == (uint8_t)COMMAND_SOFT_RIGHT)
+        convertedIntegerToFloat = (float)SOFT_RIGHT;
 
-    return convertedHexToFloat;
+    return convertedIntegerToFloat;
 }
 #endif // Public Functions
