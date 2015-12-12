@@ -63,39 +63,45 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 {
 
     Uart2& uart2 = Uart2::getInstance();
-    char *lat, *lon;
-    lat = new char{0};
-    lon = new char{0};
+
+    char *lat, *lon, *dump;
+    dump = new char[0];
+    lat = new char[0];
+    lon = new char[0];
     float temp;
+    android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)-1;
 
     if (cmdParams.beginsWithIgnoreCase("GO"))
     {
-       //GO
+       // GO
         printf("\n\nGO\n\n");
+        android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)1;
     }
 
-    else if (cmdParams == "STOP")
+    else if (cmdParams.beginsWithIgnoreCase("STOP"))
     {
+        // STOP
         printf("\n\nSTOP\n\n");
+        android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)0;
     }
 
-    else if (cmdParams == "read")
+    else if (cmdParams.beginsWithIgnoreCase("READ"))
     {
-        cmdParams.scanf("%s %s", lat, lon);
+        cmdParams.scanf("%*s %s %s", lat, lon);
+      //  printf("\n\n%s %s\n\n", lat, lon);
 
-        data_type_t.vint = (lat[0] & 0xFF) << 24 | (lat[1] & 0xFF) << 16 | (lat[2] & 0xFF) << 8 | (lat[3] & 0xFF);
+        data_type_t.vint = atoi(lat);
+
+  //      data_type_t.vint = (lat[0] & 0xFF) << 24 | (lat[1] & 0xFF) << 16 | (lat[2] & 0xFF) << 8 | (lat[3] & 0xFF);
         temp = (float)data_type_t.vfloat;
+        printf("\n\n%f\n\n", temp);
+        data_type_t.vint = atoi(lon);
+        temp = (float)data_type_t.vfloat;
+        printf("\n\n%f\n\n", temp);
 
-        android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)0;
         android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count = (uint8_t)3;
-        android_coordinates_values->GPS_INFO_COORDINATES_lat = 33.661;
-        android_coordinates_values->GPS_INFO_COORDINATES_long = -124.669;
-        printf("INSIDE READ\n");
-        printf("%s",cmdParams.c_str());
-        // add read from Android stuff here
-
-        // static QueueHandle_t gps_data_q = scheduler_task::addSharedObject("gps_data", go);
-
+        android_coordinates_values->GPS_INFO_COORDINATES_lat = 33.4;
+        android_coordinates_values->GPS_INFO_COORDINATES_long = -121.54;
     }
 
     return true;
