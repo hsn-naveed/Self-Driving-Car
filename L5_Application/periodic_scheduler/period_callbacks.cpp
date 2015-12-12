@@ -79,7 +79,7 @@
 #include "shared_handles.h"
 #include "tasks.hpp"
 #include <inttypes.h>
-
+#include <math.h>
 #include "can.h"
 
 // Include file for telemetry --> ALso need to turn on #define at sys_config.h (SYS_CFG_ENABLE_TLM)
@@ -149,6 +149,8 @@ MASTER_TX_MOTOR_CMD_t* g_motor_cmd_values;
 
 uint8_t g_motor_cmd_steer_value = 0;
 uint8_t g_motor_cmd_drive_value = 0;
+
+void generateMotorCommands(MotorCommands command);
 ///////////////////////////----///////////////////////////
 
 
@@ -321,8 +323,32 @@ bool period_reg_tlm(void)
 }
 
 void setDirectionBasedHeading() {
-
-   // g_heading_values->GPS_INFO_HEADING_current;
+        float tolerance = 20.0;
+        float current_sector = round(g_heading_values->GPS_INFO_HEADING_current/tolerance);
+        float dst_sector = round(g_heading_values->GPS_INFO_HEADING_dst/tolerance);
+    
+        //if we are in +/- 20 degrees of our destination heading, maintain course
+        if ((int)current_sector == (int)dst_sector)//+- X%
+            {
+            //go straight
+            generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW);
+        }
+        else if(g_heading_values->GPS_INFO_HEADING_dst>g_heading_values->GPS_INFO_HEADING_current) {
+            if (abs(g_heading_values->GPS_INFO_HEADING_dst - g_heading_values->GPS_INFO_HEADING_current)>=180){
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT);
+            }
+            else{
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT);
+            }
+        }
+        else{
+            if (abs(g_heading_values->GPS_INFO_HEADING_dst - g_heading_values->GPS_INFO_HEADING_current)>=180){
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT);
+            }
+            else{
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT);
+            }
+        }
 
 }
 
@@ -916,7 +942,7 @@ void period_100Hz(void)
         //send our message
         if(iCAN_tx(msg_tx, &encoded_message))
        {           // printf("Message sent to motor\n");
-            printf("Steer value: %i\n",msg_tx->data.bytes[0]);
+            //printf("Steer value: %i\n",msg_tx->data.bytes[0]);
             //printf("byte 0 = %i\n",g_motor_cmd_values->MASTER_MOTOR_CMD_steer);
             //printf("byte 1 = %i\n",(uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_drive);
 
