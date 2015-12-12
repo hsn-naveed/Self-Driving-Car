@@ -62,7 +62,7 @@ extern const MASTER_TX_MASTER_HEARTBEAT_t MASTER_HEARTBEAT__MIA_MSG;
 /// @returns the message header of this message
 static msg_hdr_t SENSOR_TX_SENSOR_SONARS_encode(uint64_t *to, SENSOR_TX_SENSOR_SONARS_t *from)
 {
-    *to = 0; ///< Default the entire destination data with zeroes
+//    *to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 
