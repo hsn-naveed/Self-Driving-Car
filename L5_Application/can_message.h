@@ -1,12 +1,12 @@
-/// DBC file: 243.dbc    Self node: MASTER
-/// This file should be included by a source file, for example: #include "generated.c"
-
 #ifndef CAN_MESSAGE_H__
 #define CAN_MESSAGE_H__
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
+/// DBC file: 243.dbc    Self node: MASTER
+/// This file should be included by a source file, for example: #include "generated.c"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -31,7 +31,7 @@ static const msg_hdr_t MASTER_TX_MOTOR_CMD_HDR =              {  604, 2 };
 static const msg_hdr_t ANDROID_TX_STOP_GO_CMD_HDR =           {  700, 1 };
 static const msg_hdr_t ANDROID_TX_INFO_CHECKPOINTS_HDR =      {  708, 1 };
 static const msg_hdr_t ANDROID_TX_INFO_COORDINATES_HDR =      {  712, 8 };
-static const msg_hdr_t GPS_TX_INFO_HEADING_HDR =              {  716, 4 };
+static const msg_hdr_t GPS_TX_INFO_HEADING_HDR =              {  716, 8 };
 static const msg_hdr_t GPS_TX_DESTINATION_REACHED_HDR =       {  720, 1 };
 
 
@@ -88,10 +88,10 @@ typedef struct {
 } ANDROID_TX_INFO_COORDINATES_t;
 
 
-/// Message: INFO_HEADING from 'GPS', DLC: 4 byte(s), MID: 716
+/// Message: INFO_HEADING from 'GPS', DLC: 8 byte(s), MID: 716
 typedef struct {
-    int32_t GPS_INFO_HEADING_current;    ///< B15:0   Destination: MASTER
-    int32_t GPS_INFO_HEADING_dst;        ///< B31:16   Destination: MASTER
+    uint32_t GPS_INFO_HEADING_current;   ///< B31:0   Destination: MASTER
+    uint32_t GPS_INFO_HEADING_dst;       ///< B63:32   Destination: MASTER
 
     mia_info_t mia_info;
 } GPS_TX_INFO_HEADING_t;
@@ -140,7 +140,7 @@ static msg_hdr_t MASTER_TX_HEARTBEAT_encode(uint64_t *to, MASTER_TX_HEARTBEAT_t 
 /// @returns the message header of this message
 static msg_hdr_t MASTER_TX_MOTOR_CMD_encode(uint64_t *to, MASTER_TX_MOTOR_CMD_t *from)
 {
-   // *to = 0; ///< Default the entire destination data with zeroes
+    //*to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 
@@ -309,13 +309,21 @@ static inline bool GPS_TX_INFO_HEADING_decode(GPS_TX_INFO_HEADING_t *to, const u
     raw_signal    |= (bits_from_byte << 0);
     bits_from_byte = ((bytes[1] >> 0) & 0xff); ///< 8 bit(s) from B8
     raw_signal    |= (bits_from_byte << 8);
+    bits_from_byte = ((bytes[2] >> 0) & 0xff); ///< 8 bit(s) from B16
+    raw_signal    |= (bits_from_byte << 16);
+    bits_from_byte = ((bytes[3] >> 0) & 0xff); ///< 8 bit(s) from B24
+    raw_signal    |= (bits_from_byte << 24);
     to->GPS_INFO_HEADING_current = (raw_signal * 1.0) + (0);
 
     raw_signal = 0;
-    bits_from_byte = ((bytes[2] >> 0) & 0xff); ///< 8 bit(s) from B16
+    bits_from_byte = ((bytes[4] >> 0) & 0xff); ///< 8 bit(s) from B32
     raw_signal    |= (bits_from_byte << 0);
-    bits_from_byte = ((bytes[3] >> 0) & 0xff); ///< 8 bit(s) from B24
+    bits_from_byte = ((bytes[5] >> 0) & 0xff); ///< 8 bit(s) from B40
     raw_signal    |= (bits_from_byte << 8);
+    bits_from_byte = ((bytes[6] >> 0) & 0xff); ///< 8 bit(s) from B48
+    raw_signal    |= (bits_from_byte << 16);
+    bits_from_byte = ((bytes[7] >> 0) & 0xff); ///< 8 bit(s) from B56
+    raw_signal    |= (bits_from_byte << 24);
     to->GPS_INFO_HEADING_dst = (raw_signal * 1.0) + (0);
 
     to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
@@ -489,7 +497,9 @@ static inline bool GPS_TX_DESTINATION_REACHED_handle_mia(GPS_TX_DESTINATION_REAC
     return mia_occurred;
 }
 
+
 #ifdef __cplusplus
 }
 #endif
 #endif /* CAN_MESSAGE_H__ */
+
