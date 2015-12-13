@@ -172,7 +172,7 @@ bool terminalTask::taskEntry()
 
     Uart2& uart2 = Uart2::getInstance();
     /* BLuetooth U2 Initialization */
-    if(uart2.init(115200, 128, 256))
+    if(uart2.init(115200, 1024, 2048))
     {
         uart2.setReady(true);
         sys_set_inchar_func(uart2.getcharIntrDriven);

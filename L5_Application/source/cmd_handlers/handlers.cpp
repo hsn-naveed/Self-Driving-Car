@@ -59,21 +59,21 @@ union{
         uint8_t byte[4];
 }data_type_t;
 
-typedef struct{
-        uint8_t g_checkpoints_counter = 0;
+typedef struct
+{
+        uint8_t checkpoints_counter = 0;
+        uint8_t checkpoints_total = 1;
 } checkpoints_control;
 
+checkpoints_control g_checkpoints_control;
 
 CMD_HANDLER_FUNC(bluetoothHandler)
 {
-    Uart2& uart2 = Uart2::getInstance();
-
     char *sizecoord = new char[0];
     char *lat, *lon;
     lat = new char[0];
     lon = new char[0];
-    float temp;
-    android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)-1;
+//    android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)-1;
 
     if (cmdParams.beginsWithIgnoreCase("GO"))
     {
@@ -104,13 +104,33 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
 
         // change to array
-        android_coordinates_values->GPS_INFO_COORDINATES_lat = atof(lat);
-        android_coordinates_values->GPS_INFO_COORDINATES_long = atof(lon);
+
+        android_coordinates_values[g_checkpoints_control.checkpoints_counter].GPS_INFO_COORDINATES_lat = atof(lat);
+        android_coordinates_values[g_checkpoints_control.checkpoints_counter].GPS_INFO_COORDINATES_long = atof(lon);
+        g_checkpoints_control.checkpoints_counter++;
+        g_checkpoints_control.checkpoints_total = g_checkpoints_control.checkpoints_counter;
     }
 
     else if (cmdParams.beginsWithIgnoreCase("ENDREAD"))
     {
+        g_checkpoints_control.checkpoints_counter = 0;
+    }
 
+    else if (cmdParams.beginsWithIgnoreCase("COORDTEST"))
+    {
+        printf("Size of array = %d\n", g_checkpoints_control.checkpoints_total);
+        for(int i = 0; i < g_checkpoints_control.checkpoints_total; i++)
+        {
+            printf("%f, %f\n",android_coordinates_values[i].GPS_INFO_COORDINATES_lat,
+                    android_coordinates_values[i].GPS_INFO_COORDINATES_long);
+        }
+    }
+
+    else if (cmdParams.beginsWithIgnoreCase("RESET"))
+    {
+        printf("\n\nRESET\n\n");
+        g_checkpoints_control.checkpoints_counter = 0;
+        g_checkpoints_control.checkpoints_total = 1;
     }
 
     return true;
