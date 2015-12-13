@@ -163,13 +163,14 @@ static uint8_t MINIMUM_LR_SENSOR_VALUE = 50;
 static uint8_t MINIMUM_MIDDLE_SENSOR_VALUE = 30;
 
 //for rear sensor
-static uint8_t MINIMUM_REAR_SENSOR_VALUE = 16;
+static uint8_t MINIMUM_REAR_SENSOR_VALUE = 10;
 
 //for all front sensor
 //unused
 static uint8_t CRITICAL_SENSOR_VALUE = 8;
 
 //Sensor readings based on minimum values
+bool CRITICAL_BLOCKED = false;
 bool LEFT_BLOCKED = false;
 bool RIGHT_BLOCKED = false;
 bool MIDDLE_BLOCKED = false;
@@ -502,6 +503,14 @@ void parseSensorReading(SENSOR_TX_INFO_SONARS_t* data)
     else
         FRONT_CLEAR = false;
 
+    //if one of our sensors is equal or below our critical value
+
+    if (data->SENSOR_INFO_SONARS_left <= CRITICAL_SENSOR_VALUE ||
+        data->SENSOR_INFO_SONARS_middle <= CRITICAL_SENSOR_VALUE ||
+        data->SENSOR_INFO_SONARS_right <= CRITICAL_SENSOR_VALUE  ) {
+        CRITICAL_BLOCKED = true;
+    } else CRITICAL_BLOCKED = false;
+
 }
 
 
@@ -549,15 +558,22 @@ void generateMotorCommands(MotorCommands command)
 
             case COMMAND_MOTOR_REVERSE_LEFT:
                 g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_LEFT;
-                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_REVERSE;//change this for reverse!
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_REVERSE;
                 disp_7LED(DISPLAY_REVERSE_LEFT);
                 break;
 
             case COMMAND_MOTOR_REVERSE_RIGHT:
                 g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_HARD_RIGHT;
-                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_REVERSE;//change this for reverse!
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_REVERSE;
                 disp_7LED(DISPLAY_REVERSE_RIGHT);
                 break;
+
+            case COMMAND_MOTOR_REVERSE_STRAIGHT:
+                g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_STRAIGHT;
+                g_motor_cmd_values->MASTER_MOTOR_CMD_drive = (uint8_t) COMMAND_REVERSE;
+                disp_7LED(DISPLAY_REVERSE_STRAIGHT);
+                break;
+
 
             case COMMAND_MOTOR_FORWARD_SOFT_LEFT:
                 g_motor_cmd_values->MASTER_MOTOR_CMD_steer = (uint8_t) COMMAND_SOFT_LEFT;
@@ -882,8 +898,24 @@ void period_100Hz(void)
         }
         //drive motor based on sensor
         else {
+            //if one of the sensors is below critical value
+            if (CRITICAL_BLOCKED) {
+                //if back sensor is also blocked
+                if (REAR_BLOCKED)
+                {
+                    generateMotorCommands(COMMAND_MOTOR_STOP);
+                    // generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
+                    disp_7LED(DISPLAY_STOP);
+                }
+                //if back is clear, reverse-straight
+                else
+                {
+                    generateMotorCommands(COMMAND_MOTOR_REVERSE_STRAIGHT);
+
+                }
+            }
             // only left is blocked         !l m r = -->
-            if (LEFT_BLOCKED && !RIGHT_BLOCKED && !MIDDLE_BLOCKED)
+            else if (LEFT_BLOCKED && !RIGHT_BLOCKED && !MIDDLE_BLOCKED)
             {
                 generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT); //turn soft right
 
@@ -932,7 +964,7 @@ void period_100Hz(void)
                 //if back sensor is also blocked
                 if (REAR_BLOCKED)
                 {
-                   generateMotorCommands(COMMAND_MOTOR_STOP);
+                    generateMotorCommands(COMMAND_MOTOR_STOP);
                     // generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
                     disp_7LED(DISPLAY_STOP);
                 }
