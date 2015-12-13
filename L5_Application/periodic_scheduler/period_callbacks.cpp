@@ -97,7 +97,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 // set to 1 if you want to test motor controls using switches
 // set to 0 if you want to use CAN (normal mode)
-#define DEBUG_NO_CAN 1
+#define DEBUG_NO_CAN 0
 
 
 ///////////////////////////LOGIC///////////////////////////
