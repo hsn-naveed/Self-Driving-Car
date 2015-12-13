@@ -11,7 +11,7 @@
 
 /// Variables used for DBC can communcation
 // immediately initialize them, so that they don't create any crashing on the board
-SENSOR_TX_INFO_SONARS_HDR* sensor_values_tx = new SENSOR_TX_INFO_SONARS_HDR {0};
+SENSOR_TX_INFO_SONARS_t *sensor_values_tx = new SENSOR_TX_INFO_SONARS_t{0};
 can_msg_t *msg_tx = new can_msg_t {0};
 
 int Left_trig_time, Middle_trig_time, Right_trig_time,
@@ -52,17 +52,19 @@ void test(void){
 
 void CAN_send(void)
 {
+
+
     /// Store the sensor values into the message that's to be sent
-    sensor_values_tx->SENSOR_SONARS_left = (float) left_dist;
-    sensor_values_tx->SENSOR_SONARS_middle = (float) middle_dist;
-    sensor_values_tx->SENSOR_SONARS_right = (float) right_dist;
-    sensor_values_tx->SENSOR_SONARS_rear = (float) rear_dist;
+    sensor_values_tx->SENSOR_INFO_SONARS_left = (float) left_dist;
+    sensor_values_tx->SENSOR_INFO_SONARS_middle = (float) middle_dist;
+    sensor_values_tx->SENSOR_INFO_SONARS_right = (float) right_dist;
+    sensor_values_tx->SENSOR_INFO_SONARS_rear = (float) rear_dist;
 
     /// The message that will be encoded with the stored values
-    msg_hdr_t encoded_msg =  SENSOR_TX_SENSOR_SONARS_encode((uint64_t*)&(msg_tx->data.qword) , sensor_values_tx);
+    msg_hdr_t encoded_msg =  SENSOR_TX_INFO_SONARS_encode((uint64_t*)&(msg_tx->data.qword) , sensor_values_tx);
 
     /// Store the proper message ID
-    msg_tx->msg_id = SENSOR_TX_SENSOR_SONARS_HDR.mid;
+    msg_tx->msg_id = SENSOR_TX_INFO_SONARS_HDR.mid;
 
     /// Send message with stored sensor values, and proper message id
     iCAN_tx(msg_tx, &encoded_msg);

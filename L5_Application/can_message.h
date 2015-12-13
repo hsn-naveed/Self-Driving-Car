@@ -1,3 +1,9 @@
+#ifndef CAN_MESSAGE_H__
+#define CAN_MESSAGE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// DBC file: 243.dbc    Self node: SENSOR
 /// This file should be included by a source file, for example: #include "generated.c"
 #include <stdbool.h>
@@ -168,3 +174,8 @@ static inline bool MASTER_TX_HEARTBEAT_handle_mia(MASTER_TX_HEARTBEAT_t *msg, ui
 
     return mia_occurred;
 }
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* CAN_MESSAGE_H__ */
