@@ -64,8 +64,8 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
     Uart2& uart2 = Uart2::getInstance();
 
-    char *lat, *lon, *dump;
-    dump = new char[0];
+    char *sizecoord = new char[0];
+    char *lat, *lon;
     lat = new char[0];
     lon = new char[0];
     float temp;
@@ -85,23 +85,21 @@ CMD_HANDLER_FUNC(bluetoothHandler)
         android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)0;
     }
 
-    else if (cmdParams.beginsWithIgnoreCase("READ"))
+    else if (cmdParams.beginsWithIgnoreCase("READSIZE"))
+    {
+        cmdParams.scanf("%*s %s", sizecoord);
+        printf("SIZE OF CHECKPOINT = %d\n", atoi(sizecoord));
+        android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count = (uint8_t) atoi(sizecoord);
+    }
+
+    else if (cmdParams.beginsWithIgnoreCase("READ") && !cmdParams.beginsWithIgnoreCase("READSIZE"))
     {
         cmdParams.scanf("%*s %s %s", lat, lon);
-      //  printf("\n\n%s %s\n\n", lat, lon);
 
-        data_type_t.vint = atoi(lat);
+        printf("LAT_float = %f\n LONG_float = %f\n", atof(lat), atof(lon));
 
-  //      data_type_t.vint = (lat[0] & 0xFF) << 24 | (lat[1] & 0xFF) << 16 | (lat[2] & 0xFF) << 8 | (lat[3] & 0xFF);
-        temp = (float)data_type_t.vfloat;
-        printf("\n\n%f\n\n", temp);
-        data_type_t.vint = atoi(lon);
-        temp = (float)data_type_t.vfloat;
-        printf("\n\n%f\n\n", temp);
-
-        android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count = (uint8_t)3;
-        android_coordinates_values->GPS_INFO_COORDINATES_lat = 33.4;
-        android_coordinates_values->GPS_INFO_COORDINATES_long = -121.54;
+        android_coordinates_values->GPS_INFO_COORDINATES_lat = atof(lat);
+        android_coordinates_values->GPS_INFO_COORDINATES_long = atof(lon);
     }
 
     return true;
