@@ -49,6 +49,7 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
         void transmitPoints(List<LatLng> dirPoints);
         void goSignal(int i);
         void stopSignal(int i);
+        void resetSignal();
     }
 
     /*
@@ -224,6 +225,7 @@ public class Map_Fragment extends Fragment implements View.OnClickListener{
                 clearPoints(latty);
                 dirPoints.clear();
                 Log.d("RESET", "RESET");
+                toActivity.resetSignal();
                 break;
 
             // After SET is pressed. Press GO to send the coordinates to MainActivity. MainActivity will transmit

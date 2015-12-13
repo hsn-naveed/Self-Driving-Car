@@ -122,11 +122,19 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
     @Override
     public void transmitPoints(List<LatLng> dirPoints) {
         List<LatLng> newDir = new ArrayList<LatLng>(dirPoints);
-        byte[] Lat;
-        byte[] Long;
+//        byte[] Lat;
+//        byte[] Long;
         ConnectedThread connectedThread = new ConnectedThread(mmSocket);
 
         Log.d("ACTIVITY DIR SIZE", "" + newDir.size());
+
+        String bluetooth_read_size = "bluetooth readsize " + Integer.toString(newDir.size()) + "\n";
+
+        synchronized (this) {
+            connectedThread.write(bluetooth_read_size.getBytes());
+            connectedThread.flush();
+        }
+
         for (int i = 0; i < newDir.size(); i++)
         {
             // Put latitude and longitude into their own separate byte arrays.
@@ -134,8 +142,8 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
 //            Long = ByteBuffer.allocate(4).putFloat((float) newDir.get(i).longitude).array();
 //            byte[] latlng = catArray(Lat,Long);
 
-            String bluetooth_read = "bluetooth read\n\n" + " LAT " + Float.toString((float) newDir.get(i).latitude)
-                    + " LONG " + Float.toString((float) newDir.get(i).longitude);
+            String bluetooth_read = "bluetooth read " + Float.toString((float) newDir.get(i).latitude)
+                    + " " + Float.toString((float) newDir.get(i).longitude) + "\n";
 
             Log.d(APP_ID, bluetooth_read);
 
@@ -147,17 +155,25 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
 //            Log.d(APP_ID + " LONG", "" + g);
 
             synchronized (this) {
-                // Sends to thread to write. catArray(Lat, Long) concatenates Lat/Lng arrays to a single byte array.
                 connectedThread.write(bluetooth_read.getBytes());
                 connectedThread.flush();
             }
         }
 
+        String bluetooth_end = "bluetooth endread\n";
+
+        synchronized (this) {
+            connectedThread.write(bluetooth_end.getBytes());
+            connectedThread.flush();
+        }
+
+        Log.d(APP_ID,"" + bluetooth_end);
+
     }
 
     @Override
     public void goSignal(int i) {
-        byte[] sendGo = "bluetooth GO\n\n".getBytes();
+        byte[] sendGo = "bluetooth GO\n".getBytes();
 //        byte[] sendGo = ByteBuffer.allocate(1).putInt(i).array();   // 1 byte, i = 1 for Go.
         Log.d(APP_ID + " GO", "" + sendGo);
         ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
@@ -167,11 +183,20 @@ public class MainActivity extends FragmentActivity implements Map_Fragment.sendP
 
     @Override
     public void stopSignal(int i) {
-        byte [] sendStop = "bluetooth STOP\n\n".getBytes();
+        byte [] sendStop = "bluetooth STOP\n".getBytes();
 //        byte [] sendStop = ByteBuffer.allocate(1).putInt(i).array();    // 1 byte, i = 0 for Stop.
         Log.d(APP_ID + " STOP", "" + sendStop);
         ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
         mConnectedThread.write(sendStop);
+        mConnectedThread.flush();
+    }
+
+    @Override
+    public void resetSignal() {
+        byte [] sendReset = "bluetooth RESET\n".getBytes();
+        Log.d(APP_ID + " RESET", "" + sendReset);
+        ConnectedThread mConnectedThread = new ConnectedThread(mmSocket);
+        mConnectedThread.write(sendReset);
         mConnectedThread.flush();
     }
 
