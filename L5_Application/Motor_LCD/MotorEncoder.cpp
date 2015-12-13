@@ -11,12 +11,11 @@
 
 
 const int circumferenceOfTire = 31; // cm
-const double distanceInMeters = circumferenceOfTire / 100;
 
 /// Done through excel sheet after logging speed
 const double slowSpeedAverageTime = 190;
-const double slowSpeedAverageRateInMetersPerMilliSecond = circumferenceOfTire/slowSpeedAverageTime;
-double tempSlowSpeedAverage = slowSpeedAverageRateInMetersPerMilliSecond;
+const double slowSpeedAverageRateInCMPerMilliSecond = circumferenceOfTire/slowSpeedAverageTime;
+double tempSlowSpeedAverage = slowSpeedAverageRateInCMPerMilliSecond;
 /*
  * @about Each tick represents a distance traveled of about 31cm
  * Diameter = 9.9cm, radius = 4.95 cm
@@ -24,7 +23,6 @@ double tempSlowSpeedAverage = slowSpeedAverageRateInMetersPerMilliSecond;
  *
  * Will calculate rate based of distance traveled and amount of time it took.
  */
-//double previousSpeed = 0;
 double *currentSpeed = &tempSlowSpeedAverage;
 
 double percentDifferenceOfSpeed = .05;
@@ -42,11 +40,10 @@ void storeBeginTime(){
     else{
         CalculateSpeed();
         startOfNewTime = true;
-        //delay_ms(100);
     }
 }
 
-char temp;
+
 void CalculateSpeed(){
     double timeDiffOfTickMarksInSeconds = (double)sys_get_uptime_ms() - (double)beginTimeOfEncoder;
 
@@ -56,14 +53,11 @@ void CalculateSpeed(){
 
     *currentSpeed = circumferenceOfTire / timeDiffOfTickMarksInSeconds;
     //printf("Current speed = %.5f, average measured speed = %.5f\n\n", *currentSpeed, slowSpeedAverageRateInMetersPerMilliSecond);
-
-//    temp = 25;
-//    LD.setNumber(temp);
 }
 
 int HasSpeedChanged(){
-    upperLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInMetersPerMilliSecond + (slowSpeedAverageRateInMetersPerMilliSecond * percentDifferenceOfSpeed));
-    lowerLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInMetersPerMilliSecond - (slowSpeedAverageRateInMetersPerMilliSecond * percentDifferenceOfSpeed));
+    upperLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInCMPerMilliSecond + (slowSpeedAverageRateInCMPerMilliSecond * percentDifferenceOfSpeed));
+    lowerLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInCMPerMilliSecond - (slowSpeedAverageRateInCMPerMilliSecond * percentDifferenceOfSpeed));
 
     if (*currentSpeed < lowerLimitThresholdDiffOfSpeed){
         printf("CUR < LOWER\nCurrent speed = %.5f, lowerLimit = %.10f\n\n", *currentSpeed, lowerLimitThresholdDiffOfSpeed);

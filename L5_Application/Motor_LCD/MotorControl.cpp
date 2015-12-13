@@ -193,22 +193,10 @@ void MotorControl::setSteeringDirectionAndSpeed(float steeringDirectionToSet, fl
     }
 }
 
-
-/// NOT NEEDED ANYMORE DUE TO DECODE
-void MotorControl::getCANMessageData(can_fullcan_msg_t *fullCanMessage, MASTER_TX_MOTOR_CMD_t *motorControlStructToUse){
-    if (fullCanMessage != NULL){
-        motorControlStructToUse->MASTER_MOTOR_CMD_steer =  (uint8_t)fullCanMessage->data.bytes[0];
-        motorControlStructToUse->MASTER_MOTOR_CMD_drive = (uint8_t) fullCanMessage->data.bytes[1];
-    }
-}
-
 void MotorControl::convertFromIntegerAndApplyServoAndMotorSettings(MASTER_TX_MOTOR_CMD_t *receviedMotorCommandsToUse){
     if (receviedMotorCommandsToUse != NULL){
         uint8_t steeringIntVal = (uint8_t) receviedMotorCommandsToUse->MASTER_MOTOR_CMD_steer;
         uint8_t speedIntVal = (uint8_t) receviedMotorCommandsToUse->MASTER_MOTOR_CMD_drive;
-
-//        printf("received steer = %i\n", steeringIntVal);
-//        printf("received drive = %i\n", speedIntVal);
 
         setSteeringDirectionAndSpeed(convertIntegerToFloatSteer(steeringIntVal), convertIntegerToFloatSpeed(speedIntVal));
     }

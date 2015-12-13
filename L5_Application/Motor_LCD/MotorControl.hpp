@@ -80,7 +80,6 @@ class MotorControl{
         // Pwm must be initialized outside (globally; e.g. in main.cpp) and passed in
         MotorControl(PWM &motorPwmToSet, PWM &servoPwmToSet);
         MotorControl();
-
         MotorControl operator=(MotorControl *obj){
             this->MotorPwm = obj->MotorPwm;
             this->ServoPwm = obj->ServoPwm;
@@ -94,14 +93,13 @@ class MotorControl{
 
 
         /// Functions for using CAN message, and setting appropriate duty cycles and sending those pwm signals
-        void getCANMessageData(can_fullcan_msg_t *fullCanMessage, MASTER_TX_MOTOR_CMD_t *motorControlStructToUse);
         void convertFromIntegerAndApplyServoAndMotorSettings(MASTER_TX_MOTOR_CMD_t *integerMotorControl);
         void setSteeringDirectionAndSpeed(float steeringDirectionToSet, float speedToSet);
 
 
-        /// Speed setting
         const float pwmFreqInMs = (ONE_SECOND_MS)/MOTOR_SERVO_PWM_FREQ;
 
+        /// Speed settings
         const float FOWARD_BRAKE = ((FOWARD_BRAKE_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
         const float FAST_SPEED = ((FORWARD_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
         const float BRAKE = ((REVERSE_PWM_PERIOD_MS)/pwmFreqInMs) * 100;

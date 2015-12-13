@@ -46,10 +46,8 @@
 MotorControl motorObj;
 
 /// These variables are used for CAN bus communication
-uint16_t motorMsgId = 0x704;
 can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t;
 msg_hdr_t motorMessage = MASTER_TX_MOTOR_CMD_HDR;
-//MASTER_TX_MOTOR_CMD_t *receivedMotorCommands = new MASTER_TX_MOTOR_CMD_t;
 
 
 /// This is the stack size used for each of the period tasks
@@ -80,15 +78,8 @@ bool period_reg_tlm(void){
     return true; // Must return true upon success
 }
 
-int count = 0;
-void setSpeedAndIncrementCount(float speedToSet){
-    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, speedToSet);
-    printf("\nCount = %i, speed = %.5f\n\n",count++, speedToSet);
-}
-
 void period_1Hz(void)
 {
-
 
 }
 
@@ -100,18 +91,12 @@ void period_10Hz(void)
         LE.on(led1);
     }
     else if (iCAN_rx(canMsgForMotor, &motorMessage)){
+        portDISABLE_INTERRUPTS();
         MASTER_TX_MOTOR_CMD_decode(motorObj.receivedMotorCommands, &(canMsgForMotor->data.qword), &MASTER_TX_MOTOR_CMD_HDR);
-
-//        printf("received steer = %i\n", receivedMotorCommands->MASTER_MOTOR_CMD_steer);
-//                printf("received drive = %i\n", receivedMotorCommands->MASTER_MOTOR_CMD_drive);
-
+        portENABLE_INTERRUPTS();
 
         motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
 
-
-
-//                motorObj.getCANMessageData(canMsgForMotor, motorObj.motorControlStruct);
-//                motorObj.convertFromHexAndApplyMotorAndServoSettings(motorObj.motorControlStruct);
         LE.off(led1);
     }
     else{
