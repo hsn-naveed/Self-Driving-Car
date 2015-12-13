@@ -170,7 +170,6 @@ bool terminalTask::taskEntry()
     help = "help";
     mCmdProc.handleCommand(help, uart0);
 
-
     Uart2& uart2 = Uart2::getInstance();
     /* BLuetooth U2 Initialization */
     if(uart2.init(115200, 128, 256))

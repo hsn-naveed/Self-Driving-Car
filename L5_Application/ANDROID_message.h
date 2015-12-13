@@ -88,7 +88,7 @@ extern const GPS_TX_DESTINATION_REACHED_t DESTINATION_REACHED__MIA_MSG;
 /// @returns the message header of this message
 static msg_hdr_t ANDROID_TX_STOP_GO_CMD_encode(uint64_t *to, ANDROID_TX_STOP_GO_CMD_t *from)
 {
-    *to = 0; ///< Default the entire destination data with zeroes
+ //   *to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 
@@ -103,7 +103,7 @@ static msg_hdr_t ANDROID_TX_STOP_GO_CMD_encode(uint64_t *to, ANDROID_TX_STOP_GO_
 /// @returns the message header of this message
 static msg_hdr_t ANDROID_TX_INFO_CHECKPOINTS_encode(uint64_t *to, ANDROID_TX_INFO_CHECKPOINTS_t *from)
 {
-    *to = 0; ///< Default the entire destination data with zeroes
+//    *to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 
@@ -120,7 +120,7 @@ static msg_hdr_t ANDROID_TX_INFO_CHECKPOINTS_encode(uint64_t *to, ANDROID_TX_INF
 /// @returns the message header of this message
 static msg_hdr_t ANDROID_TX_INFO_COORDINATES_encode(uint64_t *to, ANDROID_TX_INFO_COORDINATES_t *from)
 {
-    *to = 0; ///< Default the entire destination data with zeroes
+ //   *to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 

@@ -42,6 +42,9 @@ extern ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
 extern ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_values;
 extern ANDROID_TX_INFO_COORDINATES_t *android_coordinates_values;
 
+/***************** CAN MESSAGE *****************/
+can_msg_t *msg_tx;
+
 /***************** CAN MESSAGE ID *****************/
 msg_hdr_t android_stop_go_cmd_hdr = ANDROID_TX_STOP_GO_CMD_HDR;
 msg_hdr_t android_info_checkpoint_hdr = ANDROID_TX_INFO_CHECKPOINTS_HDR;
@@ -60,6 +63,7 @@ bool period_init(void)
     uint32_t sglist[] = {ANDROID_TX_STOP_GO_CMD_HDR.mid, ANDROID_TX_INFO_CHECKPOINTS_HDR.mid, ANDROID_TX_INFO_COORDINATES_HDR.mid};
     size_t sizeOfArray = (sizeof(sglist) / sizeof(*sglist));
 
+    msg_tx = new can_msg_t{0};
     android_stop_go_values = new ANDROID_TX_STOP_GO_CMD_t {0};
     android_checkpoints_values = new ANDROID_TX_INFO_CHECKPOINTS_t {0};
     android_coordinates_values = new ANDROID_TX_INFO_COORDINATES_t {0};
@@ -83,32 +87,46 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-    can_msg_t msg_tx = {0};
     if (android_stop_go_values->ANDROID_STOP_CMD_signal == 0)
     {
+      /*  printf("%d %d %f %f\n", android_stop_go_values->ANDROID_STOP_CMD_signal,
+                                    android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count,
+                                    android_coordinates_values[1].GPS_INFO_COORDINATES_lat,
+                                    android_coordinates_values[1].GPS_INFO_COORDINATES_long);
+*/
+        msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
+        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx->data.qword, android_stop_go_values);
 
-        msg_tx.msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
-        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx.data.qword, android_stop_go_values);
-
-        if (iCAN_tx(&msg_tx, &encoded_message))
+        if (iCAN_tx(msg_tx, &encoded_message))
         {
            printf("STOP message sent to master\n");
         }
     }
-    if (android_stop_go_values->ANDROID_STOP_CMD_signal == 1)
+    else if (android_stop_go_values->ANDROID_STOP_CMD_signal == 1)
     {
-        msg_tx.msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
-        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx.data.qword, android_stop_go_values);
+        msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
+        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&msg_tx->data.qword, android_stop_go_values);
 
-        if (iCAN_tx(&msg_tx, &encoded_message))
+        if (iCAN_tx(msg_tx, &encoded_message))
         {
             printf("GO message sent to master\n");
         }
+        msg_tx->msg_id = (uint32_t)ANDROID_TX_INFO_CHECKPOINTS_HDR.mid;
+        encoded_message = ANDROID_TX_INFO_CHECKPOINTS_encode((uint64_t*)&msg_tx->data.qword, android_checkpoints_values);
+        if (iCAN_tx(msg_tx, &encoded_message))
+        {
+            printf("checkpoint sent!\n");
+        }
 
-        /*      printf("%d %f %f\n", android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count,
-                                   android_coordinates_values->GPS_INFO_COORDINATES_lat,
-                                   android_coordinates_values->GPS_INFO_COORDINATES_long);
-        */
+        for (int i = 0; i < android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count; i++)
+        {
+            msg_tx->msg_id = (uint32_t)ANDROID_TX_INFO_COORDINATES_HDR.mid;
+            encoded_message = ANDROID_TX_INFO_COORDINATES_encode((uint64_t*)&msg_tx->data.qword, &android_coordinates_values[i]);
+            if (iCAN_tx(msg_tx, &encoded_message))
+            {
+                printf("%d android_coordinates_values sent");
+            }
+        }
     }
 }
 
