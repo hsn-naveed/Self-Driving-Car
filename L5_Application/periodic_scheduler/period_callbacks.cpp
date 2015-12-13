@@ -622,7 +622,7 @@ void period_100Hz(void)
     {
 
         portDISABLE_INTERRUPTS();
-        SENSOR_TX_INFO_SONARS_decode(g_sensor_values, (uint64_t*) &g_sensor_msg->data.qword, &SENSOR_TX_INFO_SONARS_HDR);
+        SENSOR_TX_INFO_SONARS_decode(g_sensor_values, (uint64_t*) &(g_sensor_msg->data.qword), &SENSOR_TX_INFO_SONARS_HDR);
         portENABLE_INTERRUPTS();
 
         g_sensor_receive_counter = g_reset;
