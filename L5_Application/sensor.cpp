@@ -11,7 +11,7 @@
 
 /// Variables used for DBC can communcation
 // immediately initialize them, so that they don't create any crashing on the board
-SENSOR_TX_SENSOR_SONARS_t* sensor_values_tx = new SENSOR_TX_SENSOR_SONARS_t {0};
+SENSOR_TX_INFO_SONARS_HDR* sensor_values_tx = new SENSOR_TX_INFO_SONARS_HDR {0};
 can_msg_t *msg_tx = new can_msg_t {0};
 
 int Left_trig_time, Middle_trig_time, Right_trig_time,

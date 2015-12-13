@@ -26,7 +26,8 @@
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "sensor.hpp"
-#include "can_message.h"
+//#include "can_message.h"
+#include "iCAN.hpp"
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -43,7 +44,7 @@
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
 
-uint32_t accepted_msg_ids[] = {MASTER_TX_MASTER_HEARTBEAT_HDR.mid};
+uint32_t accepted_msg_ids[] = {MASTER_TX_HEARTBEAT_HDR.mid};
 
 int main(void)
 {
