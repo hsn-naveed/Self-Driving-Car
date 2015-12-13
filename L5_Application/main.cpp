@@ -112,7 +112,7 @@ int main(void)
         AS.init();
 
         //initialize our storage
-        CAN_ST.init();
+       // CAN_ST.init();
 
     /**
      * A few basic tasks for this bare-bone system :
