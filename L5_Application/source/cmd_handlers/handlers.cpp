@@ -59,9 +59,13 @@ union{
         uint8_t byte[4];
 }data_type_t;
 
+typedef struct{
+        uint8_t g_checkpoints_counter = 0;
+} checkpoints_control;
+
+
 CMD_HANDLER_FUNC(bluetoothHandler)
 {
-
     Uart2& uart2 = Uart2::getInstance();
 
     char *sizecoord = new char[0];
@@ -98,8 +102,15 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
         printf("LAT_float = %f\n LONG_float = %f\n", atof(lat), atof(lon));
 
+
+        // change to array
         android_coordinates_values->GPS_INFO_COORDINATES_lat = atof(lat);
         android_coordinates_values->GPS_INFO_COORDINATES_long = atof(lon);
+    }
+
+    else if (cmdParams.beginsWithIgnoreCase("ENDREAD"))
+    {
+
     }
 
     return true;
