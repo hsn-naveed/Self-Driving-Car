@@ -64,7 +64,7 @@ void CAN_send(void)
     msg_hdr_t encoded_msg =  SENSOR_TX_INFO_SONARS_encode((uint64_t*)&(msg_tx->data.qword) , sensor_values_tx);
 
     /// Store the proper message ID
-    msg_tx->msg_id = SENSOR_TX_INFO_SONARS_HDR.mid;
+    encoded_msg.mid= SENSOR_TX_INFO_SONARS_HDR.mid;
 
     /// Send message with stored sensor values, and proper message id
     iCAN_tx(msg_tx, &encoded_msg);
