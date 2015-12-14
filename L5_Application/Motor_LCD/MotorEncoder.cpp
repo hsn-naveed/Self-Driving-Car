@@ -8,14 +8,18 @@
 #include "file_logger.h"
 #include "io.hpp"
 
-
-
 const int circumferenceOfTire = 31; // cm
 
 /// Done through excel sheet after logging speed
 const double slowSpeedAverageTime = 190;
+const double mediumSpeedAverageTime = 1;
+
 const double slowSpeedAverageRateInCMPerMilliSecond = circumferenceOfTire/slowSpeedAverageTime;
+const double mediumSpeedAverageRateInCMPerMillisecond = circumferenceOfTire/mediumSpeedAverageTime;
+
 double tempSlowSpeedAverage = slowSpeedAverageRateInCMPerMilliSecond;
+double tempMediumSpeedAverage = mediumSpeedAverageRateInCMPerMillisecond;
+
 /*
  * @about Each tick represents a distance traveled of about 31cm
  * Diameter = 9.9cm, radius = 4.95 cm
@@ -32,12 +36,65 @@ double lowerLimitThresholdDiffOfSpeed;
 uint64_t beginTimeOfEncoder;
 bool startOfNewTime = true;
 
-void storeBeginTime(){
+/*
+ * @about Used for keeping track of how many times
+ * the encoder hits a tick mark
+ *
+ * @note Will be used in conjunction with some timer
+ * to make sure car is moving at a constant speed
+ */
+int tickCount = 0;
+
+
+void StartTickTimer_ISR(){
     if (startOfNewTime){
         beginTimeOfEncoder = sys_get_uptime_ms();
         startOfNewTime = false;
     }
+    else {
+        /// Next time around, when the tick count = 5,
+        // timer should begin once again
+        if (tickCount == 4)
+            startOfNewTime = true;
+    }
+}
+
+void IncrementTickCounter_ISR(){
+    if (tickCount == 5){
+        /// Give signal to function waiting for semaphore to be free, to perform
+        // the necessary function
+        long taskWoken = 0;
+        xSemaphoreGiveFromISR(motorEncoderSemaphore, &taskWoken);
+
+        if (taskWoken){
+            vPortYield();
+            tickCount = 0;
+        }
+    }
+
+    /// Take semaphore whenever available, so that it only gives signal when
+    // count reaches 5
+    if (tickCount != 0){
+        if (xSemaphoreTakeFromISR(motorEncoderSemaphore, 0));
+        tickCount++;
+    }
+}
+
+
+
+
+
+
+void storeBeginTime(){
+    if (startOfNewTime){
+        xSemaphoreTakeFromISR(motorEncoderSemaphore, 0);
+
+        beginTimeOfEncoder = sys_get_uptime_ms();
+        startOfNewTime = false;
+    }
     else{
+        xSemaphoreGiveFromISR(motorEncoderSemaphore, NULL);
+
         CalculateSpeed();
         startOfNewTime = true;
     }

@@ -85,6 +85,11 @@ int main(void)
 
     encoderInput.setAsInput();
     eint3_enable_port2(port2_6, eint_rising_edge, storeBeginTime);
+//    eint3_enable_port2(port2_6, eint_falling_edge, );
+
+    motorEncoderSemaphore = xSemaphoreCreateBinary();
+
+    xSemaphoreTake(motorEncoderSemaphore, 0);
 
 /**
      * A few basic tasks for this bare-bone system :

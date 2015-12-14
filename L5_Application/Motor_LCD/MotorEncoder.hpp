@@ -15,10 +15,22 @@
 #include "scheduler_task.hpp"
 #include "lpc_sys.h"
 #include "periodic_scheduler/periodic_callback.h"
+#include "MotorControl.hpp"
+#include "task.h"
+#include "semphr.h"
+
 
 static GPIO encoderInput(P2_6);
+static SemaphoreHandle_t motorEncoderSemaphore = 0;
 
-extern uint64_t beginTimeOfEncoder;
+
+extern MotorControl motorObj;
+
+///ISR function calls for timer, and tick counts based off
+// encoder input from GPIO
+void StartTickTimer_ISR();
+void IncrementTickCounter_ISR();
+
 void storeBeginTime();
 
 /* @about Stores current speed to use
@@ -26,6 +38,7 @@ void storeBeginTime();
  * HasSpeedChanged()
  */
 void CalculateSpeed();
+
 /*
  * @about Returns 1 if speed has decreased
  * returns 2 if speed has increased *Should not happen*
