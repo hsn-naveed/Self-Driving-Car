@@ -24,7 +24,7 @@ class GPS_parser : public scheduler_task{
         };
         bool init(void);
         bool run(void *p);
-        bool verifyChecksum();
+        bool verifyChecksum(char *checkSum);
         ANDROID_TX_ANDROID_INFO_COORDINATES_t parseCood(const char *longitude, const char *latitude,
                                 const char *nORs, const char *eORw);
         uint32_t calculateCorrectHeading();

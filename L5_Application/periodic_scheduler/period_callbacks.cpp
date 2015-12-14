@@ -51,6 +51,9 @@ can_msg_t tx_msg = {0};
 can_fullcan_msg_t rx_msg = {0};
 
 extern GPS_TX_GPS_INFO_HEADING_t headingToTx;
+extern ANDROID_TX_ANDROID_INFO_COORDINATES_t dest[128];
+extern uint8_t num_rx_checkpoints;
+extern ANDROID_TX_ANDROID_INFO_CHECKPOINTS_t lastDest;
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
@@ -126,7 +129,7 @@ void period_1Hz(void)
 void period_10Hz(void)
 {
     headingToTx.GPS_INFO_HEADING_current = MS.getHeading();
-    printf("Encoded current heading value: %i\n", headingToTx.GPS_INFO_HEADING_current);
+//    printf("Encoded current heading value: %i\n", headingToTx.GPS_INFO_HEADING_current);
     LE.toggle(2);
 }
 
