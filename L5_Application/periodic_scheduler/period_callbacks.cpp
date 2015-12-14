@@ -38,8 +38,10 @@
 
 /***************** ANDROID *****************/
 extern ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
-extern ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_values;
+extern ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_count;
 extern ANDROID_TX_INFO_COORDINATES_t *android_coordinates_values;
+extern bool g_flagTransmitToCAN;
+extern bool g_flagTransmitCheckpointCount;
 
 /***************** CAN MESSAGE *****************/
 can_msg_t *msg_tx;
@@ -48,6 +50,9 @@ can_msg_t *msg_tx;
 msg_hdr_t android_stop_go_cmd_hdr = ANDROID_TX_STOP_GO_CMD_HDR;
 msg_hdr_t android_info_checkpoint_hdr = ANDROID_TX_INFO_CHECKPOINTS_HDR;
 msg_hdr_t android_info_coordinates_hdr = ANDROID_TX_INFO_COORDINATES_HDR;
+
+/***************** PERIODIC COUNTER *****************/
+uint8_t g_checkpoints_counter = 0;
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -63,7 +68,7 @@ bool period_init(void)
 
     msg_tx = new can_msg_t{0};
     android_stop_go_values = new ANDROID_TX_STOP_GO_CMD_t {0};
-    android_checkpoints_values = new ANDROID_TX_INFO_CHECKPOINTS_t {0};
+    android_checkpoints_count = new ANDROID_TX_INFO_CHECKPOINTS_t {0};
     android_coordinates_values = new ANDROID_TX_INFO_COORDINATES_t {0};
     android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)-1;
 
@@ -84,6 +89,7 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
+    /* STOP */
     if (android_stop_go_values->ANDROID_STOP_CMD_signal == 0)
     {
       /*  printf("%d %d %f %f\n", android_stop_go_values->ANDROID_STOP_CMD_signal,
@@ -91,6 +97,7 @@ void period_10Hz(void)
                                     android_coordinates_values[1].GPS_INFO_COORDINATES_lat,
                                     android_coordinates_values[1].GPS_INFO_COORDINATES_long);
 */
+        /* Send stop */
         msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
         msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode(&(msg_tx->data.qword), android_stop_go_values);
 
@@ -99,8 +106,12 @@ void period_10Hz(void)
            printf("STOP message sent!\n");
         }
     }
+
+    /* GO */
     else if (android_stop_go_values->ANDROID_STOP_CMD_signal == 1)
     {
+
+        /* Send go */
         msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
         msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&(msg_tx->data.qword), android_stop_go_values);
 
@@ -109,12 +120,7 @@ void period_10Hz(void)
             printf("GO message sent to master\n");
         }
 
-        msg_tx->msg_id = (uint32_t)ANDROID_TX_INFO_CHECKPOINTS_HDR.mid;
-        encoded_message = ANDROID_TX_INFO_CHECKPOINTS_encode((uint64_t*)&(msg_tx->data.qword), android_checkpoints_values);
-        if (iCAN_tx(msg_tx, &encoded_message))
-        {
-            printf("checkpoint sent!\n");
-        }
+
     }
 }
 
@@ -122,6 +128,37 @@ void period_100Hz(void)
 {
     LE.toggle(3);
 
+    if (g_flagTransmitToCAN)    //Flag to transmit to CAN
+    {
+        msg_hdr_t message;
+        /*
+         * Counter will increment till it is at the total of checkpoints.
+         * IE: (i = 0; i < totalNumberOfCheckpoints; i++);
+         */
+        if (g_checkpoints_counter == (android_checkpoints_count->ANDROID_INFO_CHECKPOINTS_count - 1))
+            g_flagTransmitToCAN = false;
+
+
+        if (g_flagTransmitCheckpointCount)
+        {
+            /* Send number of checkpoints */
+            msg_tx->msg_id = (uint32_t)ANDROID_TX_INFO_CHECKPOINTS_HDR.mid;
+            message = ANDROID_TX_INFO_CHECKPOINTS_encode((uint64_t*)&(msg_tx->data.qword), android_checkpoints_count);
+            if (iCAN_tx(msg_tx, &message))
+            {
+                printf("checkpoint sent!\n");
+            }
+        }
+
+        /* Send the coordinates incrementally */
+        msg_tx->msg_id = (uint32_t)ANDROID_TX_INFO_COORDINATES_HDR.mid;
+        message = ANDROID_TX_INFO_COORDINATES_encode((uint64_t*)&(msg_tx->data.qword),
+                &android_coordinates_values[g_checkpoints_counter++]);
+        if (iCAN_tx(msg_tx, &message))
+        {
+            printf("android_coordinates_values sent");
+        }
+    }
 
   /*  if ( count == android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count)
     {

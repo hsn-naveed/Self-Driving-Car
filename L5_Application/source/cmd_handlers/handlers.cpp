@@ -50,8 +50,12 @@
 #include "ANDROID_message.h"
 
 ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
-ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_values;
+ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_count;
 ANDROID_TX_INFO_COORDINATES_t *android_coordinates_values;
+
+bool g_flagTransmitCheckpointCount = false;
+bool g_flagTransmitToCAN = false;
+uint8_t g_checkpointsCountTotal = 0;
 
 union{
         uint32_t vint;
@@ -69,7 +73,6 @@ checkpoints_control g_checkpoints_control;
 
 CMD_HANDLER_FUNC(bluetoothHandler)
 {
-    char *sizecoord = new char[0];
     char *lat, *lon;
     lat = new char[0];
     lon = new char[0];
@@ -89,12 +92,13 @@ CMD_HANDLER_FUNC(bluetoothHandler)
         android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)0;
     }
 
-    else if (cmdParams.beginsWithIgnoreCase("READSIZE"))
-    {
-        cmdParams.scanf("%*s %s", sizecoord);
-        printf("SIZE OF CHECKPOINT = %d\n", atoi(sizecoord));
-        android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count = (uint8_t) atoi(sizecoord);
-    }
+    /* This takes total size from Android, may be inaccurate. Do not use for now. */
+//    else if (cmdParams.beginsWithIgnoreCase("READSIZE"))
+//    {
+//        cmdParams.scanf("%*s %s", sizecoord);
+//        printf("SIZE OF CHECKPOINT = %d\n", atoi(sizecoord));
+//        android_checkpoints_count->ANDROID_INFO_CHECKPOINTS_count = (uint8_t) atoi(sizecoord);
+//    }
 
     else if (cmdParams.beginsWithIgnoreCase("READ") && !cmdParams.beginsWithIgnoreCase("READSIZE"))
     {
@@ -103,17 +107,21 @@ CMD_HANDLER_FUNC(bluetoothHandler)
         printf("LAT_float = %f\n LONG_float = %f\n", atof(lat), atof(lon));
 
 
-        // change to array
-
         android_coordinates_values[g_checkpoints_control.checkpoints_counter].GPS_INFO_COORDINATES_lat = atof(lat);
         android_coordinates_values[g_checkpoints_control.checkpoints_counter].GPS_INFO_COORDINATES_long = atof(lon);
-        g_checkpoints_control.checkpoints_counter++;
-        g_checkpoints_control.checkpoints_total = g_checkpoints_control.checkpoints_counter;
+        g_checkpoints_control.checkpoints_counter++;    // Counter for checkpoints, adds to total #checkpoints.
+        g_checkpoints_control.checkpoints_total = g_checkpoints_control.checkpoints_counter;    // Total # of checkpoints
     }
 
+    /* End Read sequence
+     * Trigger flag to true. This will allow periodic scheduler to run,
+     * also transfers the number of checkpoints and the checkpoints. */
     else if (cmdParams.beginsWithIgnoreCase("ENDREAD"))
     {
         g_checkpoints_control.checkpoints_counter = 0;
+        android_checkpoints_count->ANDROID_INFO_CHECKPOINTS_count = g_checkpoints_control.checkpoints_total;
+        g_flagTransmitToCAN = true;
+        g_flagTransmitCheckpointCount = true;
     }
 
     else if (cmdParams.beginsWithIgnoreCase("COORDTEST"))
@@ -131,6 +139,7 @@ CMD_HANDLER_FUNC(bluetoothHandler)
         printf("\n\nRESET\n\n");
         g_checkpoints_control.checkpoints_counter = 0;
         g_checkpoints_control.checkpoints_total = 1;
+        android_checkpoints_count->ANDROID_INFO_CHECKPOINTS_count = 0;
     }
 
     return true;
