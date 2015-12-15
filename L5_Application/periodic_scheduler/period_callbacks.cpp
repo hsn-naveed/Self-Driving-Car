@@ -60,9 +60,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    uint32_t sglist[] = {ANDROID_TX_STOP_GO_CMD_HDR.mid,
-                        ANDROID_TX_INFO_CHECKPOINTS_HDR.mid,
-                        ANDROID_TX_INFO_COORDINATES_HDR.mid};
+    uint32_t sglist[] = {GPS_TX_DESTINATION_REACHED_HDR.mid};
     size_t sizeOfArray = (sizeof(sglist) / sizeof(*sglist));
     iCAN_init_FULLCAN(sglist, sizeOfArray);
 
@@ -92,14 +90,9 @@ void period_10Hz(void)
     /* STOP */
     if (android_stop_go_values->ANDROID_STOP_CMD_signal == 0)
     {
-      /*  printf("%d %d %f %f\n", android_stop_go_values->ANDROID_STOP_CMD_signal,
-                                    android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count,
-                                    android_coordinates_values[1].GPS_INFO_COORDINATES_lat,
-                                    android_coordinates_values[1].GPS_INFO_COORDINATES_long);
-*/
         /* Send stop */
-        msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
-        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode(&(msg_tx->data.qword), android_stop_go_values);
+        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&(msg_tx->data.qword), android_stop_go_values);
+        encoded_message.mid = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
 
         if (iCAN_tx(msg_tx, &encoded_message))
         {
@@ -110,17 +103,15 @@ void period_10Hz(void)
     /* GO */
     else if (android_stop_go_values->ANDROID_STOP_CMD_signal == 1)
     {
-
         /* Send go */
-        msg_tx->msg_id = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
         msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&(msg_tx->data.qword), android_stop_go_values);
+        encoded_message.mid = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
+
 
         if (iCAN_tx(msg_tx, &encoded_message))
         {
             printf("GO message sent to master\n");
         }
-
-
     }
 }
 
@@ -142,8 +133,9 @@ void period_100Hz(void)
         if (g_flagTransmitCheckpointCount)
         {
             /* Send number of checkpoints */
-            msg_tx->msg_id = (uint32_t)ANDROID_TX_INFO_CHECKPOINTS_HDR.mid;
             message = ANDROID_TX_INFO_CHECKPOINTS_encode((uint64_t*)&(msg_tx->data.qword), android_checkpoints_count);
+            message.mid = (uint32_t)ANDROID_TX_INFO_CHECKPOINTS_HDR.mid;
+
             if (iCAN_tx(msg_tx, &message))
             {
                 printf("checkpoint sent!\n");
@@ -151,28 +143,15 @@ void period_100Hz(void)
         }
 
         /* Send the coordinates incrementally */
-        msg_tx->msg_id = (uint32_t)ANDROID_TX_INFO_COORDINATES_HDR.mid;
         message = ANDROID_TX_INFO_COORDINATES_encode((uint64_t*)&(msg_tx->data.qword),
-                &android_coordinates_values[g_checkpoints_counter++]);
+                        &android_coordinates_values[g_checkpoints_counter++]);
+        message.mid = (uint32_t)ANDROID_TX_INFO_COORDINATES_HDR.mid;
+
         if (iCAN_tx(msg_tx, &message))
         {
             printf("android_coordinates_values sent");
         }
     }
-
-  /*  if ( count == android_checkpoints_values->ANDROID_INFO_CHECKPOINTS_count)
-    {
-        // printf("All coordinates are sent.\n");
-    }
-    else
-    {*/
-       /* msg_tx->msg_id = (uint32_t)ANDROID_TX_INFO_COORDINATES_HDR.mid;
-        msg_hdr_t message = ANDROID_TX_INFO_COORDINATES_encode((uint64_t*)&(msg_tx->data.qword), &android_coordinates_values[count++]);
-        if (iCAN_tx(msg_tx, &message))
-        {
-            printf("android_coordinates_values sent");
-        }*/
-
 }
 
 void period_1000Hz(void)
