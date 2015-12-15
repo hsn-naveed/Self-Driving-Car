@@ -99,6 +99,9 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 // set to 0 if you want to use CAN (normal mode)
 #define DEBUG_NO_CAN 0
 
+// set to 1 if you want to test Car heading using test vectors
+// set to 0 if you want to use CAN (normal mode)
+#define HEAD_TEST_MODE 0
 
 ///////////////////////////LOGIC///////////////////////////
 
@@ -201,6 +204,8 @@ GPS_TX_DESTINATION_REACHED_t* g_dest_reached_value;
 
 double g_heading_current_value = 0;
 double g_heading_destination_value = 0;
+
+void setDirectionBasedHeading();
 
 ///////////////////////////----///////////////////////////
 
@@ -330,30 +335,44 @@ bool period_reg_tlm(void)
 }
 
 void setDirectionBasedHeading() {
+        //Tolerance defines our accuracy of control. Great tolerance means less precision
         float tolerance = 20.0;
-        float current_sector = round(g_heading_values->GPS_INFO_HEADING_current/tolerance);
-        float dst_sector = round(g_heading_values->GPS_INFO_HEADING_dst/tolerance);
+        float current_sector = round(g_heading_current_value/tolerance);
+        float dst_sector = round(g_heading_destination_value/tolerance);
     
-        //if we are in +/- 20 degrees of our destination heading, maintain course
-        if ((int)current_sector == (int)dst_sector)//+- X%
+        //if we are in +/- tolerance degrees of our destination heading, maintain course
+        if (((int)current_sector <= (int)dst_sector+1) and ((int)current_sector >= (int)dst_sector-1))
             {
             //go straight
+            printf("Same Sector\n");
             generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW);
         }
-        else if(g_heading_values->GPS_INFO_HEADING_dst>g_heading_values->GPS_INFO_HEADING_current) {
-            if (abs(g_heading_values->GPS_INFO_HEADING_dst - g_heading_values->GPS_INFO_HEADING_current)>=180){
+        else if(g_heading_destination_value>g_heading_current_value) {
+            if (abs(g_heading_destination_value - g_heading_current_value)>=180){
                 generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT);
+                printf("Current Sector: %f \n",current_sector);
+                printf("Destination Sector: %f \n",dst_sector);
+                printf("Right\n");
             }
             else{
                 generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT);
+                printf("Current Sector: %f \n",current_sector);
+                printf("Destination Sector: %f \n",dst_sector);
+                printf("LEFT\n");
             }
         }
         else{
-            if (abs(g_heading_values->GPS_INFO_HEADING_dst - g_heading_values->GPS_INFO_HEADING_current)>=180){
+            if (abs(g_heading_destination_value - g_heading_current_value)>=180){
                 generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT);
+                printf("Current Sector: %f \n",current_sector);
+                printf("Destination Sector: %f \n",dst_sector);
+                printf("LEFT\n");
             }
             else{
                 generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT);
+                printf("Current Sector: %f \n",current_sector);
+                printf("Destination Sector: %f \n",dst_sector);
+                printf("Right\n");
             }
         }
 
@@ -581,13 +600,33 @@ void generateMotorCommands(MotorCommands command)
     //printMotorCommand(command);
 }
 
-
+int gps_simulate_variable = 0;
 void period_1Hz(void)
 {
     LE.toggle(1);
     //printf("\n\n\nHEART BEAT: %d\n\n\n", g_heart_counter++);
     g_heart_counter++;
     if (50000 < g_heart_counter) g_heart_counter = 0;
+
+#if !HEAD_TEST_MODE
+    uint32_t curr_array[] = {45, 315,135,95,89,1};
+    uint32_t dest_array[] = {5,95,359,270,91,341};
+
+    while (gps_simulate_variable<(sizeof(curr_array) / sizeof(*curr_array))){
+        g_heading_values->GPS_INFO_HEADING_current = curr_array[gps_simulate_variable];
+        g_heading_values->GPS_INFO_HEADING_dst = dest_array[gps_simulate_variable];
+
+        g_heading_current_value = (double) g_heading_values->GPS_INFO_HEADING_current;
+        g_heading_destination_value = (double) g_heading_values->GPS_INFO_HEADING_dst;
+
+        printf("\n\nHEADING current %" PRIu32 "\n", (uint32_t) g_heading_values->GPS_INFO_HEADING_current);
+        printf("HEADING dest %" PRIu32 "\n", (uint32_t) g_heading_values->GPS_INFO_HEADING_dst);
+
+        setDirectionBasedHeading();
+        gps_simulate_variable++;
+    }
+
+#endif
 
 }
 
@@ -627,8 +666,9 @@ void period_100Hz(void)
 
         g_sensor_receive_counter = g_reset;
     }
+
     //Compass sending current heading
-    //TO DO @hsn_naveed
+
     else if (iCAN_rx(g_compass_msg, &gps_info_heading_hdr))
     {
         portDISABLE_INTERRUPTS();
@@ -644,6 +684,9 @@ void period_100Hz(void)
         g_compass_receive_counter = g_reset;
 
     }
+
+
+
     //Parse STOP&GO signal message
     else if (iCAN_rx(g_android_msg, &android_stop_go_cmd_hdr))
     {
@@ -873,8 +916,11 @@ void period_100Hz(void)
         //>>>>>>>>>>>>>>>>>GENERATE DRIVE COMMANDS
         //drive motor based on HEADING
         if(FRONT_CLEAR) {
-            //this is where we command based on the heading
-            //TO DO: GPS IMPLEMENTATION
+
+            //For GPS based car steering, uncomment the setDirectionBasedHeading() function and
+            //comment the generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM) function
+
+            //setDirectionBasedHeading();
 
             // now we're testing without GPS
             // so we go straight
