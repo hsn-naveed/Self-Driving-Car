@@ -91,9 +91,9 @@ void period_10Hz(void)
         LE.on(led1);
     }
     else if (iCAN_rx(canMsgForMotor, &motorMessage)){
-        portDISABLE_INTERRUPTS();
+//        portDISABLE_INTERRUPTS();
         MASTER_TX_MOTOR_CMD_decode(motorObj.receivedMotorCommands, &(canMsgForMotor->data.qword), &MASTER_TX_MOTOR_CMD_HDR);
-        portENABLE_INTERRUPTS();
+//        portENABLE_INTERRUPTS();
 
         motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
 

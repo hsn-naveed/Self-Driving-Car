@@ -52,6 +52,8 @@
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
 
+MotorEncoder *ptrToMotorEncoder;
+
 extern MotorControl motorObj;
 
 int main(void)
@@ -84,12 +86,13 @@ int main(void)
     uint8_t port2_6 = 6;
 
     encoderInput.setAsInput();
-    eint3_enable_port2(port2_6, eint_rising_edge, storeBeginTime);
-//    eint3_enable_port2(port2_6, eint_falling_edge, );
+    eint3_enable_port2(port2_6, eint_rising_edge, StartTickTimer_ISR);
+    eint3_enable_port2(port2_6, eint_falling_edge, IncrementTickCounter_ISR);
 
-    motorEncoderSemaphore = xSemaphoreCreateBinary();
 
-    xSemaphoreTake(motorEncoderSemaphore, 0);
+    scheduler_add_task(new MotorEncoder(PRIORITY_MEDIUM));
+
+
 
 /**
      * A few basic tasks for this bare-bone system :

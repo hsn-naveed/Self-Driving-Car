@@ -8,6 +8,8 @@
 #include "file_logger.h"
 #include "io.hpp"
 
+
+
 const int circumferenceOfTire = 31; // cm
 
 /// Done through excel sheet after logging speed
@@ -51,33 +53,34 @@ void StartTickTimer_ISR(){
         beginTimeOfEncoder = sys_get_uptime_ms();
         startOfNewTime = false;
     }
-    else {
-        /// Next time around, when the tick count = 5,
-        // timer should begin once again
-        if (tickCount == 4)
-            startOfNewTime = true;
-    }
+//    else {
+//        /// Next time around, when the tick count = 5,
+//        // timer should begin once again
+//        if (tickCount == 4)
+//            startOfNewTime = true;
+//    }
 }
+
+static BaseType_t xHigherPriorityTaskWoken;
 
 void IncrementTickCounter_ISR(){
     if (tickCount == 5){
         /// Give signal to function waiting for semaphore to be free, to perform
         // the necessary function
-        long taskWoken = 0;
-        xSemaphoreGiveFromISR(motorEncoderSemaphore, &taskWoken);
 
-        if (taskWoken){
-            vPortYield();
-            tickCount = 0;
+        //printf("giving semaphore; tick count =  %i", tickCount);
+        xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
+
+        if (xHigherPriorityTaskWoken){
+            portYIELD_FROM_ISR(true);
+
+            xHigherPriorityTaskWoken = pdFALSE;
         }
     }
 
-    /// Take semaphore whenever available, so that it only gives signal when
-    // count reaches 5
-    if (tickCount != 0){
-        if (xSemaphoreTakeFromISR(motorEncoderSemaphore, 0));
-        tickCount++;
-    }
+    /// Increment counter
+    tickCount++;
+    puts("incremented counter\n");
 }
 
 
@@ -87,13 +90,13 @@ void IncrementTickCounter_ISR(){
 
 void storeBeginTime(){
     if (startOfNewTime){
-        xSemaphoreTakeFromISR(motorEncoderSemaphore, 0);
+//        xSemaphoreTakeFromISR(motorEncoderSemaphore, 0);
 
         beginTimeOfEncoder = sys_get_uptime_ms();
         startOfNewTime = false;
     }
     else{
-        xSemaphoreGiveFromISR(motorEncoderSemaphore, NULL);
+//        xSemaphoreGiveFromISR(motorEncoderSemaphore, NULL);
 
         CalculateSpeed();
         startOfNewTime = true;
@@ -126,3 +129,26 @@ int HasSpeedChanged(){
     }
     return 0;
 }
+
+
+MotorEncoder::MotorEncoder(uint8_t priorityToUse) :
+        scheduler_task("motorEncoder", 512, priorityToUse){
+    ptrToMotorEncoder = this;
+}
+
+bool MotorEncoder::init(){
+    motorEncoderSemaphore = xSemaphoreCreateBinary();
+}
+
+bool MotorEncoder::run(void *p){
+    while (1){
+        if(xSemaphoreTake(motorEncoderSemaphore, 0)){
+            printf("Inside motorEncoder tasks after 5 ticks\nTick count == %i\n", tickCount);
+            tickCount = 0;
+            xHigherPriorityTaskWoken = pdTRUE;
+        }
+    }
+
+    return true;
+}
+

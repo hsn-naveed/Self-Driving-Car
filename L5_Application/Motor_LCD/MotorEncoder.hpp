@@ -21,10 +21,9 @@
 
 
 static GPIO encoderInput(P2_6);
-static SemaphoreHandle_t motorEncoderSemaphore = 0;
 
 
-extern MotorControl motorObj;
+
 
 ///ISR function calls for timer, and tick counts based off
 // encoder input from GPIO
@@ -45,5 +44,19 @@ void CalculateSpeed();
  * default return 0 if speed is within percent threshold
  */
 int HasSpeedChanged();
+
+
+
+class MotorEncoder : public scheduler_task{
+    public:
+        MotorEncoder(uint8_t priorityToUse);
+
+        bool init();
+        bool run(void *p);
+
+        SemaphoreHandle_t motorEncoderSemaphore;
+};
+
+extern MotorEncoder *ptrToMotorEncoder;
 
 #endif
