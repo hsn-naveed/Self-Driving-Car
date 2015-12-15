@@ -49,56 +49,34 @@
 
 #include "ANDROID_message.h"
 
-ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
-ANDROID_TX_INFO_CHECKPOINTS_t *android_checkpoints_count;
-ANDROID_TX_INFO_COORDINATES_t *android_coordinates_values;
+extern ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
+extern ANDROID_TX_INFO_CHECKPOINTS_t android_checkpoints_count;
+extern ANDROID_TX_INFO_COORDINATES_t android_coordinates_values[128];
 
 bool g_flagTransmitCheckpointCount = false;
 bool g_flagTransmitToCAN = false;
-uint8_t g_checkpointsCountTotal = 0;
 
-union{
-        uint32_t vint;
-        float vfloat;
-        uint8_t byte[4];
-}data_type_t;
-
-typedef struct
-{
-        uint8_t checkpoints_counter = 0;
-        uint8_t checkpoints_total = 1;
-} checkpoints_control;
-
-checkpoints_control g_checkpoints_control;
+int g_cp = 0;
 
 CMD_HANDLER_FUNC(bluetoothHandler)
 {
     char *lat, *lon;
     lat = new char[0];
     lon = new char[0];
-//    android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)-1;
 
     if (cmdParams.beginsWithIgnoreCase("GO"))
     {
        // GO
-        printf("\n\nGO\n\n");
+ //       printf("\n\nGO\n\n");
         android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)1;
     }
 
     else if (cmdParams.beginsWithIgnoreCase("STOP"))
     {
         // STOP
-        printf("\n\nSTOP\n\n");
+ //       printf("\n\nSTOP\n\n");
         android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)0;
     }
-
-    /* This takes total size from Android, may be inaccurate. Do not use for now. */
-//    else if (cmdParams.beginsWithIgnoreCase("READSIZE"))
-//    {
-//        cmdParams.scanf("%*s %s", sizecoord);
-//        printf("SIZE OF CHECKPOINT = %d\n", atoi(sizecoord));
-//        android_checkpoints_count->ANDROID_INFO_CHECKPOINTS_count = (uint8_t) atoi(sizecoord);
-//    }
 
     else if (cmdParams.beginsWithIgnoreCase("READ") && !cmdParams.beginsWithIgnoreCase("READSIZE"))
     {
@@ -107,39 +85,34 @@ CMD_HANDLER_FUNC(bluetoothHandler)
         printf("LAT_float = %f\n LONG_float = %f\n", atof(lat), atof(lon));
 
 
-        android_coordinates_values[g_checkpoints_control.checkpoints_counter].GPS_INFO_COORDINATES_lat = atof(lat);
-        android_coordinates_values[g_checkpoints_control.checkpoints_counter].GPS_INFO_COORDINATES_long = atof(lon);
-        g_checkpoints_control.checkpoints_counter++;    // Counter for checkpoints, adds to total #checkpoints.
-        g_checkpoints_control.checkpoints_total = g_checkpoints_control.checkpoints_counter;    // Total # of checkpoints
+        android_coordinates_values[g_cp].GPS_INFO_COORDINATES_lat = atof(lat);
+        android_coordinates_values[g_cp].GPS_INFO_COORDINATES_long = atof(lon);
+        g_cp++;
+//        g_checkpoints_control.checkpoints_counter++;    // Counter for checkpoints, adds to total #checkpoints.
+//        g_checkpoints_control.checkpoints_total = g_checkpoints_control.checkpoints_counter;    // Total # of checkpoints
+//        printf("COUNTER = %d\n",g_checkpoints_control.checkpoints_counter);
+
     }
+
 
     /* End Read sequence
      * Trigger flag to true. This will allow periodic scheduler to run,
      * also transfers the number of checkpoints and the checkpoints. */
     else if (cmdParams.beginsWithIgnoreCase("ENDREAD"))
     {
-        g_checkpoints_control.checkpoints_counter = 0;
-        android_checkpoints_count->ANDROID_INFO_CHECKPOINTS_count = g_checkpoints_control.checkpoints_total;
+        android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count = g_cp;
         g_flagTransmitToCAN = true;
         g_flagTransmitCheckpointCount = true;
-    }
-
-    else if (cmdParams.beginsWithIgnoreCase("COORDTEST"))
-    {
-        printf("Size of array = %d\n", g_checkpoints_control.checkpoints_total);
-        for(int i = 0; i < g_checkpoints_control.checkpoints_total; i++)
-        {
-            printf("%f, %f\n",android_coordinates_values[i].GPS_INFO_COORDINATES_lat,
-                    android_coordinates_values[i].GPS_INFO_COORDINATES_long);
-        }
     }
 
     else if (cmdParams.beginsWithIgnoreCase("RESET"))
     {
         printf("\n\nRESET\n\n");
-        g_checkpoints_control.checkpoints_counter = 0;
-        g_checkpoints_control.checkpoints_total = 1;
-        android_checkpoints_count->ANDROID_INFO_CHECKPOINTS_count = 0;
+        g_cp = 0;
+        android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count = 0;
+        g_flagTransmitToCAN = false;
+        g_flagTransmitCheckpointCount = false;
+//        printf("Reset: %d %d\n\n", g_cp, android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count);
     }
 
     return true;
