@@ -150,7 +150,7 @@ void period_100Hz(void)
 
                if (iCAN_tx(msg_tx, &message))
                {
-                   printf("Checkpoints value: %d\n", (uint8_t)msg_tx->data.qword);
+       //            printf("Checkpoints value: %d\n", (uint8_t)msg_tx->data.qword);
                }
                g_flagTransmitCheckpointCount = false;
            }
@@ -159,6 +159,10 @@ void period_100Hz(void)
            message = ANDROID_TX_INFO_COORDINATES_encode(&(msg_tx->data.qword),
                            &android_coordinates_values[g_checkpoints_counter++]);
            message.mid = (uint32_t)ANDROID_TX_INFO_COORDINATES_HDR.mid;
+
+           printf("[1] %x\n", msg_tx->data.dwords[0]);
+           printf("[2] %x\n", msg_tx->data.dwords[1]);
+
 
            if (iCAN_tx(msg_tx, &message))
            {

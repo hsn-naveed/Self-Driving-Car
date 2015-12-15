@@ -1,15 +1,10 @@
 /// DBC file: 243.dbc    Self node: ANDROID
 /// This file should be included by a source file, for example: #include "generated.c"
-#ifndef ANDROID_MESSAGE_H__
-#define ANDROID_MESSAGE_H__
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+
+
 
 /// Missing in Action structure
 typedef struct {
@@ -88,7 +83,7 @@ extern const GPS_TX_DESTINATION_REACHED_t DESTINATION_REACHED__MIA_MSG;
 /// @returns the message header of this message
 static msg_hdr_t ANDROID_TX_STOP_GO_CMD_encode(uint64_t *to, ANDROID_TX_STOP_GO_CMD_t *from)
 {
- //   *to = 0; ///< Default the entire destination data with zeroes
+    *to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 
@@ -103,7 +98,7 @@ static msg_hdr_t ANDROID_TX_STOP_GO_CMD_encode(uint64_t *to, ANDROID_TX_STOP_GO_
 /// @returns the message header of this message
 static msg_hdr_t ANDROID_TX_INFO_CHECKPOINTS_encode(uint64_t *to, ANDROID_TX_INFO_CHECKPOINTS_t *from)
 {
-//    *to = 0; ///< Default the entire destination data with zeroes
+    *to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 
@@ -120,7 +115,7 @@ static msg_hdr_t ANDROID_TX_INFO_CHECKPOINTS_encode(uint64_t *to, ANDROID_TX_INF
 /// @returns the message header of this message
 static msg_hdr_t ANDROID_TX_INFO_COORDINATES_encode(uint64_t *to, ANDROID_TX_INFO_COORDINATES_t *from)
 {
- //   *to = 0; ///< Default the entire destination data with zeroes
+    *to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 
@@ -130,7 +125,7 @@ static msg_hdr_t ANDROID_TX_INFO_COORDINATES_encode(uint64_t *to, ANDROID_TX_INF
     bytes[2] |= (((uint8_t)(raw_signal >> 16) & 0xff) << 0); ///< 8 bit(s) to B16
     bytes[3] |= (((uint8_t)(raw_signal >> 24) & 0xff) << 0); ///< 8 bit(s) to B24
 
-    raw_signal = ((uint64_t)(((from->GPS_INFO_COORDINATES_long - (0)) / 1e-05) + 0.5)) & 0xffffffff;
+    raw_signal = ((uint64_t)(((from->GPS_INFO_COORDINATES_long - (-200)) / 1e-05) + 0.5)) & 0xffffffff;
     bytes[4] |= (((uint8_t)(raw_signal >> 0) & 0xff) << 0); ///< 8 bit(s) to B32
     bytes[5] |= (((uint8_t)(raw_signal >> 8) & 0xff) << 0); ///< 8 bit(s) to B40
     bytes[6] |= (((uint8_t)(raw_signal >> 16) & 0xff) << 0); ///< 8 bit(s) to B48
@@ -203,8 +198,3 @@ static inline bool GPS_TX_DESTINATION_REACHED_handle_mia(GPS_TX_DESTINATION_REAC
 
     return mia_occurred;
 }
-
-#ifdef __cplusplus
-}
-#endif
-#endif

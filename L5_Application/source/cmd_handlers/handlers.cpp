@@ -87,12 +87,12 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
         android_coordinates_values[g_cp].GPS_INFO_COORDINATES_lat = atof(lat);
         android_coordinates_values[g_cp].GPS_INFO_COORDINATES_long = atof(lon);
+
         g_cp++;
 //        g_checkpoints_control.checkpoints_counter++;    // Counter for checkpoints, adds to total #checkpoints.
 //        g_checkpoints_control.checkpoints_total = g_checkpoints_control.checkpoints_counter;    // Total # of checkpoints
 //        printf("COUNTER = %d\n",g_checkpoints_control.checkpoints_counter);
-
-    }
+         }
 
 
     /* End Read sequence
