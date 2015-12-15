@@ -64,6 +64,10 @@ void StartTickTimer_ISR(){
 static BaseType_t xHigherPriorityTaskWoken;
 
 void IncrementTickCounter_ISR(){
+    /// Increment counter
+    tickCount++;
+    //puts("incremented counter\n");
+
     if (tickCount == 5){
         /// Give signal to function waiting for semaphore to be free, to perform
         // the necessary function
@@ -77,10 +81,6 @@ void IncrementTickCounter_ISR(){
             xHigherPriorityTaskWoken = pdFALSE;
         }
     }
-
-    /// Increment counter
-    tickCount++;
-    puts("incremented counter\n");
 }
 
 
@@ -143,7 +143,7 @@ bool MotorEncoder::init(){
 bool MotorEncoder::run(void *p){
     while (1){
         if(xSemaphoreTake(motorEncoderSemaphore, 0)){
-            printf("Inside motorEncoder tasks after 5 ticks\nTick count == %i\n", tickCount);
+            printf("Inside motorEncoder tasks after 5 ticks\nTick count == %i\n\n", tickCount);
             tickCount = 0;
             xHigherPriorityTaskWoken = pdTRUE;
         }
