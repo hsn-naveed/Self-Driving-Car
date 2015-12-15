@@ -18,7 +18,7 @@
 #include "can.h"
 #include "uart3.hpp"
 
-//#include "periodic_scheduler/periodic_callback.h"
+#include "periodic_scheduler/periodic_callback.h"
 
 #include "MotorControl.hpp" //temporary for LCD testing purposes
 /* Pinout:-
@@ -56,6 +56,9 @@
 
 using namespace std;
 
+extern MotorControl motorObj;
+
+
 class LCD: public MotorControl
 {
 
@@ -63,16 +66,15 @@ class LCD: public MotorControl
         LCD();
         bool LCD_busy();
 
-        char convertHextoCharSpeed(uint8_t *hexSpeedValue);
-        char convertHextoCharSteer(uint8_t *hexSteerValue);
+        char* convertHextoCharSpeed(uint8_t hexSpeedValue);
+        char* convertHextoCharSteer(uint8_t hexSteerValue);
         void initLCD();
         void initVariables();
 
         void getMessageDataFromMotor(mast_mot_msg_t *motorControlStruct);
-        void writetoLCD(char *steerVal, char *speedVal); //takes data and displays on the LCD
+        void writetoLCD(char *speedVal, char *steerVal); //takes data and displays on the LCD
         void clearLCD(); //clears the entire LCD
         void moveCursor(int row, int column); //moves the cursor to a desired point
-
 
 
         //float pwmFreqInMs = (ONE_SECOND_MS)/MOTOR_SERVO_PWM_FREQ;
@@ -90,6 +92,10 @@ class LCD: public MotorControl
         char *FULL_LEFT_LCD;
         char *FULL_RIGHT_LCD;
         char *STRAIGHT_LCD;
+        char *FAST;
+        char *MEDIUM;
+        char *REVERSE;
+
 
     private:
         Uart3& lcd = Uart3::getInstance();
