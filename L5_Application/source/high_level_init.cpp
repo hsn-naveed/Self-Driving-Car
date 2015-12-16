@@ -124,7 +124,7 @@ void high_level_init(void)
     /* Add default telemetry components if telemetry is enabled */
     #if SYS_CFG_ENABLE_TLM
         tlm_component_add(SYS_CFG_DISK_TLM_NAME);
-        tlm_component_add(SYS_CFG_DEBUG_DLM_NAME);
+        tlm_component_add(SYS_CFG_DEBUG_TLM_NAME);
     #endif
 
     /**

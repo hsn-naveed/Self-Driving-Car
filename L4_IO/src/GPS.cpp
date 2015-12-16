@@ -13,10 +13,13 @@
 #include <cmath>
 #include "io.hpp"
 
+#define MAX_NUMBER_CHECKPOINTS 128
+
 GPS_TX_GPS_INFO_HEADING_t headingToTx = {0};
-ANDROID_TX_ANDROID_INFO_COORDINATES_t dest[128] = {0};
+ANDROID_TX_ANDROID_INFO_COORDINATES_t dest[MAX_NUMBER_CHECKPOINTS] = {0};
 uint8_t num_rx_checkpoints = 0;
-ANDROID_TX_ANDROID_INFO_CHECKPOINTS_t lastDest = {0};
+uint32_t currentDist = 0;
+volatile ANDROID_TX_ANDROID_INFO_CHECKPOINTS_t lastDest = {0};
 
 bool GPS_parser::init(void){
     gps_uart.init(9600, 256, 0);
@@ -47,13 +50,14 @@ bool GPS_parser::run(void *p){
                 }
                 currentGPS = parseCood(latitude, longitude, nORs, eORw);
             }
+            currentDist = calculateDistance();
             headingToTx.GPS_INFO_HEADING_dst = calculateCorrectHeading();
         }
         else{
             printf("Checksum failed!!!\n");
         }
     }
-    else printf("Nothing received from GPS");
+//    else printf("Nothing received from GPS");
     //    printf("%s\n\n", nmeaSentence);
     //    char *nmeaSentence = "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47";
     return true;
@@ -104,19 +108,20 @@ ANDROID_TX_ANDROID_INFO_COORDINATES_t GPS_parser::parseCood(const char *latitude
     return temp;
 }
 
-uint32_t GPS_parser::calculateCorrectHeading(){
+uint32_t GPS_parser::calculateCorrectHeading(void){
     const float pi = 3.1415;
     float correctHeading = 0;
     dest[currentDest] = {37.3604355, -122.1282221};
-    float currentDist = (currentGPS.GPS_INFO_COORDINATES_lat - dest[currentDest].GPS_INFO_COORDINATES_lat)
-                         / (currentGPS.GPS_INFO_COORDINATES_long - dest[currentDest].GPS_INFO_COORDINATES_long);
-    printf("Current Dist: %f\n", currentDist);
     if(dest[currentDest].GPS_INFO_COORDINATES_lat == 0 && dest[currentDest].GPS_INFO_COORDINATES_long == 0){
         printf("Destination has been reached or no more destinations in path! \n");
     }
-//    else if(currentDist < 5){
-//        currentDest++;
-//    }
+    printf("Current Dist: %f\n", currentDist);
+    if(currentDist < 15){
+        printf("Reached checkpoint #%i at \t lat: %f \t long: %f\n", currentDest,
+                dest[currentDest].GPS_INFO_COORDINATES_lat,
+                dest[currentDest].GPS_INFO_COORDINATES_long);
+        currentDest++;
+    }
     else{
         float dx = dest[currentDest].GPS_INFO_COORDINATES_lat - currentGPS.GPS_INFO_COORDINATES_lat;
         printf("dx = %f\n", dx);
@@ -132,4 +137,17 @@ uint32_t GPS_parser::calculateCorrectHeading(){
     }
     printf("The correct heading is: %i\n", (uint32_t) correctHeading);
     return (uint32_t) correctHeading;
+}
+
+uint32_t GPS_parser::calculateDistance(void){
+    double a = 0;
+    double c = 0;
+    const uint32_t R = 6371000; // radius of earth.
+    double dLat = dest[currentDest].GPS_INFO_COORDINATES_lat - currentGPS.GPS_INFO_COORDINATES_lat;
+    double dLong = dest[currentDest].GPS_INFO_COORDINATES_long - currentGPS.GPS_INFO_COORDINATES_long;
+    a = (double)((sin(dLat / 2) * sin(dLat / 2)) + cos(currentGPS.GPS_INFO_COORDINATES_lat) *
+            cos(currentGPS.GPS_INFO_COORDINATES_lat) *
+            (sin(dLong / 2) * sin(dLong / 2)));
+    c = 2 * (atan2(sqrt(a), sqrt(1-a)));
+    return (uint32_t)(R * c);
 }

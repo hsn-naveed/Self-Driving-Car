@@ -36,6 +36,11 @@
 #include "243_can/CAN_structs.h"
 #include "243_can/iCAN.hpp"
 #include "globalVars.h"
+#include <inttypes.h>
+
+//telemtry includes
+#include "c_tlm_comp.h"
+#include "c_tlm_var.h"
 
 #define CANtest 0
 
@@ -49,17 +54,21 @@ const uint32_t ANDROID_INFO_COORDINATES__MIA_MS = 0;
 const ANDROID_TX_ANDROID_INFO_COORDINATES_t ANDROID_INFO_COORDINATES__MIA_MSG = {0};
 can_msg_t tx_msg = {0};
 can_fullcan_msg_t rx_msg = {0};
+uint64_t go = 0;
 
 extern GPS_TX_GPS_INFO_HEADING_t headingToTx;
 extern ANDROID_TX_ANDROID_INFO_COORDINATES_t dest[128];
-extern uint8_t num_rx_checkpoints;
+extern uint64_t num_rx_checkpoints;
 extern ANDROID_TX_ANDROID_INFO_CHECKPOINTS_t lastDest;
-
+extern uint32_t currentDist;
+ANDROID_TX_ANDROID_INFO_COORDINATES_t temp = {0};
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    uint32_t slist[] = {ANDROID_TX_ANDROID_GO_CMD_HDR.mid,
+
+    uint32_t slist[] = {ANDROID_TX_ANDROID_STOP_CMD_HDR.mid,
                         ANDROID_TX_ANDROID_BEGIN_CMD_HDR.mid,
+                        ANDROID_TX_ANDROID_GO_CMD_HDR.mid,
                         ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR.mid,
                         ANDROID_TX_ANDROID_INFO_COORDINATES_HDR.mid};
     iCAN_init_FULLCAN(slist, sizeof(slist) / sizeof(*slist));
@@ -70,6 +79,13 @@ bool period_init(void)
 bool period_reg_tlm(void)
 {
     // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+    tlm_component *GPS_cmp = tlm_component_add("GPS");
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), temp.GPS_INFO_COORDINATES_lat, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), temp.GPS_INFO_COORDINATES_long, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), headingToTx.GPS_INFO_HEADING_current, tlm_uint);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), headingToTx.GPS_INFO_HEADING_dst, tlm_uint);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), num_rx_checkpoints, tlm_uint);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), go, tlm_uint);
     return true; // Must return true upon success
 }
 
@@ -143,20 +159,30 @@ void period_100Hz(void)
         num_rx_checkpoints = 0;
         ANDROID_TX_ANDROID_INFO_CHECKPOINTS_decode(&lastDest, &(rx_msg.data.qword),
                                                     &ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR);
+        printf("Number of checkpoints: %i\n", lastDest.ANDROID_INFO_CHECKPOINTS_count);
     }
     if(iCAN_rx(&rx_msg, ANDROID_TX_ANDROID_INFO_COORDINATES_HDR)){
-        if(num_rx_checkpoints > lastDest.ANDROID_INFO_CHECKPOINTS_count - 1){
+//        printf("Number of checkpoints received: %i\n", (uint8_t)num_rx_checkpoints);
+//        printf("Last destination: %i\n", lastDest.ANDROID_INFO_CHECKPOINTS_count);
+        printf("Received data packet [0]: %x\n", rx_msg.data.dwords[0]);
+        printf("Received data packet [1]: %x\n", rx_msg.data.dwords[1]);
+        if(num_rx_checkpoints > (lastDest.ANDROID_INFO_CHECKPOINTS_count)){
             printf("Something is wrong!!! Too many checkpoints!!!");
         }
         else{
             ANDROID_TX_ANDROID_INFO_COORDINATES_decode(&dest[num_rx_checkpoints], &(rx_msg.data.qword),
                                                         &ANDROID_TX_ANDROID_INFO_COORDINATES_HDR);
+            temp = dest[num_rx_checkpoints];
+
+//            printf("Checkpoint # %i received:\n Lat: %f \n Long: %f\n", num_rx_checkpoints,
+//                    dest[num_rx_checkpoints].GPS_INFO_COORDINATES_lat,
+//                    dest[num_rx_checkpoints].GPS_INFO_COORDINATES_long);
             num_rx_checkpoints++;
         }
     }
 //    tx_msg.msg_id = (uint32_t)716;
     if(iCAN_tx(&tx_msg, GPS_TX_GPS_INFO_HEADING_encode(&(tx_msg.data.qword), &headingToTx))){
-        printf("CAN message sent!\n");
+//        printf("CAN message sent!\n");
     }
     else{
         printf("\n\nCould not send can message!!\n\n");
