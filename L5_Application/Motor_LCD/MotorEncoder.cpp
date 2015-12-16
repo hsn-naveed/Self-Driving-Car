@@ -66,13 +66,13 @@ void CalculateSpeed(){
 //    LOG_INFO("Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
 
 
-    //beginTimeOfEncoder = currentTime;
+    beginTimeOfEncoder = (uint64_t)currentTime;
 
     /// Log time info for each tick mark
 
     //printf("Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
 
-    //*currentSpeed = (circumferenceOfTire/numberOfTickMarks) / timeDiffOfTickMarksInSeconds;
+    *currentSpeed = (circumferenceOfTire/numberOfTickMarks) / timeDiffOfTickMarksInSeconds;
     //printf("Current speed = %.5f, average measured speed = %.5f\n\n", *currentSpeed, slowSpeedAverageRateInMetersPerMilliSecond);
 }
 
@@ -126,26 +126,27 @@ void IncrementTickCounter_ISR(){
     /// Increment counter
     tickCount++;
 
-    xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
-    //
-    if (xHigherPriorityTaskWoken){
-        portYIELD_FROM_ISR(true);
-
-        xHigherPriorityTaskWoken = pdFALSE;
-    }
-
-
-//    if (tickCount == 5){
-//        /// Give signal to function waiting for semaphore to be free, to perform
-//        // the necessary function
-//        xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
+//    xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
+//    //
+//    if (xHigherPriorityTaskWoken){
+//        portYIELD_FROM_ISR(true);
 //
-//        if (xHigherPriorityTaskWoken){
-//            portYIELD_FROM_ISR(true);
-//
-//            xHigherPriorityTaskWoken = pdFALSE;
-//        }
+//        xHigherPriorityTaskWoken = pdFALSE;
 //    }
+
+
+    if (tickCount == 5){
+        /// Give signal to function waiting for semaphore to be free, to perform
+        // the necessary function
+//        xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
+        xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, NULL);
+
+        if (xHigherPriorityTaskWoken){
+            portYIELD_FROM_ISR(true);
+
+            xHigherPriorityTaskWoken = pdFALSE;
+        }
+    }
 }
 
 MotorEncoder::MotorEncoder(uint8_t priorityToUse) :
@@ -158,21 +159,22 @@ bool MotorEncoder::init(){
 }
 
 bool MotorEncoder::run(void *p){
-    if(xSemaphoreTake(motorEncoderSemaphore, 0)){
-        double currentTime = (double)sys_get_uptime_ms();
-        LOG_INFO("RUN func: Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
+    if(xSemaphoreTake(motorEncoderSemaphore, portMAX_DELAY)){
+//        double currentTime = (double)sys_get_uptime_ms();
+        //LOG_INFO("RUN func: Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
 
         printf("Inside motorEncoder tasks after 5 ticks\nTick count = %i\n\n", tickCount);
 
-        beginTimeOfEncoder = (uint64_t)currentTime;
+//        beginTimeOfEncoder = (uint64_t)currentTime;
+
+        CalculateSpeed();
+
+        LOG_DEBUG("Current speed = %.5f\n", *currentSpeed);
+        vTaskDelay(10);
 
         tickCount = 0;
         xHigherPriorityTaskWoken = pdTRUE;
     }
-    //    if (previousTickCount == tickCount){
-
-    //    }
-
     return true;
 }
 

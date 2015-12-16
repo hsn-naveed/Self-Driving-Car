@@ -90,7 +90,7 @@ int main(void)
     eint3_enable_port2(port2_6, eint_falling_edge, IncrementTickCounter_ISR);
 
 
-    scheduler_add_task(new MotorEncoder(PRIORITY_HIGH));
+    scheduler_add_task(new MotorEncoder(PRIORITY_LOW));
 
 
 
@@ -109,7 +109,7 @@ int main(void)
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
-    scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+//    scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 #endif
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
