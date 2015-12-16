@@ -52,7 +52,7 @@
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
 
-MotorEncoder *ptrToMotorEncoder;
+
 
 extern MotorControl motorObj;
 
@@ -63,7 +63,7 @@ int main(void)
     PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
 
     motorObj = new MotorControl(motorPWM, servoPWM);
-    motorObj.initESC();
+    //motorObj.initESC();
 
     /// For initial testing of the motor and brake functionality prior to starting
     float testDutyCycle = 0;
@@ -90,7 +90,7 @@ int main(void)
     eint3_enable_port2(port2_6, eint_falling_edge, IncrementTickCounter_ISR);
 
 
-    scheduler_add_task(new MotorEncoder(PRIORITY_MEDIUM));
+    scheduler_add_task(new MotorEncoder(PRIORITY_HIGH));
 
 
 

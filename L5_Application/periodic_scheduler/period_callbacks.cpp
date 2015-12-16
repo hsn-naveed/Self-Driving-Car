@@ -86,22 +86,25 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-    if (CAN_is_bus_off(can1)){
-        puts("====CAN BUS is off====\n");
-        LE.on(led1);
-    }
-    else if (iCAN_rx(canMsgForMotor, &motorMessage)){
-//        portDISABLE_INTERRUPTS();
-        MASTER_TX_MOTOR_CMD_decode(motorObj.receivedMotorCommands, &(canMsgForMotor->data.qword), &MASTER_TX_MOTOR_CMD_HDR);
-//        portENABLE_INTERRUPTS();
+    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
 
-        motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
 
-        LE.off(led1);
-    }
-    else{
-        LE.on(led1);
-    }
+//    if (CAN_is_bus_off(can1)){
+//        puts("====CAN BUS is off====\n");
+//        LE.on(led1);
+//    }
+//    else if (iCAN_rx(canMsgForMotor, &motorMessage)){
+////        portDISABLE_INTERRUPTS();
+//        MASTER_TX_MOTOR_CMD_decode(motorObj.receivedMotorCommands, &(canMsgForMotor->data.qword), &MASTER_TX_MOTOR_CMD_HDR);
+////        portENABLE_INTERRUPTS();
+//
+//        motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
+//
+//        LE.off(led1);
+//    }
+//    else{
+//        LE.on(led1);
+//    }
 
 
 //    if (HasSpeedChanged() == 1){

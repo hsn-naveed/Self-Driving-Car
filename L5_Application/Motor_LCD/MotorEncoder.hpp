@@ -23,8 +23,6 @@
 static GPIO encoderInput(P2_6);
 
 
-
-
 ///ISR function calls for timer, and tick counts based off
 // encoder input from GPIO
 void StartTickTimer_ISR();
@@ -56,7 +54,5 @@ class MotorEncoder : public scheduler_task{
 
         SemaphoreHandle_t motorEncoderSemaphore;
 };
-
-extern MotorEncoder *ptrToMotorEncoder;
 
 #endif
