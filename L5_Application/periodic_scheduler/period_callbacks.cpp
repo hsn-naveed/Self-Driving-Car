@@ -38,9 +38,13 @@
 
 /***************** ANDROID *****************/
 ANDROID_TX_STOP_GO_CMD_t test ={0};
-ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
+ANDROID_TX_STOP_GO_CMD_t android_stop_go_values = {0};
 ANDROID_TX_INFO_CHECKPOINTS_t android_checkpoints_count = {0};
 ANDROID_TX_INFO_COORDINATES_t android_coordinates_values[128];
+
+/***************** All Flag *****************/
+extern bool g_flag_go;
+extern bool g_flag_stop;
 extern bool g_flagTransmitToCAN;
 extern bool g_flagTransmitCheckpointCount;
 
@@ -64,10 +68,7 @@ bool period_init(void)
     uint32_t sglist[] = {GPS_TX_DESTINATION_REACHED_HDR.mid};
     size_t sizeOfArray = (sizeof(sglist) / sizeof(*sglist));
     iCAN_init_FULLCAN(sglist, sizeOfArray);
-
     msg_tx = new can_msg_t{0};
-    android_stop_go_values = new ANDROID_TX_STOP_GO_CMD_t {0};
-    android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)-1;
 
     return true; // Must return true upon success
 }
@@ -81,38 +82,11 @@ bool period_reg_tlm(void)
 
 void period_1Hz(void)
 {
-    LE.toggle(1);
+
 }
 
 void period_10Hz(void)
 {
-//    /* STOP */
-//    if (android_stop_go_values->ANDROID_STOP_CMD_signal == 0)
-//    {
-//        /* Send stop */
-//        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&(msg_tx->data.qword), android_stop_go_values);
-//        encoded_message.mid = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
-//
-//        if (iCAN_tx(msg_tx, &encoded_message))
-//        {
-//           printf("STOP message sent!\n");
-//        }
-//    }
-//
-//    /* GO */
-//    else if (android_stop_go_values->ANDROID_STOP_CMD_signal == 1)
-//    {
-//        /* Send go */
-//        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&(msg_tx->data.qword), android_stop_go_values);
-//        encoded_message.mid = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
-//
-//
-//        if (iCAN_tx(msg_tx, &encoded_message))
-//        {
-//            printf("GO message sent to master\n");
-//        }
-//    }
-
 
 }
 
@@ -130,64 +104,73 @@ void period_100Hz(void)
 //       printf("%i!\n", (uint32_t)msg_tx->data.qword);
 //    }
 
-    if (g_flagTransmitToCAN)    //Flag to transmit to CAN
-       {
-            msg_hdr_t message;
-//            * Counter will increment till it is at the total of checkpoints.
-//            * IE: (i = 0; i < totalNumberOfCheckpoints; i++);
+    if (g_flagTransmitToCAN) //Flag to transmit to CAN
+    {
+        msg_hdr_t message;
 
-           if (g_checkpoints_counter == (android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count - 1))
-           {
-               g_flagTransmitToCAN = false;
-               g_checkpoints_counter = 0;
-           }
+        if (g_checkpoints_counter
+                == (android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count - 1))
+        {
+            g_flagTransmitToCAN = false;
+            g_checkpoints_counter = 0;
+        }
 
-           if (g_flagTransmitCheckpointCount)
-           {
+        if (g_flagTransmitCheckpointCount)
+        {
             //    Send number of checkpoints
-               message = ANDROID_TX_INFO_CHECKPOINTS_encode(&(msg_tx->data.qword), &android_checkpoints_count);
-               message.mid = (uint32_t)ANDROID_TX_INFO_CHECKPOINTS_HDR.mid;
+            message = ANDROID_TX_INFO_CHECKPOINTS_encode(&(msg_tx->data.qword),
+                    &android_checkpoints_count);
+            message.mid = (uint32_t) ANDROID_TX_INFO_CHECKPOINTS_HDR.mid;
 
-               if (iCAN_tx(msg_tx, &message))
-               {
-       //            printf("Checkpoints value: %d\n", (uint8_t)msg_tx->data.qword);
-               }
-               g_flagTransmitCheckpointCount = false;
-           }
+            if (iCAN_tx(msg_tx, &message))
+            {
+                LE.toggle(4);
+            }
+            g_flagTransmitCheckpointCount = false;
+        }
 
-          //  Send the coordinates incrementally
-           message = ANDROID_TX_INFO_COORDINATES_encode(&(msg_tx->data.qword),
-                           &android_coordinates_values[g_checkpoints_counter++]);
-           message.mid = (uint32_t)ANDROID_TX_INFO_COORDINATES_HDR.mid;
+        //  Send the coordinates incrementally
+        message = ANDROID_TX_INFO_COORDINATES_encode(&(msg_tx->data.qword),
+                &android_coordinates_values[g_checkpoints_counter++]);
+        message.mid = (uint32_t) ANDROID_TX_INFO_COORDINATES_HDR.mid;
 
-           printf("[1] %x\n", msg_tx->data.dwords[0]);
-           printf("[2] %x\n", msg_tx->data.dwords[1]);
+        if (iCAN_tx(msg_tx, &message))
+        {
+            LE.toggle(3);
+        }
+    }
 
+    /* STOP */
+    if (g_flag_stop)
+    {
+        /* Send stop */
+        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&(msg_tx->data.qword), &android_stop_go_values);
+        encoded_message.mid = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
 
-           if (iCAN_tx(msg_tx, &message))
-           {
-         //      printf("android_coordinates_values sent");
-           }
-//       }
-       }
+        if (iCAN_tx(msg_tx, &encoded_message))
+        {
+            LE.toggle(2);
+        }
+        g_flag_stop = false;
+    }
 
-//    if (android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count > 0)
-//    {
-//        message.mid = (uint32_t)ANDROID_TX_INFO_CHECKPOINTS_HDR.mid;
-//    //    message.mid = (uint32_t)708;
-//        message = ANDROID_TX_INFO_CHECKPOINTS_encode(&(msg_tx->data.qword), &android_checkpoints_count);
-//
-//    //    printf("data: %d\n\n", (uint8_t)msg_tx->data.qword);
-//       if (iCAN_tx(msg_tx, &message))
-//       {
-//          // printf("");
-//    //       puts("checkpoint sent!");
-//       }
-//    }
+    /* GO */
+    if (g_flag_go)
+    {
+        /* Send go */
+        msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode((uint64_t*)&(msg_tx->data.qword), &android_stop_go_values);
+        encoded_message.mid = (uint32_t)ANDROID_TX_STOP_GO_CMD_HDR.mid;
+        if (iCAN_tx(msg_tx, &encoded_message))
+        {
+            LE.toggle(1);
+        }
+
+        g_flag_go = false;
+    }
 }
 
 void period_1000Hz(void)
 {
-    LE.toggle(4);
+
 }
 

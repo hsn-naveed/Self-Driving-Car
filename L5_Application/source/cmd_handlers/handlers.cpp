@@ -49,12 +49,14 @@
 
 #include "ANDROID_message.h"
 
-extern ANDROID_TX_STOP_GO_CMD_t *android_stop_go_values;
+extern ANDROID_TX_STOP_GO_CMD_t android_stop_go_values;
 extern ANDROID_TX_INFO_CHECKPOINTS_t android_checkpoints_count;
 extern ANDROID_TX_INFO_COORDINATES_t android_coordinates_values[128];
 
 bool g_flagTransmitCheckpointCount = false;
 bool g_flagTransmitToCAN = false;
+bool g_flag_go = false;
+bool g_flag_stop = false;
 
 int g_cp = 0;
 
@@ -66,16 +68,14 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
     if (cmdParams.beginsWithIgnoreCase("GO"))
     {
-       // GO
- //       printf("\n\nGO\n\n");
-        android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)1;
+         android_stop_go_values.ANDROID_STOP_CMD_signal = (uint8_t)1;
+         g_flag_go = true;
     }
 
     else if (cmdParams.beginsWithIgnoreCase("STOP"))
     {
-        // STOP
- //       printf("\n\nSTOP\n\n");
-        android_stop_go_values->ANDROID_STOP_CMD_signal = (uint8_t)0;
+        android_stop_go_values.ANDROID_STOP_CMD_signal = (uint8_t)0;
+        g_flag_stop = true;
     }
 
     else if (cmdParams.beginsWithIgnoreCase("READ") && !cmdParams.beginsWithIgnoreCase("READSIZE"))
@@ -94,10 +94,6 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 //        printf("COUNTER = %d\n",g_checkpoints_control.checkpoints_counter);
          }
 
-
-    /* End Read sequence
-     * Trigger flag to true. This will allow periodic scheduler to run,
-     * also transfers the number of checkpoints and the checkpoints. */
     else if (cmdParams.beginsWithIgnoreCase("ENDREAD"))
     {
         android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count = g_cp;
@@ -112,8 +108,7 @@ CMD_HANDLER_FUNC(bluetoothHandler)
         android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count = 0;
         g_flagTransmitToCAN = false;
         g_flagTransmitCheckpointCount = false;
-//        printf("Reset: %d %d\n\n", g_cp, android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count);
-    }
+   }
 
     return true;
 }
