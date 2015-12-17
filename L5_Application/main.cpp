@@ -66,7 +66,8 @@ int main(void)
     PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
 
     motorObj = new MotorControl(motorPWM, servoPWM);
-    motorObj.initESC();
+    motorPWM.set(motorObj.NEUTRAL);
+    //motorObj.initESC();
 
 
     lcdObj.initLCD();

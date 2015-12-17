@@ -28,6 +28,7 @@ void MotorControl::triggerForwardOrReverseThrottle(float maxOrMin,
 }
 
 void MotorControl::changeMotorDirection(float speedToSet){
+    int delay = 10;
     /// Enter here if wanting to brake, going either forward or reverse
     if (speedToSet == BRAKE){
         /// If currently moving forward, just set pwm to BRAKE, as the BRAKE is
@@ -41,7 +42,7 @@ void MotorControl::changeMotorDirection(float speedToSet){
         // until you return to neutral
         else if (CurrentMotorValue == BACK_SPEED){
             MotorPwm.set(FOWARD_BRAKE);
-            delay_ms(10);
+            delay_ms(delay);
             CurrentMotorValue = speedToSet;
         }
     }
@@ -49,10 +50,10 @@ void MotorControl::changeMotorDirection(float speedToSet){
     if (speedToSet == BACK_SPEED){
         if (CurrentMotorValue == MEDIUM_SPEED || CurrentMotorValue == SLOW_SPEED){
             MotorPwm.set(BRAKE);
-            delay_ms(10);
+            delay_ms(delay);
 
             MotorPwm.set(NEUTRAL);
-            delay_ms(10);
+            delay_ms(delay);
 
             CurrentMotorValue = speedToSet;
             MotorPwm.set(CurrentMotorValue);
@@ -61,7 +62,7 @@ void MotorControl::changeMotorDirection(float speedToSet){
         // then reverse; ESC will then know that the reverse is now reverse, instead of a brake
         else if (CurrentMotorValue == BRAKE){
             MotorPwm.set(NEUTRAL);
-            delay_ms(10);
+            delay_ms(delay);
 
             CurrentMotorValue = speedToSet;
             MotorPwm.set(CurrentMotorValue);
@@ -74,14 +75,19 @@ void MotorControl::changeMotorDirection(float speedToSet){
     if (speedToSet == MEDIUM_SPEED || speedToSet == SLOW_SPEED){
         if (CurrentMotorValue < NEUTRAL){
             MotorPwm.set(FOWARD_BRAKE);
-            delay_ms(10);
+            delay_ms(delay);
 
             MotorPwm.set(NEUTRAL);
-            delay_ms(10);
+            delay_ms(delay);
 
             CurrentMotorValue = speedToSet;
             MotorPwm.set(CurrentMotorValue);
         }
+        else{
+            CurrentMotorValue = speedToSet;
+            MotorPwm.set(CurrentMotorValue);
+        }
+
     }
 }
 #endif

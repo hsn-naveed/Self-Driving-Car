@@ -72,6 +72,7 @@ bool period_init(void)
     /// Clear LCD in case there's stuff on LCD left over
     lcdObj.clearLCD();
     lcdObj.initLCD();
+
     return true; // Must return true upon success
 }
 
