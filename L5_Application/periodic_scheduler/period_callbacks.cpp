@@ -27,7 +27,7 @@
  * For example, the 1000Hz take slot runs periodically every 1ms, and whatever you
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
-
+#include "L5_Application/can_message.h"
 #include <stdio.h>
 #include <stdint.h>
 #include "io.hpp"
@@ -39,15 +39,17 @@
 #include "iCAN.hpp"
 #include "Motor_LCD/MotorControl.hpp"
 #include "Motor_LCD/MotorEncoder.hpp"
-#include "L5_Application/can_message.h"
 
-/// Object that will be used for calling all functions
-   // related to motor and servo
+#include "Motor_LCD/LCD.hpp"
+
+
 MotorControl motorObj;
 
-/// These variables are used for CAN bus communication
+
+
 can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t;
 msg_hdr_t motorMessage = MASTER_TX_MOTOR_CMD_HDR;
+
 
 
 /// This is the stack size used for each of the period tasks
@@ -60,6 +62,7 @@ bool period_init(void)
 {
     /// CAN bus initialization
     uint32_t std_list_arr[] = {(uint32_t)MASTER_TX_MOTOR_CMD_HDR.mid};
+
     size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
 
     iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
@@ -68,7 +71,8 @@ bool period_init(void)
 }
 
 /// Register any telemetry variables
-bool period_reg_tlm(void){
+bool period_reg_tlm(void)
+{
 //    TLM_REG_VAR(tlm_component_get_by_name("disk"), MOTOR_SERVO_PWM_FREQ, tlm_float);
 //
 //    TLM_REG_VAR(tlm_component_get_by_name("disk"), MEDIUM_SPEED_OFFSET, tlm_float);
@@ -92,6 +96,7 @@ void period_1Hz(void)
 void period_10Hz(void)
 {
 //    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
+    {
 
 
 //    if (CAN_is_bus_off(can1)){
@@ -153,5 +158,22 @@ void period_100Hz(void)
 
 void period_1000Hz(void)
 {
-
+//    if (HasSpeedChanged() == 1)
+//    {
+//        /// Adjust motor speed offset accordingly
+//        SLOW_SPEED_OFFSET += incrementSpeedAmount;
+//        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
+//    }
+//    else if (HasSpeedChanged() == 2)
+//    {
+//        // Anything below the max negative speed offset, it throws off the duty cycle
+//        // and car motor is unpr/// Object that will be used for calling all functions
+   // related to motor and servoedictable
+//        if (SLOW_SPEED_OFFSET
+//                < (maxNegativeSlowSpeedOffset - incrementSpeedAmount))
+//        {
+//            SLOW_SPEED_OFFSET -= incrementSpeedAmount;
+//        }
+//        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
+//    }
 }
