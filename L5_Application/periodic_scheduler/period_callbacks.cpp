@@ -98,6 +98,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 // set to 1 if you want to test motor controls using switches
 // set to 0 if you want to use CAN (normal mode)
 #define DEBUG_NO_CAN 0
+int g_counter = 0;
 
 // set to 1 if you want to test Car heading using test vectors
 // set to 0 if you want to use CAN (normal mode)
@@ -160,17 +161,17 @@ void generateMotorCommands(MotorCommands command);
 ///////////////////////////SENSOR///////////////////////////
 
 //for left and right sensors
-static uint8_t MINIMUM_LR_SENSOR_VALUE = 50;
+static uint8_t MINIMUM_LR_SENSOR_VALUE = 40;
 
 //for middle sensor
-static uint8_t MINIMUM_MIDDLE_SENSOR_VALUE = 30;
+static uint8_t MINIMUM_MIDDLE_SENSOR_VALUE = 40;
 
 //for rear sensor
 static uint8_t MINIMUM_REAR_SENSOR_VALUE = 10;
 
 //for all front sensor
 //unused
-static uint8_t CRITICAL_SENSOR_VALUE = 8;
+static uint8_t CRITICAL_SENSOR_VALUE = 10;
 
 //Sensor readings based on minimum values
 bool CRITICAL_BLOCKED = false;
@@ -194,7 +195,7 @@ SENSOR_TX_INFO_SONARS_t* g_sensor_values;
 const SENSOR_TX_INFO_SONARS_t INFO_SONARS__MIA_MSG = { 5, 5, 5, 5};
 
 // EXACT NAME: Timeout when MIA is replaced
-const uint32_t INFO_SONARS__MIA_MS = 1000;
+const uint32_t INFO_SONARS__MIA_MS = 700;
 
 ///////////////////////////----///////////////////////////
 
@@ -203,8 +204,16 @@ const uint32_t INFO_SONARS__MIA_MS = 1000;
 GPS_TX_INFO_HEADING_t* g_heading_values;
 GPS_TX_DESTINATION_REACHED_t* g_dest_reached_value;
 
-double g_heading_current_value = 0;
-double g_heading_destination_value = 0;
+uint32_t g_heading_current_value = 0;
+uint32_t g_heading_destination_value = 0;
+uint8_t g_tlm_dest_reached_value = 0;
+
+
+
+const uint32_t INFO_HEADING__MIA_MS = 100;
+const GPS_TX_INFO_HEADING_t INFO_HEADING__MIA_MSG = { 5, 5};
+
+
 
 void setDirectionBasedHeading();
 
@@ -215,6 +224,8 @@ void setDirectionBasedHeading();
 bool g_receiving_checkpoints = false;
 
 bool g_GO_signal = false;
+
+uint8_t g_tel_GO_signal = 0;
 
 ANDROID_TX_STOP_GO_CMD_t* g_android_stop_go_value;
 ///////////////////////////----///////////////////////////
@@ -263,6 +274,8 @@ can_fullcan_msg_t *g_gps_msg;
 can_fullcan_msg_t *g_compass_msg;
 can_fullcan_msg_t *g_android_msg;
 
+can_fullcan_msg_t *g_dest_reach_msg;
+
 can_fullcan_msg_t* g_receive_msg;
 
 //used for sending data
@@ -291,6 +304,8 @@ bool period_init(void)
     g_compass_msg = new can_fullcan_msg_t { 0 };
     g_sensor_msg = new can_fullcan_msg_t { 0 };
     g_android_msg = new can_fullcan_msg_t { 0 };
+
+    g_dest_reach_msg = new can_fullcan_msg_t { 0 };
 
     msg_tx = new can_msg_t {0};
 
@@ -329,11 +344,25 @@ bool period_reg_tlm(void)
     TLM_REG_VAR(master_cmp, g_motor_cmd_drive_value, tlm_uint);
 
     //heading values
-    TLM_REG_VAR(master_cmp,g_heading_current_value, tlm_double);
-       TLM_REG_VAR(master_cmp, g_heading_destination_value, tlm_double);
+    TLM_REG_VAR(master_cmp,g_heading_current_value, tlm_uint);
+    TLM_REG_VAR(master_cmp, g_heading_destination_value, tlm_uint);
+    TLM_REG_VAR(master_cmp, g_tlm_dest_reached_value, tlm_uint);
+
+    TLM_REG_VAR(master_cmp, g_counter, tlm_int);
+
+    //GO signal
+    TLM_REG_VAR(master_cmp, g_tel_GO_signal, tlm_uint);
 
     return true; // Must return true upon success
 }
+
+void byPassSensor() {
+    g_sensor_values->SENSOR_INFO_SONARS_left = 50;
+    g_sensor_values->SENSOR_INFO_SONARS_middle = 50;
+    g_sensor_values->SENSOR_INFO_SONARS_right = 50;
+    g_sensor_values->SENSOR_INFO_SONARS_rear = 50;
+}
+
 
 void setDirectionBasedHeading() {
         //Tolerance defines our accuracy of control. Great tolerance means less precision
@@ -341,41 +370,38 @@ void setDirectionBasedHeading() {
         float current_sector = round(g_heading_current_value/tolerance);
         float dst_sector = round(g_heading_destination_value/tolerance);
     
+        //we have reached our destination
+        if(g_heading_destination_value == 999){
+            g_tlm_dest_reached_value = 1;
+        }
+
         //if we are in +/- tolerance degrees of our destination heading, maintain course
-        if (((int)current_sector <= (int)dst_sector+1) and ((int)current_sector >= (int)dst_sector-1))
+        else if (((int)current_sector <= (int)dst_sector+1) and ((int)current_sector >= (int)dst_sector-1))
             {
             //go straight
-            printf("Same Sector\n");
-            generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_SLOW);
+           // printf("Same Sector\n");
+            generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM);
         }
-        else if(g_heading_destination_value>g_heading_current_value) {
+        else if(g_heading_destination_value > g_heading_current_value) {
             if (abs(g_heading_destination_value - g_heading_current_value)>=180){
-                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT);
-                printf("Current Sector: %f \n",current_sector);
-                printf("Destination Sector: %f \n",dst_sector);
-                printf("Right\n");
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT);
             }
             else{
-                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT);
-                printf("Current Sector: %f \n",current_sector);
-                printf("Destination Sector: %f \n",dst_sector);
-                printf("LEFT\n");
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT);
+
             }
         }
         else{
             if (abs(g_heading_destination_value - g_heading_current_value)>=180){
-                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT);
-                printf("Current Sector: %f \n",current_sector);
-                printf("Destination Sector: %f \n",dst_sector);
-                printf("LEFT\n");
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT);
             }
             else{
-                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_RIGHT);
-                printf("Current Sector: %f \n",current_sector);
-                printf("Destination Sector: %f \n",dst_sector);
-                printf("Right\n");
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_SOFT_LEFT);
+
+
             }
         }
+
 
 }
 
@@ -518,7 +544,10 @@ void parseSensorReading(SENSOR_TX_INFO_SONARS_t* data)
         REAR_BLOCKED = false;
 
     if (!LEFT_BLOCKED && !MIDDLE_BLOCKED && !RIGHT_BLOCKED)
+    {
         FRONT_CLEAR = true;
+
+    }
     else
         FRONT_CLEAR = false;
 
@@ -624,7 +653,7 @@ void period_1Hz(void)
     g_heart_counter++;
     if (50000 < g_heart_counter) g_heart_counter = 0;
 
-#if !HEAD_TEST_MODE
+#if HEAD_TEST_MODE
     uint32_t curr_array[] = {45, 315,135,95,89,1};
     uint32_t dest_array[] = {5,95,359,270,91,341};
 
@@ -672,48 +701,77 @@ void period_100Hz(void)
 //        }
 
 
+    //Parse STOP&GO signal message
+     if (iCAN_rx(g_android_msg, &android_stop_go_cmd_hdr))
+       {
+           portDISABLE_INTERRUPTS();
+           ANDROID_TX_STOP_GO_CMD_decode(g_android_stop_go_value, (uint64_t*) &g_android_msg->data.qword, &ANDROID_TX_STOP_GO_CMD_HDR);
+           portENABLE_INTERRUPTS();
 
-    if (iCAN_rx(g_sensor_msg, &sensor_info_sonar_hdr))
+           if((uint8_t) g_android_stop_go_value->ANDROID_STOP_CMD_signal == 1) {
+               g_GO_signal = true;
+               g_tel_GO_signal = (uint8_t) g_android_stop_go_value->ANDROID_STOP_CMD_signal;
+           } else {
+               g_GO_signal = false;
+               g_tel_GO_signal = (uint8_t) g_android_stop_go_value->ANDROID_STOP_CMD_signal;
+           }
+
+           g_tlm_dest_reached_value = 0;
+       }
+
+     //receive destination reached message
+     if (iCAN_rx(g_dest_reach_msg, &gps_destination_reached_hdr))
+         {
+             portDISABLE_INTERRUPTS();
+             GPS_TX_DESTINATION_REACHED_decode(g_dest_reached_value,(uint64_t*) &g_dest_reach_msg->data.qword, &GPS_TX_DESTINATION_REACHED_HDR);
+             portENABLE_INTERRUPTS();
+
+           //  g_tlm_dest_reached_value = (uint8_t) g_dest_reached_value->GPS_DESTINATION_REACHED_signal;
+             //printf("dest reached %i", g_counter++);
+//
+//             if((uint8_t) g_dest_reached_value->GPS_DESTINATION_REACHED_signal == 1) {
+//                 g_GO_signal = false;
+//                 g_tlm_dest_reached_value = (uint8_t) g_dest_reached_value->GPS_DESTINATION_REACHED_signal;
+//             } else {
+//                 g_GO_signal = true;
+//                 g_tlm_dest_reached_value = (uint8_t) g_dest_reached_value->GPS_DESTINATION_REACHED_signal;
+//             }
+
+         }
+
+
+      if (iCAN_rx(g_sensor_msg, &sensor_info_sonar_hdr))
     {
 
-        portDISABLE_INTERRUPTS();
+       //  puts("received sensor!\n");
         SENSOR_TX_INFO_SONARS_decode(g_sensor_values, (uint64_t*) &(g_sensor_msg->data.qword), &SENSOR_TX_INFO_SONARS_HDR);
-        portENABLE_INTERRUPTS();
+
+
+//        g_sensor_values->SENSOR_INFO_SONARS_left = g_sensor_msg->data.bytes[0];
+//        g_sensor_values->SENSOR_INFO_SONARS_middle = g_sensor_msg->data.bytes[1];
+//        g_sensor_values->SENSOR_INFO_SONARS_right = g_sensor_msg->data.bytes[2];
+//        g_sensor_values->SENSOR_INFO_SONARS_rear = g_sensor_msg->data.bytes[3];
+
+        //printf("%i\n",g_sensor_msg->data.bytes[0] );
 
         g_sensor_receive_counter = g_reset;
     }
-
     //Compass sending current heading
-
-    else if (iCAN_rx(g_compass_msg, &gps_info_heading_hdr))
-    {
+     if (iCAN_rx(g_compass_msg, &gps_info_heading_hdr)) {
         portDISABLE_INTERRUPTS();
         GPS_TX_INFO_HEADING_decode(g_heading_values,(uint64_t*) &(g_compass_msg->data.qword), &GPS_TX_INFO_HEADING_HDR);
         portENABLE_INTERRUPTS();
 
-        printf("HEADING current %" PRIu32 "\n", (uint32_t) g_heading_values->GPS_INFO_HEADING_current);
-        printf("HEADING dest %" PRIu32 "\n", (uint32_t) g_heading_values->GPS_INFO_HEADING_dst);
+       // printf("HEADING current %" PRIu32 "\n", (uint32_t) g_heading_values->GPS_INFO_HEADING_current);
+        //printf("HEADING dest %" PRIu32 "\n", (uint32_t) g_heading_values->GPS_INFO_HEADING_dst);
 
-        g_heading_current_value = (double) g_heading_values->GPS_INFO_HEADING_current;
-        g_heading_destination_value = (double) g_heading_values->GPS_INFO_HEADING_dst;
+        g_heading_current_value = (uint32_t) g_heading_values->GPS_INFO_HEADING_current;
+        g_heading_destination_value = (uint32_t) g_heading_values->GPS_INFO_HEADING_dst;
 
         g_compass_receive_counter = g_reset;
 
     }
 
-
-
-    //Parse STOP&GO signal message
-    else if (iCAN_rx(g_android_msg, &android_stop_go_cmd_hdr))
-    {
-        portDISABLE_INTERRUPTS();
-        ANDROID_TX_STOP_GO_CMD_decode(g_android_stop_go_value, (uint64_t*) &g_android_msg->data.qword, &ANDROID_TX_STOP_GO_CMD_HDR);
-        portENABLE_INTERRUPTS();
-
-        if((uint8_t) g_android_stop_go_value->ANDROID_STOP_CMD_signal == 1) {
-            g_GO_signal = true;
-        } else g_GO_signal = false;
-    }
 
 
 
@@ -751,7 +809,7 @@ void period_100Hz(void)
 
         case 1:
         portDISABLE_INTERRUPTS();
-        g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[0] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
         g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
@@ -762,7 +820,7 @@ void period_100Hz(void)
         case 2:
         portDISABLE_INTERRUPTS();
         g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
-        g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[1] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
         CAN_ST.sensor_data = (sen_msg_t*) & g_sensor_msg->data.bytes[0];
@@ -771,8 +829,8 @@ void period_100Hz(void)
 
         case 3:
         portDISABLE_INTERRUPTS();
-        g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[0] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[1] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
 
@@ -783,7 +841,7 @@ void period_100Hz(void)
         portDISABLE_INTERRUPTS();
         g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
-        g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[2] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
 
         portENABLE_INTERRUPTS();
@@ -791,9 +849,9 @@ void period_100Hz(void)
 
         case 5:
         portDISABLE_INTERRUPTS();
-        g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[0] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
         g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
-        g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[2] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
 
         portENABLE_INTERRUPTS();
@@ -802,8 +860,8 @@ void period_100Hz(void)
         case 6:
         portDISABLE_INTERRUPTS();
         g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
-        g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[1] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[2] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
 
         portENABLE_INTERRUPTS();
@@ -811,9 +869,9 @@ void period_100Hz(void)
 
         case 7:
         portDISABLE_INTERRUPTS();
-        g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[0] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[1] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[2] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
         g_sensor_msg->data.bytes[3] = (uint8_t) 0xff;
 
         portENABLE_INTERRUPTS();
@@ -824,27 +882,27 @@ void period_100Hz(void)
         g_sensor_msg->data.bytes[0] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[1] = (uint8_t) 0xff;
         g_sensor_msg->data.bytes[2] = (uint8_t) 0xff;
-        g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[3] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
 
         portENABLE_INTERRUPTS();
         break;
 
         case 15:
         portDISABLE_INTERRUPTS();
-        g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[0] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[1] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[2] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[3] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
 
         portENABLE_INTERRUPTS();
         break;
 
         default:
         portDISABLE_INTERRUPTS();
-        g_sensor_msg->data.bytes[0] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[1] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[2] = (uint8_t) 0x00;
-        g_sensor_msg->data.bytes[3] = (uint8_t) 0x00;
+        g_sensor_msg->data.bytes[0] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[1] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[2] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
+        g_sensor_msg->data.bytes[3] = (uint8_t) CRITICAL_SENSOR_VALUE + 2;
 
         portENABLE_INTERRUPTS();
         break;
@@ -858,9 +916,16 @@ void period_100Hz(void)
 
     //NO MESSAGE RECEIVE LOGIC
     //>>>>>>>>>>>>>>>>>>>>>HANDLE MIA
-       if (SENSOR_TX_INFO_SONARS_handle_mia(g_sensor_values, 30)) {
+    if (GPS_TX_INFO_HEADING_handle_mia(g_heading_values, 10)) {
+        g_heading_current_value = (uint32_t) g_heading_values->GPS_INFO_HEADING_current;
+        g_heading_destination_value = (uint32_t) g_heading_values->GPS_INFO_HEADING_dst;
+    }
+
+       if (SENSOR_TX_INFO_SONARS_handle_mia(g_sensor_values, 10)) {
            //SENSOR MISS
        }
+
+
 
 #if !DEBUG_NO_CAN
     //setting modes
@@ -891,7 +956,7 @@ void period_100Hz(void)
                 break;
 
                 default:
-
+                    printf("default entered\n");
                 break;
         }
     }
@@ -908,26 +973,29 @@ void period_100Hz(void)
     //prepare our motor commands container
     g_motor_cmd_values = (MASTER_TX_MOTOR_CMD_t*) & msg_tx->data.bytes[0];
 
-    // we send STOP command while we wait for GO signal from Android
-    if (!g_GO_signal && (g_current_mode ==  AUTO))
-    {
+    // we send STOP command while we wait for GO signal from Android, or when
+    // we reached our destination
+
+    //>>>>>>>>>>>>>>>>>READING SENSOR
+    //First State is to check our sensor values
+    //we parse the sensor values
+    parseSensorReading(g_sensor_values);
+    //byPassSensor();
+
+    g_sensor_left_value =  g_sensor_values->SENSOR_INFO_SONARS_left;
+    g_sensor_middle_value = g_sensor_values->SENSOR_INFO_SONARS_middle;
+    g_sensor_right_value =  g_sensor_values->SENSOR_INFO_SONARS_right;
+    g_sensor_rear_value =  g_sensor_values->SENSOR_INFO_SONARS_rear;
+
+    if ( ( !g_GO_signal && (g_current_mode ==  AUTO) ) || ( g_tlm_dest_reached_value == 1))  {
        //generate command to STOP
         generateMotorCommands(COMMAND_MOTOR_STOP);
 
     }
     //if we're in FREERUN or we receive a GO signal
-    else if ( (g_current_mode == FREERUN) || (g_GO_signal && g_current_mode ==  AUTO) )
+    else if ( (g_current_mode == FREERUN) || (g_GO_signal && (g_current_mode ==  AUTO) ) )
+
     {
-
-        //>>>>>>>>>>>>>>>>>READING SENSOR
-        //First State is to check our sensor values
-        //we parse the sensor values
-        parseSensorReading(g_sensor_values);
-
-        g_sensor_left_value = (uint8_t) g_sensor_values->SENSOR_INFO_SONARS_left;
-        g_sensor_middle_value = (uint8_t) g_sensor_values->SENSOR_INFO_SONARS_middle;
-        g_sensor_right_value = (uint8_t) g_sensor_values->SENSOR_INFO_SONARS_right;
-        g_sensor_rear_value = (uint8_t) g_sensor_values->SENSOR_INFO_SONARS_rear;
 
         //>>>>>>>>>>>>>>>>>GENERATE DRIVE COMMANDS
         //drive motor based on HEADING
@@ -936,16 +1004,37 @@ void period_100Hz(void)
             //For GPS based car steering, uncomment the setDirectionBasedHeading() function and
             //comment the generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM) function
 
-            //setDirectionBasedHeading();
+            if (g_current_mode == FREERUN) {
+                generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM);
 
-            // now we're testing without GPS
-            // so we go straight
-            generateMotorCommands(COMMAND_MOTOR_FORWARD_STRAIGHT_MEDIUM);
+            }
+            else {
+
+                setDirectionBasedHeading();
+            }
+
         }
         //drive motor based on sensor
         else {
             //if one of the sensors is below critical value
-            if (CRITICAL_BLOCKED) {
+//            if (CRITICAL_BLOCKED) {
+//                //if back sensor is also blocked
+//                if (REAR_BLOCKED)
+//                {
+//                    generateMotorCommands(COMMAND_MOTOR_STOP);
+//                    // generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
+//                    disp_7LED(DISPLAY_STOP);
+//                }
+//                //if back is clear, reverse-straight
+//                else
+//                {
+//                    generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
+//
+//                }
+//            }
+            //if all front sensors are blocked
+            if (LEFT_BLOCKED && RIGHT_BLOCKED && MIDDLE_BLOCKED)
+            {
                 //if back sensor is also blocked
                 if (REAR_BLOCKED)
                 {
@@ -953,10 +1042,10 @@ void period_100Hz(void)
                     // generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
                     disp_7LED(DISPLAY_STOP);
                 }
-                //if back is clear, reverse-straight
+                //if back is clear, reverse-left
                 else
                 {
-                    generateMotorCommands(COMMAND_MOTOR_REVERSE_STRAIGHT);
+                    generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
 
                 }
             }
@@ -1004,23 +1093,7 @@ void period_100Hz(void)
                 //generateMotorCommands(COMMAND_MOTOR_STOP);
 
             }
-            //if all front sensors are blocked
-            else if (!FRONT_CLEAR)
-            {
-                //if back sensor is also blocked
-                if (REAR_BLOCKED)
-                {
-                    generateMotorCommands(COMMAND_MOTOR_STOP);
-                    // generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
-                    disp_7LED(DISPLAY_STOP);
-                }
-                //if back is clear, reverse-left
-                else
-                {
-                    generateMotorCommands(COMMAND_MOTOR_REVERSE_LEFT);
 
-                }
-            }
             else
             {
                 generateMotorCommands(COMMAND_MOTOR_STOP);
@@ -1028,32 +1101,32 @@ void period_100Hz(void)
             }
         }
 
-        ///////////////////////////SENDING PART///////////////////////////////
-
-        //copy our values for telemetry
-
-        g_motor_cmd_steer_value = (uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_steer;
-        g_motor_cmd_drive_value = (uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_drive;
-        //>>>>>>>>>>>>>>>>>SEND COMM1ANDS TO THE MOTOR
-        //prepare our message id
-        msg_tx->msg_id = (uint32_t) MASTER_TX_MOTOR_CMD_HDR.mid;
-
-        msg_hdr_t encoded_message = MASTER_TX_MOTOR_CMD_encode((uint64_t*)&(msg_tx->data.qword), g_motor_cmd_values);
-        //send our message
-        if(iCAN_tx(msg_tx, &encoded_message))
-        {
-            // printf("Message sent to motor\n");
-            // printf("Steer value: %i\n",msg_tx->data.bytes[0]);
-            // printf("drive value: %i\n",msg_tx->data.bytes[1]);
-            //printf("byte 0 = %i\n",g_motor_cmd_values->MASTER_MOTOR_CMD_steer);
-            //printf("byte 1 = %i\n",(uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_drive);
-
-        } else {
-            //printf("\nNo message sent\n");
-        }
-
-
     } //else if ( (g_current_mode == FREERUN) || (g_GO_signal && g_current_mode ==  AUTO) )
+    ///////////////////////////SENDING PART///////////////////////////////
+
+    //copy our values for telemetry
+
+    g_motor_cmd_steer_value = (uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_steer;
+    g_motor_cmd_drive_value = (uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_drive;
+    //>>>>>>>>>>>>>>>>>SEND COMM1ANDS TO THE MOTOR
+    //prepare our message id
+    msg_tx->msg_id = (uint32_t) MASTER_TX_MOTOR_CMD_HDR.mid;
+
+    msg_hdr_t encoded_message = MASTER_TX_MOTOR_CMD_encode((uint64_t*)&(msg_tx->data.qword), g_motor_cmd_values);
+    //send our message
+    if(iCAN_tx(msg_tx, &encoded_message))
+    {
+        // printf("Message sent to motor\n");
+        // printf("Steer value: %i\n",msg_tx->data.bytes[0]);
+        //printf("drive value: %i\n",msg_tx->data.bytes[1]);
+        //printf("byte 0 = %i\n",g_motor_cmd_values->MASTER_MOTOR_CMD_steer);
+        //printf("byte 1 = %i\n",(uint8_t) g_motor_cmd_values->MASTER_MOTOR_CMD_drive);
+
+    } else {
+        //printf("\nNo message sent\n");
+    }
+
+
 
     ///////////////////////////////////////////////////////////////
 

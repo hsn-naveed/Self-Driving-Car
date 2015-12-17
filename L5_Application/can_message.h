@@ -140,7 +140,7 @@ static msg_hdr_t MASTER_TX_HEARTBEAT_encode(uint64_t *to, MASTER_TX_HEARTBEAT_t 
 /// @returns the message header of this message
 static msg_hdr_t MASTER_TX_MOTOR_CMD_encode(uint64_t *to, MASTER_TX_MOTOR_CMD_t *from)
 {
-    //*to = 0; ///< Default the entire destination data with zeroes
+   // *to = 0; ///< Default the entire destination data with zeroes
     uint8_t *bytes = (uint8_t*) to;
     uint64_t raw_signal;
 
@@ -502,4 +502,3 @@ static inline bool GPS_TX_DESTINATION_REACHED_handle_mia(GPS_TX_DESTINATION_REAC
 }
 #endif
 #endif /* CAN_MESSAGE_H__ */
-
