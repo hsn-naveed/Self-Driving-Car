@@ -3,8 +3,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-//---can_message.h BODY----///
-
 /// DBC file: 243.dbc    Self node: MOTOR
 /// This file should be included by a source file, for example: #include "generated.c"
 #include <stdbool.h>
@@ -60,7 +58,14 @@ typedef struct {
 
 /// Not generating 'ANDROID_TX_INFO_COORDINATES_t' since we are not the sender or a recipient of any of its signals
 
-/// Not generating 'GPS_TX_INFO_HEADING_t' since we are not the sender or a recipient of any of its signals
+/// Message: INFO_HEADING from 'GPS', DLC: 4 byte(s), MID: 716
+typedef struct {
+        int32_t GPS_INFO_HEADING_current;    ///< B15:0   Destination: MASTER,MOTOR
+        int32_t GPS_INFO_HEADING_dst;        ///< B31:16   Destination: MASTER,MOTOR
+
+        mia_info_t mia_info;
+} GPS_TX_INFO_HEADING_t;
+
 
 /// Not generating 'GPS_TX_DESTINATION_REACHED_t' since we are not the sender or a recipient of any of its signals
 
@@ -69,6 +74,8 @@ extern const uint32_t HEARTBEAT__MIA_MS;
 extern const MASTER_TX_HEARTBEAT_t HEARTBEAT__MIA_MSG;
 extern const uint32_t MOTOR_CMD__MIA_MS;
 extern const MASTER_TX_MOTOR_CMD_t MOTOR_CMD__MIA_MSG;
+extern const uint32_t INFO_HEADING__MIA_MS;
+extern const GPS_TX_INFO_HEADING_t INFO_HEADING__MIA_MSG;
 
 /// Not generating code for MASTER_TX_HEARTBEAT_encode() since the sender is MASTER and we are MOTOR
 
@@ -143,7 +150,36 @@ static inline bool MASTER_TX_MOTOR_CMD_decode(MASTER_TX_MOTOR_CMD_t *to, const u
 
 /// Not generating code for ANDROID_TX_INFO_COORDINATES_decode() since we are not the recipient of any of its signals
 
-/// Not generating code for GPS_TX_INFO_HEADING_decode() since we are not the recipient of any of its signals
+/// Decode GPS's 'INFO_HEADING' message
+/// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
+static inline bool GPS_TX_INFO_HEADING_decode(GPS_TX_INFO_HEADING_t *to, const uint64_t *from, const msg_hdr_t *hdr)
+{
+    const bool success = true;
+    if (NULL != hdr && (hdr->dlc != GPS_TX_INFO_HEADING_HDR.dlc || hdr->mid != GPS_TX_INFO_HEADING_HDR.mid)) {
+        return !success;
+    }
+    uint64_t raw_signal;
+    uint64_t bits_from_byte;
+    const uint8_t *bytes = (const uint8_t*) from;
+
+    raw_signal = 0;
+    bits_from_byte = ((bytes[0] >> 0) & 0xff); ///< 8 bit(s) from B0
+    raw_signal    |= (bits_from_byte << 0);
+    bits_from_byte = ((bytes[1] >> 0) & 0xff); ///< 8 bit(s) from B8
+    raw_signal    |= (bits_from_byte << 8);
+    to->GPS_INFO_HEADING_current = (raw_signal * 1.0) + (0);
+
+    raw_signal = 0;
+    bits_from_byte = ((bytes[2] >> 0) & 0xff); ///< 8 bit(s) from B16
+    raw_signal    |= (bits_from_byte << 0);
+    bits_from_byte = ((bytes[3] >> 0) & 0xff); ///< 8 bit(s) from B24
+    raw_signal    |= (bits_from_byte << 8);
+    to->GPS_INFO_HEADING_dst = (raw_signal * 1.0) + (0);
+
+    to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
+    return success;
+}
+
 
 /// Not generating code for GPS_TX_DESTINATION_REACHED_decode() since we are not the recipient of any of its signals
 
@@ -188,6 +224,30 @@ static inline bool MASTER_TX_MOTOR_CMD_handle_mia(MASTER_TX_MOTOR_CMD_t *msg, ui
         // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
         *msg = MOTOR_CMD__MIA_MSG;
         msg->mia_info.mia_counter_ms = MOTOR_CMD__MIA_MS;
+        msg->mia_info.is_mia = true;
+        mia_occurred = true;
+    }
+
+    return mia_occurred;
+}
+
+/// Handle the MIA for GPS's 'INFO_HEADING' message
+/// @param   time_incr_ms  The time to increment the MIA counter with
+/// @returns true if the MIA just occurred
+/// @post    If the MIA counter is not reset, and goes beyond the MIA value, the MIA flag is set
+static inline bool GPS_TX_INFO_HEADING_handle_mia(GPS_TX_INFO_HEADING_t *msg, uint32_t time_incr_ms)
+{
+    bool mia_occurred = false;
+    const mia_info_t old_mia = msg->mia_info;
+    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= INFO_HEADING__MIA_MS);
+
+    if (!msg->mia_info.is_mia) { 
+        msg->mia_info.mia_counter_ms += time_incr_ms;
+    }
+    else if(!old_mia.is_mia)   { 
+        // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
+        *msg = INFO_HEADING__MIA_MSG;
+        msg->mia_info.mia_counter_ms = INFO_HEADING__MIA_MS;
         msg->mia_info.is_mia = true;
         mia_occurred = true;
     }

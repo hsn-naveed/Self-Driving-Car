@@ -101,6 +101,8 @@ class LCD: public MotorControl
         Uart3& lcd = Uart3::getInstance();
         int currentLCDbrightness;
         const int LowLCDbrightness = 20;
-        const int HighLCDbrightness = 80;
+        const int HighLCDbrightness = 100;
+
+        bool lcdHasBeenInitialized = false;
 };
 #endif

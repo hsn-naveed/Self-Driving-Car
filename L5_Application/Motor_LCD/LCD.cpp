@@ -44,7 +44,7 @@
 
 LCD::LCD()
 {
-    initLCD();
+    //initLCD();
     /*
      * init the LCD
      * send 0xF0 to baud detection
@@ -54,25 +54,29 @@ LCD::LCD()
 }
 void LCD::initLCD()
 {
-    /// Initialize the UART baudrate
-    lcd.init(9600, 10, 10);
-    delay_ms(10);
+    int delay = 10;
+    if (lcdHasBeenInitialized == false){
+        /// Initialize the UART baudrate
+        lcd.init(9600, 10, 10);
+        delay_ms(delay);
+        lcdHasBeenInitialized = true;
+    }
 
     /// Send initializing characters for LCD
     char initChar = '0xF0';
     lcd.putChar(initChar, portMAX_DELAY);
-    delay_ms(10);
+    delay_ms(delay);
 
     /// Send initial LCD messages
     lcd.putline("$GOTO:0:0");
     lcd.putline("Undergrads++");
-    delay_ms(10);
-    lcd.putline("$GOTO:1:0");
+    delay_ms(delay);
+    lcd.putline("$GOTO:0:1");
     lcd.putline("SPD:"); //speed value should be written to row 1, column 4
-    delay_ms(10);
-    lcd.putline("$GOTO:1:7");
+    delay_ms(delay);
+    lcd.putline("$GOTO:0:2");
     lcd.putline("STR:"); //steering value should be written to row 1, column 13
-    delay_ms(10);
+    delay_ms(delay);
 
     /// Set LCD brightness level
     currentLCDbrightness = HighLCDbrightness;
@@ -84,9 +88,9 @@ void LCD::initLCD()
 
 void LCD::writeSpeedAndSteerToLCD(char *speedVal, char* steerVal)
 {
-    lcd.putline("$GOTO:1:4");
+    lcd.putline("$GOTO:5:1");
     lcd.putline(speedVal, portMAX_DELAY);
-    lcd.putline("$GOTO:1:13");
+    lcd.putline("$GOTO:5:2");
     lcd.putline(steerVal, portMAX_DELAY);
 
 }
@@ -94,34 +98,44 @@ char* LCD::convertIntToCharSpeed(uint8_t hexSpeedValue)
 {
     char *convertedSpeedValue = 0;
     if (hexSpeedValue == (uint8_t) COMMAND_FAST)
-        //convertedSpeedValue = (char) motorObj.FAST_SPEED;
-        sprintf(convertedSpeedValue, "%f", motorObj.FAST_SPEED);
+        convertedSpeedValue = "FS";
+//        //convertedSpeedValue = (char) motorObj.FAST_SPEED;
+//        sprintf(convertedSpeedValue, "%f", motorObj.FAST_SPEED);
     if (hexSpeedValue == (uint8_t) COMMAND_MEDIUM)
-        //  convertedSpeedValue = (char) motorObj.MEDIUM_SPEED;
-        sprintf(convertedSpeedValue, "%f", motorObj.MEDIUM_SPEED);
+        convertedSpeedValue = "MS";
+//        //  convertedSpeedValue = (char) motorObj.MEDIUM_SPEED;
+//        sprintf(convertedSpeedValue, "%f", motorObj.MEDIUM_SPEED);
+    if (hexSpeedValue == (uint8_t) COMMAND_SLOW)
+        convertedSpeedValue = "SS";
+//        sprintf(convertedSpeedValue, "%f", motorObj.SLOW_SPEED);
     if (hexSpeedValue == (uint8_t) COMMAND_REVERSE)
+        convertedSpeedValue = "RV";
         //convertedSpeedValue = (char) motorObj.BACK_SPEED;
-        sprintf(convertedSpeedValue, "%f", motorObj.BACK_SPEED);
+//        sprintf(convertedSpeedValue, "%f", motorObj.BACK_SPEED);
     return convertedSpeedValue;
 }
 char* LCD::convertIntToCharSteer(uint8_t hexSteerValue)
 {
     char *convertedSteerValue = 0;
     if (hexSteerValue == (uint8_t) COMMAND_STRAIGHT)
-        // convertedSteerValue = (char)STRAIGHT_LCD;
-        sprintf(convertedSteerValue, "%f", motorObj.STRAIGHT);
+        convertedSteerValue = "ST";
+//        // convertedSteerValue = (char)STRAIGHT_LCD;
+//        sprintf(convertedSteerValue, "%f", motorObj.STRAIGHT);
     if (hexSteerValue == (uint8_t) COMMAND_HARD_LEFT)
+        convertedSteerValue = "HL";
         // convertedSteerValue = (char)FULL_LEFT_LCD;
-        sprintf(convertedSteerValue, "%f", motorObj.FULL_LEFT);
+//        sprintf(convertedSteerValue, "%f", motorObj.FULL_LEFT);
     if (hexSteerValue == (uint8_t) COMMAND_SOFT_LEFT)
-        sprintf(convertedSteerValue, "%f", motorObj.SOFT_LEFT);
+        convertedSteerValue = "SL";
+//        sprintf(convertedSteerValue, "%f", motorObj.SOFT_LEFT);
     if (hexSteerValue == (uint8_t) COMMAND_HARD_RIGHT)
+        convertedSteerValue = "HR";
         // convertedSteerValue = (char)FULL_RIGHT_LCD;
-        sprintf(convertedSteerValue, "%f", motorObj.FULL_RIGHT);
+//        sprintf(convertedSteerValue, "%f", motorObj.FULL_RIGHT);
     if (hexSteerValue == (uint8_t) COMMAND_SOFT_RIGHT)
-        sprintf(convertedSteerValue, "%f", motorObj.SOFT_RIGHT);
+        convertedSteerValue = "SR";
+//        sprintf(convertedSteerValue, "%f", motorObj.SOFT_RIGHT);
     return convertedSteerValue;
-
 }
 
 void LCD::getMessageDataFromMotor(MASTER_TX_MOTOR_CMD_t *DataforLCD_motorControlStruct)
@@ -138,7 +152,7 @@ void LCD::getMessageDataFromMotor(MASTER_TX_MOTOR_CMD_t *DataforLCD_motorControl
 
 void LCD::clearLCD()
 {
-
+    lcd.putline("$CLR_SCR");
 }
 
 void LCD::moveCursor(int row, int column)

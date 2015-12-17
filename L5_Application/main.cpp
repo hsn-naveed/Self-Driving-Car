@@ -35,6 +35,7 @@
 #include "periodic_scheduler/periodic_callback.h"
 #include "gpio.hpp"
 #include "Motor_LCD/MotorEncoder.hpp"
+#include "Motor_LCD/LCD.hpp"
 #include "eint.h"
 
 /**
@@ -56,6 +57,8 @@
 
 extern MotorControl motorObj;
 
+extern LCD lcdObj;
+
 int main(void)
 {
     /// Motor/Servo PWM initialization
@@ -64,6 +67,9 @@ int main(void)
 
     motorObj = new MotorControl(motorPWM, servoPWM);
     //motorObj.initESC();
+
+
+    lcdObj.initLCD();
 
     /// For initial testing of the motor and brake functionality prior to starting
     float testDutyCycle = 0;

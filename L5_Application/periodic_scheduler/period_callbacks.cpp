@@ -50,6 +50,7 @@ LCD lcdObj;
 /// These variables are used for CAN communication
 can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t;
 msg_hdr_t motorMessage = MASTER_TX_MOTOR_CMD_HDR;
+msg_hdr_t gpsHeadingMessage = GPS_TX_INFO_HEADING_HDR;
 
 
 /// This is the stack size used for each of the period tasks
@@ -61,14 +62,15 @@ float incrementSpeedAmount = .2;
 bool period_init(void)
 {
     /// CAN bus initialization
-    uint32_t std_list_arr[] = {(uint32_t)MASTER_TX_MOTOR_CMD_HDR.mid};
+    uint32_t std_list_arr[] = {MASTER_TX_MOTOR_CMD_HDR.mid,GPS_TX_INFO_HEADING_HDR.mid};
 
     size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
 
     iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
 
+    /// Clear LCD in case there's stuff on LCD left over
+    lcdObj.clearLCD();
     lcdObj.initLCD();
-
     return true; // Must return true upon success
 }
 
@@ -87,15 +89,16 @@ bool period_reg_tlm(void)
 int count = 0;
 void period_1Hz(void)
 {
-    if (count == 0){
-        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
-        count++;
-    }
 
-    if (count >= 5){
-        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.BRAKE);
-        count = 0;
-    }
+//    if (count == 0){
+//        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
+//        count++;
+//    }
+//
+//    if (count >= 5){
+//        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.BRAKE);
+//        count = 0;
+//    }
 }
 
 
@@ -104,23 +107,23 @@ void period_10Hz(void)
 //    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
 
 
-//    if (CAN_is_bus_off(can1)){
-//        puts("====CAN BUS is off====\n");
-          //lcdObj.toggleLCDBrightness();
-//        LE.on(led1);
-//    }
-//    else if (iCAN_rx(canMsgForMotor, &motorMessage)){
-////        portDISABLE_INTERRUPTS();
-//        MASTER_TX_MOTOR_CMD_decode(motorObj.receivedMotorCommands, &(canMsgForMotor->data.qword), &MASTER_TX_MOTOR_CMD_HDR);
-////        portENABLE_INTERRUPTS();
-//
-//        motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
-//          lcdObj.getMessageDataFromMotor(motorObj.receivedMotorCommands);
-//        LE.off(led1);
-//    }
-//    else{
-//        LE.on(led1);
-//    }
+    if (CAN_is_bus_off(can1)){
+        puts("====CAN BUS is off====\n");
+          lcdObj.toggleLCDBrightness();
+        LE.on(led1);
+    }
+    else if (iCAN_rx(canMsgForMotor, &motorMessage)){
+//        portDISABLE_INTERRUPTS();
+        MASTER_TX_MOTOR_CMD_decode(motorObj.receivedMotorCommands, &(canMsgForMotor->data.qword), &MASTER_TX_MOTOR_CMD_HDR);
+//        portENABLE_INTERRUPTS();
+
+        motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
+          lcdObj.getMessageDataFromMotor(motorObj.receivedMotorCommands);
+        LE.off(led1);
+    }
+    else{
+        LE.on(led1);
+    }
 
 
 //    /// Increase PWM Duty cycle (speed up) because car is slowing down
