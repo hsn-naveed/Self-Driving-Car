@@ -42,12 +42,15 @@
 
 #include "Motor_LCD/LCD.hpp"
 
+
+MotorControl motorObj;
+
+
+
 can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t;
 msg_hdr_t motorMessage = MASTER_TX_MOTOR_CMD_HDR;
 //MASTER_TX_MOTOR_CMD_t *receivedMotorCommands = new MASTER_TX_MOTOR_CMD_t;
 
-
-can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t { 0 };
 
 
 /// This is the stack size used for each of the period tasks
