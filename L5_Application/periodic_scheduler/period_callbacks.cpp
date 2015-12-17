@@ -49,6 +49,8 @@ LCD lcdObj;
 
 /// These variables are used for CAN communication
 can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t;
+can_fullcan_msg_t *canMsgForGPS = new can_fullcan_msg_t;
+
 msg_hdr_t motorMessage = MASTER_TX_MOTOR_CMD_HDR;
 msg_hdr_t gpsHeadingMessage = GPS_TX_INFO_HEADING_HDR;
 
@@ -90,6 +92,8 @@ int count = 0;
 void period_1Hz(void)
 {
 
+
+
 //    if (count == 0){
 //        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
 //        count++;
@@ -118,7 +122,14 @@ void period_10Hz(void)
 //        portENABLE_INTERRUPTS();
 
         motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
-          lcdObj.getMessageDataFromMotor(motorObj.receivedMotorCommands);
+          lcdObj.getMessageDataForMotor(motorObj.receivedMotorCommands);
+
+          if(iCAN_rx(canMsgForGPS, &gpsHeadingMessage)){
+              GPS_TX_INFO_HEADING_decode(lcdObj.receivedGPSHeadingInfo, &(canMsgForGPS->data.qword), &GPS_TX_INFO_HEADING_HDR);
+
+              lcdObj.getMessageDataForGPS(lcdObj.receivedGPSHeadingInfo);
+          }
+
         LE.off(led1);
     }
     else{

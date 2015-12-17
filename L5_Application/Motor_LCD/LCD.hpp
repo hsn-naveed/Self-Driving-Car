@@ -19,6 +19,7 @@
 #include "uart3.hpp"
 
 #include "periodic_scheduler/periodic_callback.h"
+#include "L5_Application/can_message.h"
 
 #include "MotorControl.hpp" //temporary for LCD testing purposes
 /* Pinout:-
@@ -65,14 +66,19 @@ class LCD: public MotorControl
         LCD();
         bool LCD_busy();
 
+        GPS_TX_INFO_HEADING_t *receivedGPSHeadingInfo = new GPS_TX_INFO_HEADING_t {0};
+
         char* convertIntToCharSpeed(uint8_t hexSpeedValue);
         char* convertIntToCharSteer(uint8_t hexSteerValue);
         void initLCD();
 
-        void getMessageDataFromMotor(MASTER_TX_MOTOR_CMD_t *motorControlStruct);
+        void getMessageDataForMotor(MASTER_TX_MOTOR_CMD_t *motorControlStruct);
+        void getMessageDataForGPS(GPS_TX_INFO_HEADING_t *gpsHeadingInfo);
+
         void writeSpeedAndSteerToLCD(char *speedVal, char *steerVal); //takes data and displays on the LCD
         void clearLCD(); //clears the entire LCD
         void moveCursor(int row, int column); //moves the cursor to a desired point
+        void writeHeadingData(char *currentHeading, char* destHeading);
 
         void CanOff();
         void toggleLCDBrightness();

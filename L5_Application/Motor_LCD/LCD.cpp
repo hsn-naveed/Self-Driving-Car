@@ -71,9 +71,19 @@ void LCD::initLCD()
     lcd.putline("$GOTO:0:0");
     lcd.putline("Undergrads++");
     delay_ms(delay);
+
     lcd.putline("$GOTO:0:1");
     lcd.putline("SPD:"); //speed value should be written to row 1, column 4
     delay_ms(delay);
+
+    lcd.putline("$GOTO:9:1");
+    lcd.putline("CUR: ");
+    delay_ms(delay);
+
+    lcd.putline("$GOTO:9:2");
+    lcd.putline("DST: ");
+    delay_ms(delay);
+
     lcd.putline("$GOTO:0:2");
     lcd.putline("STR:"); //steering value should be written to row 1, column 13
     delay_ms(delay);
@@ -93,6 +103,13 @@ void LCD::writeSpeedAndSteerToLCD(char *speedVal, char* steerVal)
     lcd.putline("$GOTO:5:2");
     lcd.putline(steerVal, portMAX_DELAY);
 
+}
+void LCD::writeHeadingData(char *currentHeading, char*destHeading){
+    lcd.putline("$GOTO:14:1");
+   lcd.printf("%s", *currentHeading);
+
+   lcd.putline("$GOTO:14:2");
+   lcd.printf("$s", *destHeading);
 }
 char* LCD::convertIntToCharSpeed(uint8_t hexSpeedValue)
 {
@@ -138,7 +155,7 @@ char* LCD::convertIntToCharSteer(uint8_t hexSteerValue)
     return convertedSteerValue;
 }
 
-void LCD::getMessageDataFromMotor(MASTER_TX_MOTOR_CMD_t *DataforLCD_motorControlStruct)
+void LCD::getMessageDataForMotor(MASTER_TX_MOTOR_CMD_t *DataforLCD_motorControlStruct)
 {
     if (DataforLCD_motorControlStruct != NULL)
     {
@@ -147,6 +164,21 @@ void LCD::getMessageDataFromMotor(MASTER_TX_MOTOR_CMD_t *DataforLCD_motorControl
 
         writeSpeedAndSteerToLCD(convertIntToCharSpeed(speedIntVal),
                 convertIntToCharSteer(steeringIntVal));
+    }
+}
+
+void LCD::getMessageDataForGPS(GPS_TX_INFO_HEADING_t *gpsHeadingInfo){
+    if (gpsHeadingInfo != NULL){
+        int32_t currentHeading = gpsHeadingInfo->GPS_INFO_HEADING_current;
+        int32_t destinationHeading = gpsHeadingInfo->GPS_INFO_HEADING_dst;
+
+        char * curHead;
+        char * destHead;
+
+        sprintf(curHead, "%i", currentHeading);
+        sprintf(destHead, "%i", destinationHeading);
+
+        writeHeadingData(curHead, destHead);
     }
 }
 
