@@ -74,11 +74,12 @@ class LCD: public MotorControl
 
         void getMessageDataForMotor(MASTER_TX_MOTOR_CMD_t *motorControlStruct);
         void getMessageDataForGPS(GPS_TX_INFO_HEADING_t *gpsHeadingInfo);
+        void getMessageDataForSensors();
 
         void writeSpeedAndSteerToLCD(char *speedVal, char *steerVal); //takes data and displays on the LCD
         void clearLCD(); //clears the entire LCD
         void moveCursor(int row, int column); //moves the cursor to a desired point
-        void writeHeadingData(char *currentHeading, char* destHeading);
+        void writeHeadingData(int32_t currentHeading, int32_t destHeading);
 
         void CanOff();
         void toggleLCDBrightness();

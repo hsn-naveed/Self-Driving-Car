@@ -149,10 +149,10 @@ bool MotorEncoder::run(void *p){
     if(xSemaphoreTake(motorEncoderSemaphore, portMAX_DELAY)){
         //printf("Inside motorEncoder tasks after 5 ticks\nTick count = %i\n\n", tickCount);
 
-        CalculateSpeed();
-
-        //if (tickCount == 5)
-            LOG_DEBUG("Current speed = %.5f\n", *currentSpeed);
+//        CalculateSpeed();
+//
+//        //if (tickCount == 5)
+//            LOG_DEBUG("Current speed = %.5f\n", *currentSpeed);
 
         tickCount = 0;
         xHigherPriorityTaskWoken = pdTRUE;

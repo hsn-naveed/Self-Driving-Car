@@ -66,7 +66,7 @@ int main(void)
     PWM servoPWM = PWM(PWM::pwm3, MOTOR_SERVO_PWM_FREQ);
 
     motorObj = new MotorControl(motorPWM, servoPWM);
-    //motorObj.initESC();
+    motorObj.initESC();
 
 
     lcdObj.initLCD();
@@ -92,8 +92,8 @@ int main(void)
     uint8_t port2_6 = 6;
 
     encoderInput.setAsInput();
-    eint3_enable_port2(port2_6, eint_rising_edge, StartTickTimer_ISR);
-    eint3_enable_port2(port2_6, eint_falling_edge, IncrementTickCounter_ISR);
+//    eint3_enable_port2(port2_6, eint_rising_edge, StartTickTimer_ISR);
+//    eint3_enable_port2(port2_6, eint_falling_edge, IncrementTickCounter_ISR);
 
 
     scheduler_add_task(new MotorEncoder(PRIORITY_LOW));

@@ -54,7 +54,6 @@ can_fullcan_msg_t *canMsgForGPS = new can_fullcan_msg_t;
 msg_hdr_t motorMessage = MASTER_TX_MOTOR_CMD_HDR;
 msg_hdr_t gpsHeadingMessage = GPS_TX_INFO_HEADING_HDR;
 
-
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -91,9 +90,6 @@ bool period_reg_tlm(void)
 int count = 0;
 void period_1Hz(void)
 {
-
-
-
 //    if (count == 0){
 //        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
 //        count++;
@@ -125,8 +121,8 @@ void period_10Hz(void)
           lcdObj.getMessageDataForMotor(motorObj.receivedMotorCommands);
 
           if(iCAN_rx(canMsgForGPS, &gpsHeadingMessage)){
-              GPS_TX_INFO_HEADING_decode(lcdObj.receivedGPSHeadingInfo, &(canMsgForGPS->data.qword), &GPS_TX_INFO_HEADING_HDR);
-
+              lcdObj.receivedGPSHeadingInfo->GPS_INFO_HEADING_current = canMsgForGPS->data.dwords[0];
+              lcdObj.receivedGPSHeadingInfo->GPS_INFO_HEADING_dst = canMsgForGPS->data.dwords[1];
               lcdObj.getMessageDataForGPS(lcdObj.receivedGPSHeadingInfo);
           }
 

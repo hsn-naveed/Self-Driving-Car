@@ -104,12 +104,12 @@ void LCD::writeSpeedAndSteerToLCD(char *speedVal, char* steerVal)
     lcd.putline(steerVal, portMAX_DELAY);
 
 }
-void LCD::writeHeadingData(char *currentHeading, char*destHeading){
+void LCD::writeHeadingData(int32_t currentHeading, int32_t destHeading){
     lcd.putline("$GOTO:14:1");
-   lcd.printf("%s", *currentHeading);
+   lcd.printf("%i", currentHeading);
 
    lcd.putline("$GOTO:14:2");
-   lcd.printf("$s", *destHeading);
+   lcd.printf("%i", destHeading);
 }
 char* LCD::convertIntToCharSpeed(uint8_t hexSpeedValue)
 {
@@ -172,13 +172,13 @@ void LCD::getMessageDataForGPS(GPS_TX_INFO_HEADING_t *gpsHeadingInfo){
         int32_t currentHeading = gpsHeadingInfo->GPS_INFO_HEADING_current;
         int32_t destinationHeading = gpsHeadingInfo->GPS_INFO_HEADING_dst;
 
-        char * curHead;
-        char * destHead;
+//        char * curHead;
+//        char * destHead;
+//
+//        sprintf(curHead, "%i", currentHeading);
+//        sprintf(destHead, "%i", destinationHeading);
 
-        sprintf(curHead, "%i", currentHeading);
-        sprintf(destHead, "%i", destinationHeading);
-
-        writeHeadingData(curHead, destHead);
+        writeHeadingData(currentHeading, destinationHeading);
     }
 }
 
