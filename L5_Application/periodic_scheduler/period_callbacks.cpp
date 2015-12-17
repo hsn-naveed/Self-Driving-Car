@@ -53,7 +53,7 @@ msg_hdr_t motorMessage = MASTER_TX_MOTOR_CMD_HDR;
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
-float incrementSpeedAmount = .5;
+float incrementSpeedAmount = .2;
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
@@ -78,15 +78,20 @@ bool period_reg_tlm(void){
     return true; // Must return true upon success
 }
 
+int count = 0;
 void period_1Hz(void)
 {
+    if (count == 0)
+    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
 
+    if (count >= 5)
+        motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.BRAKE);
 }
 
 
 void period_10Hz(void)
 {
-    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
+//    motorObj.setSteeringDirectionAndSpeed(motorObj.STRAIGHT, motorObj.MEDIUM_SPEED);
 
 
 //    if (CAN_is_bus_off(can1)){
@@ -107,35 +112,37 @@ void period_10Hz(void)
 //    }
 
 
-//    if (HasSpeedChanged() == 1){
-//        /// Adjust motor speed offset accordingly
-//        if ((motorObj.SLOW_SPEED + *SLOW_SPEED_OFFSET) <= motorObj.maxSlowSpeed){
-//            *SLOW_SPEED_OFFSET += incrementSpeedAmount;
-//            motorObj.SLOW_SPEED += *SLOW_SPEED_OFFSET;
-//        }
-//        printf("Inside hasSpeedChanged = 1\nMotorValue = %.5f\n\n", motorObj.SLOW_SPEED);
-//
-//        MEDIUM_SPEED_OFFSET += incrementSpeedAmount;
-//        LE.off(led3);
-//    }
-//    else if (HasSpeedChanged() == 2){
-//        // Anything below the max negative speed offset, it throws off the duty cycle
-//        // and car motor is unpredictable
-//        if (motorObj.SLOW_SPEED >= (motorObj.maxSlowSpeed - initialSlowSpeedOffset)){
-//        //if (initialSlowSpeedOffset <= (*SLOW_SPEED_OFFSET - incrementSpeedAmount)){
-//            *SLOW_SPEED_OFFSET -= incrementSpeedAmount;
-//            motorObj.SLOW_SPEED += *SLOW_SPEED_OFFSET;
-//            printf("Inside hasSpeedChanged = 2\nMotorValue = %.5f\n\n", motorObj.SLOW_SPEED);
-//        }
-//
-//
-//        MEDIUM_SPEED_OFFSET -= incrementSpeedAmount;
-//        LE.off(led3);
-//    }
-//    else{
-//        LE.on(led3);
-//        printf("no speed change \n");
-//    }
+    /// Increase PWM Duty cycle (speed up) because car is slowing down
+    if (HasSpeedChanged() == SPEED_BELOW_THRESHOLD_SLOW){
+        /// Adjust motor speed offset accordingly
+        motorObj.SLOW_SPEED += incrementSpeedAmount;
+        LE.on(led3);
+    }
+    else if (HasSpeedChanged() == SPEED_BELOW_THRESHOLD_MEDIUM){
+        motorObj.MEDIUM_SPEED += incrementSpeedAmount;
+        LE.on(led3);
+    }
+
+    /// Decrease PWM duty cycle because car is moving too fast
+    else if (HasSpeedChanged() == SPEED_ABOVE_THRESHOLD_SLOW){
+        if (motorObj.SLOW_SPEED >= (motorObj.maxSlowSpeed)){
+            incrementSpeedAmount = motorObj.SLOW_SPEED - motorObj.maxSlowSpeed;
+            motorObj.SLOW_SPEED += incrementSpeedAmount;
+
+            /// Reset back to original increment amount in case it is greater or smaller
+            incrementSpeedAmount = .2;
+        }
+    }
+    else if (HasSpeedChanged() == SPEED_ABOVE_THRESHOLD_MEDIUM){
+        if (motorObj.MEDIUM_SPEED >= motorObj.SLOW_SPEED){
+            motorObj.MEDIUM_SPEED -= incrementSpeedAmount;
+            LE.on(led3);
+        }
+    }
+    else{
+        LE.off(led3);
+        printf("No speed change \n");
+    }
 }
 
 void period_100Hz(void)

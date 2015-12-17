@@ -49,10 +49,6 @@ class MotorControl{
         PWM MotorPwm;
         PWM ServoPwm;
 
-        /// Variables used for keeping track of current motor and servo values, in case there's no change
-        float CurrentMotorValue;
-        float CurrentServoValue;
-
 
         /// Sets the currentMotorValue, and currentServo value to
         // appropriate settings based on HEX values received
@@ -72,6 +68,10 @@ class MotorControl{
         bool escHasBeenInitialized;
 
     public:
+        /// Variables used for keeping track of current motor and servo values, in case there's no change
+        float CurrentMotorValue;
+        float CurrentServoValue;
+
         /// Struct containing the motor commands from the CAN message
         MASTER_TX_MOTOR_CMD_t *receivedMotorCommands = new MASTER_TX_MOTOR_CMD_t {0};
 
@@ -106,7 +106,7 @@ class MotorControl{
         const float NEUTRAL = ((NEUTRAL_PWM_PERIOD_MS)/pwmFreqInMs) * 100;
 
         float MEDIUM_SPEED = (FAST_SPEED+NEUTRAL)/2 + MEDIUM_SPEED_OFFSET;
-        const float maxSlowSpeed = (MEDIUM_SPEED+NEUTRAL)/2;
+        const float maxSlowSpeed = 15.44;
         float SLOW_SPEED =  MEDIUM_SPEED + *SLOW_SPEED_OFFSET;
 
         const float maxBackSpeed = (BRAKE+NEUTRAL)/2;

@@ -22,6 +22,14 @@
 
 static GPIO encoderInput(P2_6);
 
+/// Results from encoder calculation
+typedef enum{
+    SPEED_BELOW_THRESHOLD_SLOW,
+    SPEED_BELOW_THRESHOLD_MEDIUM,
+    SPEED_ABOVE_THRESHOLD_SLOW,
+    SPEED_ABOVE_THRESHOLD_MEDIUM,
+    SPEED_NO_CHANGE
+}encoderSpeedResult_t;
 
 ///ISR function calls for timer, and tick counts based off
 // encoder input from GPIO
@@ -37,11 +45,9 @@ void storeBeginTime();
 void CalculateSpeed();
 
 /*
- * @about Returns 1 if speed has decreased
- * returns 2 if speed has increased *Should not happen*
- * default return 0 if speed is within percent threshold
+ * @about Returns encoderSpeedResult_t type
  */
-int HasSpeedChanged();
+encoderSpeedResult_t HasSpeedChanged();
 
 
 

@@ -8,6 +8,7 @@
 #include "file_logger.h"
 #include "io.hpp"
 
+extern MotorControl motorObj;
 MotorEncoder *ptrToMotorEncoder;
 
 const int numberOfTickMarks = 5;
@@ -76,19 +77,41 @@ void CalculateSpeed(){
     //printf("Current speed = %.5f, average measured speed = %.5f\n\n", *currentSpeed, slowSpeedAverageRateInMetersPerMilliSecond);
 }
 
-int HasSpeedChanged(){
-    upperLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInCMPerMilliSecond + (slowSpeedAverageRateInCMPerMilliSecond * percentDifferenceOfSpeed));
-    lowerLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInCMPerMilliSecond - (slowSpeedAverageRateInCMPerMilliSecond * percentDifferenceOfSpeed));
+encoderSpeedResult_t HasSpeedChanged(){
+    float currentMotorValue = motorObj.CurrentMotorValue;
+    bool isSlowSpeed = (currentMotorValue == motorObj.SLOW_SPEED);
+    bool isMediumSpeed = (currentMotorValue == motorObj.MEDIUM_SPEED);
 
-    if (*currentSpeed < lowerLimitThresholdDiffOfSpeed){
-        printf("CUR < LOWER\nCurrent speed = %.5f, lowerLimit = %.10f\n\n", *currentSpeed, lowerLimitThresholdDiffOfSpeed);
-        return 1;
+    if ((isSlowSpeed) || (isMediumSpeed)){
+
+        if (isSlowSpeed){
+            upperLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInCMPerMilliSecond + (slowSpeedAverageRateInCMPerMilliSecond * percentDifferenceOfSpeed));
+            lowerLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInCMPerMilliSecond - (slowSpeedAverageRateInCMPerMilliSecond * percentDifferenceOfSpeed));
+        }
+        if (isMediumSpeed){
+            upperLimitThresholdDiffOfSpeed = (mediumSpeedAverageRateInCMPerMillisecond + (mediumSpeedAverageRateInCMPerMillisecond * percentDifferenceOfSpeed));
+            lowerLimitThresholdDiffOfSpeed = (mediumSpeedAverageRateInCMPerMillisecond  - (mediumSpeedAverageRateInCMPerMillisecond * percentDifferenceOfSpeed));
+        }
+
+        if (*currentSpeed < lowerLimitThresholdDiffOfSpeed){
+            printf("CUR < LOWER\nCurrent speed = %.5f, lowerLimit = %.10f\n\n", *currentSpeed, lowerLimitThresholdDiffOfSpeed);
+
+            if (isSlowSpeed)
+                return SPEED_BELOW_THRESHOLD_SLOW;
+            if (isMediumSpeed)
+                return SPEED_BELOW_THRESHOLD_MEDIUM;
+        }
+        else if (*currentSpeed > upperLimitThresholdDiffOfSpeed){
+            printf("CUR > UPPER\nCurrent speed = %.5f, upperLimit = %.10f\n\n", *currentSpeed, upperLimitThresholdDiffOfSpeed);
+
+            if (isSlowSpeed)
+                return SPEED_ABOVE_THRESHOLD_SLOW;
+            if (isMediumSpeed)
+                return SPEED_ABOVE_THRESHOLD_MEDIUM;
+        }
     }
-    else if (*currentSpeed > upperLimitThresholdDiffOfSpeed){
-        printf("CUR > UPPER\nCurrent speed = %.5f, upperLimit = %.10f\n\n", *currentSpeed, upperLimitThresholdDiffOfSpeed);
-        return 2;
-    }
-    return 0;
+
+    return SPEED_NO_CHANGE;
 }
 
 
@@ -126,21 +149,14 @@ void IncrementTickCounter_ISR(){
     /// Increment counter
     tickCount++;
 
-//    xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
-//    //
-//    if (xHigherPriorityTaskWoken){
-//        portYIELD_FROM_ISR(true);
-//
-//        xHigherPriorityTaskWoken = pdFALSE;
-//    }
-
-
     if (tickCount == 5){
         /// Give signal to function waiting for semaphore to be free, to perform
         // the necessary function
-//        xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
-        xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, NULL);
+        xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
 
+        /// Task1 ---->
+        //          IncrementTickCounter_ISR---->
+        //                          MotorEncoder---->
         if (xHigherPriorityTaskWoken){
             portYIELD_FROM_ISR(true);
 
@@ -160,17 +176,11 @@ bool MotorEncoder::init(){
 
 bool MotorEncoder::run(void *p){
     if(xSemaphoreTake(motorEncoderSemaphore, portMAX_DELAY)){
-//        double currentTime = (double)sys_get_uptime_ms();
-        //LOG_INFO("RUN func: Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
-
         printf("Inside motorEncoder tasks after 5 ticks\nTick count = %i\n\n", tickCount);
-
-//        beginTimeOfEncoder = (uint64_t)currentTime;
 
         CalculateSpeed();
 
         LOG_DEBUG("Current speed = %.5f\n", *currentSpeed);
-        vTaskDelay(10);
 
         tickCount = 0;
         xHigherPriorityTaskWoken = pdTRUE;
