@@ -15,14 +15,23 @@ const int numberOfTickMarks = 5;
 const int circumferenceOfTire = 31; // cm
 
 /// Done through excel sheet after logging speed
-const double slowSpeedAverageTime = 190;
+const double slowSpeedAverageTime = 190/numberOfTickMarks;
 const double mediumSpeedAverageTime = 1;
 
 const double slowSpeedAverageRateInCMPerMilliSecond = circumferenceOfTire/slowSpeedAverageTime;
 const double mediumSpeedAverageRateInCMPerMillisecond = circumferenceOfTire/mediumSpeedAverageTime;
 
 double tempSlowSpeedAverage = slowSpeedAverageRateInCMPerMilliSecond;
-double tempMediumSpeedAverage = mediumSpeedAverageRateInCMPerMillisecond;
+//double tempMediumSpeedAverage = mediumSpeedAverageRateInCMPerMillisecond;
+
+/*
+ * @about Used for keeping track of how many times
+ * the encoder hits a tick mark
+ *
+ * @note Will be used in conjunction with some timer
+ * to make sure car is moving at a constant speed
+ */
+int tickCount = 0;
 
 /*
  * @about Each tick represents a distance traveled of about 31cm
@@ -33,6 +42,8 @@ double tempMediumSpeedAverage = mediumSpeedAverageRateInCMPerMillisecond;
  */
 double *currentSpeed = &tempSlowSpeedAverage;
 
+double totalTimeOfAllTicks = 0;
+
 double percentDifferenceOfSpeed = .05;
 double upperLimitThresholdDiffOfSpeed;
 double lowerLimitThresholdDiffOfSpeed;
@@ -41,40 +52,16 @@ uint64_t beginTimeOfEncoder;
 bool startOfNewTime = true;
 
 
-
-
-
-
-void storeBeginTime(){
-    if (startOfNewTime){
-//        xSemaphoreTakeFromISR(motorEncoderSemaphore, 0);
-
-        beginTimeOfEncoder = sys_get_uptime_ms();
-        startOfNewTime = false;
-    }
-    else{
-//        xSemaphoreGiveFromISR(motorEncoderSemaphore, NULL);
-
-        CalculateSpeed();
-        startOfNewTime = true;
-    }
-}
-
-
 void CalculateSpeed(){
     double currentTime = (double)sys_get_uptime_ms();
     double timeDiffOfTickMarksInSeconds = currentTime - (double)beginTimeOfEncoder;
-//    LOG_INFO("Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
-
 
     beginTimeOfEncoder = (uint64_t)currentTime;
+    totalTimeOfAllTicks += timeDiffOfTickMarksInSeconds;
 
-    /// Log time info for each tick mark
-
-    //printf("Current time = %f, begin time = %f\n", (double)sys_get_uptime_ms(), (double)beginTimeOfEncoder);
-
-    *currentSpeed = (circumferenceOfTire/numberOfTickMarks) / timeDiffOfTickMarksInSeconds;
-    //printf("Current speed = %.5f, average measured speed = %.5f\n\n", *currentSpeed, slowSpeedAverageRateInMetersPerMilliSecond);
+   // if (tickCount == 5){
+        *currentSpeed = (circumferenceOfTire/numberOfTickMarks) / timeDiffOfTickMarksInSeconds;
+    //}
 }
 
 encoderSpeedResult_t HasSpeedChanged(){
@@ -83,12 +70,11 @@ encoderSpeedResult_t HasSpeedChanged(){
     bool isMediumSpeed = (currentMotorValue == motorObj.MEDIUM_SPEED);
 
     if ((isSlowSpeed) || (isMediumSpeed)){
-
         if (isSlowSpeed){
             upperLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInCMPerMilliSecond + (slowSpeedAverageRateInCMPerMilliSecond * percentDifferenceOfSpeed));
             lowerLimitThresholdDiffOfSpeed = (slowSpeedAverageRateInCMPerMilliSecond - (slowSpeedAverageRateInCMPerMilliSecond * percentDifferenceOfSpeed));
         }
-        if (isMediumSpeed){
+        else if (isMediumSpeed){
             upperLimitThresholdDiffOfSpeed = (mediumSpeedAverageRateInCMPerMillisecond + (mediumSpeedAverageRateInCMPerMillisecond * percentDifferenceOfSpeed));
             lowerLimitThresholdDiffOfSpeed = (mediumSpeedAverageRateInCMPerMillisecond  - (mediumSpeedAverageRateInCMPerMillisecond * percentDifferenceOfSpeed));
         }
@@ -115,19 +101,6 @@ encoderSpeedResult_t HasSpeedChanged(){
 }
 
 
-
-
-
-/*
- * @about Used for keeping track of how many times
- * the encoder hits a tick mark
- *
- * @note Will be used in conjunction with some timer
- * to make sure car is moving at a constant speed
- */
-int tickCount = 0;
-
-
 void StartTickTimer_ISR(){
     if (startOfNewTime){
         beginTimeOfEncoder = sys_get_uptime_ms();
@@ -149,20 +122,18 @@ void IncrementTickCounter_ISR(){
     /// Increment counter
     tickCount++;
 
-    if (tickCount == 5){
-        /// Give signal to function waiting for semaphore to be free, to perform
-        // the necessary function
-        xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
+    /// Give signal to function waiting for semaphore to be free, to perform
+            // the necessary function
+            xSemaphoreGiveFromISR(ptrToMotorEncoder->motorEncoderSemaphore, &xHigherPriorityTaskWoken);
 
-        /// Task1 ---->
-        //          IncrementTickCounter_ISR---->
-        //                          MotorEncoder---->
-        if (xHigherPriorityTaskWoken){
-            portYIELD_FROM_ISR(true);
+            /// Task1 ---->
+            //          IncrementTickCounter_ISR---->
+            //                          MotorEncoder---->
+            if (xHigherPriorityTaskWoken){
+                portYIELD_FROM_ISR(true);
 
-            xHigherPriorityTaskWoken = pdFALSE;
-        }
-    }
+                xHigherPriorityTaskWoken = pdFALSE;
+            }
 }
 
 MotorEncoder::MotorEncoder(uint8_t priorityToUse) :
@@ -176,11 +147,12 @@ bool MotorEncoder::init(){
 
 bool MotorEncoder::run(void *p){
     if(xSemaphoreTake(motorEncoderSemaphore, portMAX_DELAY)){
-        printf("Inside motorEncoder tasks after 5 ticks\nTick count = %i\n\n", tickCount);
+        //printf("Inside motorEncoder tasks after 5 ticks\nTick count = %i\n\n", tickCount);
 
         CalculateSpeed();
 
-        LOG_DEBUG("Current speed = %.5f\n", *currentSpeed);
+        //if (tickCount == 5)
+            LOG_DEBUG("Current speed = %.5f\n", *currentSpeed);
 
         tickCount = 0;
         xHigherPriorityTaskWoken = pdTRUE;

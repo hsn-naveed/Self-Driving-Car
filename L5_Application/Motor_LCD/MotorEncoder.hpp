@@ -36,7 +36,6 @@ typedef enum{
 void StartTickTimer_ISR();
 void IncrementTickCounter_ISR();
 
-void storeBeginTime();
 
 /* @about Stores current speed to use
  * for comparing against previous speed in

@@ -112,37 +112,37 @@ void period_10Hz(void)
 //    }
 
 
-    /// Increase PWM Duty cycle (speed up) because car is slowing down
-    if (HasSpeedChanged() == SPEED_BELOW_THRESHOLD_SLOW){
-        /// Adjust motor speed offset accordingly
-        motorObj.SLOW_SPEED += incrementSpeedAmount;
-        LE.on(led3);
-    }
-    else if (HasSpeedChanged() == SPEED_BELOW_THRESHOLD_MEDIUM){
-        motorObj.MEDIUM_SPEED += incrementSpeedAmount;
-        LE.on(led3);
-    }
-
-    /// Decrease PWM duty cycle because car is moving too fast
-    else if (HasSpeedChanged() == SPEED_ABOVE_THRESHOLD_SLOW){
-        if (motorObj.SLOW_SPEED >= (motorObj.maxSlowSpeed)){
-            incrementSpeedAmount = motorObj.SLOW_SPEED - motorObj.maxSlowSpeed;
-            motorObj.SLOW_SPEED += incrementSpeedAmount;
-
-            /// Reset back to original increment amount in case it is greater or smaller
-            incrementSpeedAmount = .2;
-        }
-    }
-    else if (HasSpeedChanged() == SPEED_ABOVE_THRESHOLD_MEDIUM){
-        if (motorObj.MEDIUM_SPEED >= motorObj.SLOW_SPEED){
-            motorObj.MEDIUM_SPEED -= incrementSpeedAmount;
-            LE.on(led3);
-        }
-    }
-    else{
-        LE.off(led3);
-        printf("No speed change \n");
-    }
+//    /// Increase PWM Duty cycle (speed up) because car is slowing down
+//    if (HasSpeedChanged() == SPEED_BELOW_THRESHOLD_SLOW){
+//        /// Adjust motor speed offset accordingly
+//        motorObj.SLOW_SPEED += incrementSpeedAmount;
+//        LE.on(led3);
+//    }
+//    else if (HasSpeedChanged() == SPEED_BELOW_THRESHOLD_MEDIUM){
+//        motorObj.MEDIUM_SPEED += incrementSpeedAmount;
+//        LE.on(led3);
+//    }
+//
+//    /// Decrease PWM duty cycle because car is moving too fast
+//    else if (HasSpeedChanged() == SPEED_ABOVE_THRESHOLD_SLOW){
+//        if (motorObj.SLOW_SPEED >= (motorObj.maxSlowSpeed)){
+//            incrementSpeedAmount = motorObj.SLOW_SPEED - motorObj.maxSlowSpeed;
+//            motorObj.SLOW_SPEED += incrementSpeedAmount;
+//
+//            /// Reset back to original increment amount in case it is greater or smaller
+//            incrementSpeedAmount = .2;
+//        }
+//    }
+//    else if (HasSpeedChanged() == SPEED_ABOVE_THRESHOLD_MEDIUM){
+//        if (motorObj.MEDIUM_SPEED >= motorObj.SLOW_SPEED){
+//            motorObj.MEDIUM_SPEED -= incrementSpeedAmount;
+//            LE.on(led3);
+//        }
+//    }
+//    else{
+//        LE.off(led3);
+//        printf("No speed change \n");
+//    }
 }
 
 void period_100Hz(void)
