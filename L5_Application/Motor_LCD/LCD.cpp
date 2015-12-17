@@ -54,12 +54,16 @@ LCD::LCD()
 }
 void LCD::initLCD()
 {
+    /// Initialize the UART baudrate
     lcd.init(9600, 10, 10);
     delay_ms(10);
+
+    /// Send initializing characters for LCD
     char initChar = '0xF0';
     lcd.putChar(initChar, portMAX_DELAY);
     delay_ms(10);
-    initVariables();
+
+    /// Send initial LCD messages
     lcd.putline("$GOTO:0:0");
     lcd.putline("Undergrads++");
     delay_ms(10);
@@ -69,16 +73,16 @@ void LCD::initLCD()
     lcd.putline("$GOTO:1:7");
     lcd.putline("STR:"); //steering value should be written to row 1, column 13
     delay_ms(10);
+
+    /// Set LCD brightness level
+    currentLCDbrightness = HighLCDbrightness;
+    lcd.putline("$BLIGHT:80");
+
     printf("LCD initialized\n");
 
 }
-void LCD::initVariables()
-{
-    sprintf(FULL_LEFT_LCD, "%f", motorObj.FULL_LEFT);
-    sprintf(STRAIGHT_LCD, "%f", motorObj.STRAIGHT);
-    sprintf(FULL_RIGHT_LCD, "%f", motorObj.FULL_RIGHT);
-}
-void LCD::writetoLCD(char *speedVal, char* steerVal)
+
+void LCD::writeSpeedAndSteerToLCD(char *speedVal, char* steerVal)
 {
     lcd.putline("$GOTO:1:4");
     lcd.putline(speedVal, portMAX_DELAY);
@@ -86,7 +90,7 @@ void LCD::writetoLCD(char *speedVal, char* steerVal)
     lcd.putline(steerVal, portMAX_DELAY);
 
 }
-char* LCD::convertHextoCharSpeed(uint8_t hexSpeedValue)
+char* LCD::convertIntToCharSpeed(uint8_t hexSpeedValue)
 {
     char *convertedSpeedValue = 0;
     if (hexSpeedValue == (uint8_t) COMMAND_FAST)
@@ -100,7 +104,7 @@ char* LCD::convertHextoCharSpeed(uint8_t hexSpeedValue)
         sprintf(convertedSpeedValue, "%f", motorObj.BACK_SPEED);
     return convertedSpeedValue;
 }
-char* LCD::convertHextoCharSteer(uint8_t hexSteerValue)
+char* LCD::convertIntToCharSteer(uint8_t hexSteerValue)
 {
     char *convertedSteerValue = 0;
     if (hexSteerValue == (uint8_t) COMMAND_STRAIGHT)
@@ -119,25 +123,36 @@ char* LCD::convertHextoCharSteer(uint8_t hexSteerValue)
     return convertedSteerValue;
 
 }
-void LCD::getMessageDataFromMotor(mast_mot_msg_t *DataforLCD_motorControlStruct)
+
+void LCD::getMessageDataFromMotor(MASTER_TX_MOTOR_CMD_t *DataforLCD_motorControlStruct)
 {
+    if (DataforLCD_motorControlStruct != NULL)
     {
-        if (DataforLCD_motorControlStruct != NULL)
-        {
-            uint8_t steeringVal = (uint8_t) DataforLCD_motorControlStruct->LR;
-            uint8_t speedVal = (uint8_t) DataforLCD_motorControlStruct->SPD;
-            writetoLCD(convertHextoCharSpeed(speedVal),
-                    convertHextoCharSteer(steeringVal));
-        }
+        uint8_t steeringIntVal = (uint8_t) DataforLCD_motorControlStruct->MASTER_MOTOR_CMD_steer;
+        uint8_t speedIntVal = (uint8_t) DataforLCD_motorControlStruct->MASTER_MOTOR_CMD_drive;
+
+        writeSpeedAndSteerToLCD(convertIntToCharSpeed(speedIntVal),
+                convertIntToCharSteer(steeringIntVal));
     }
 }
+
 void LCD::clearLCD()
 {
 
 }
+
 void LCD::moveCursor(int row, int column)
 {
     //char *gotoCommand = "$GOTO"
 //lcd.putline("");
 }
-
+void LCD::toggleLCDBrightness(){
+    if(currentLCDbrightness == LowLCDbrightness){
+        currentLCDbrightness = HighLCDbrightness;
+        lcd.putline("$BLIGHT:80");
+    }
+    else if (currentLCDbrightness == HighLCDbrightness){
+        currentLCDbrightness = LowLCDbrightness;
+        lcd.putline("$BLIGHT:20");
+    }
+}

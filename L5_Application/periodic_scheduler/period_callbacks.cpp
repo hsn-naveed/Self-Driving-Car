@@ -45,7 +45,7 @@
 
 /// Object used for motor and servo control
 MotorControl motorObj;
-
+LCD lcdObj;
 
 /// These variables are used for CAN communication
 can_fullcan_msg_t *canMsgForMotor = new can_fullcan_msg_t;
@@ -66,6 +66,8 @@ bool period_init(void)
     size_t sizeOfArray = (sizeof(std_list_arr) / sizeof(*std_list_arr));
 
     iCAN_init_FULLCAN(std_list_arr, sizeOfArray);
+
+    lcdObj.initLCD();
 
     return true; // Must return true upon success
 }
@@ -104,6 +106,7 @@ void period_10Hz(void)
 
 //    if (CAN_is_bus_off(can1)){
 //        puts("====CAN BUS is off====\n");
+          //lcdObj.toggleLCDBrightness();
 //        LE.on(led1);
 //    }
 //    else if (iCAN_rx(canMsgForMotor, &motorMessage)){
@@ -112,7 +115,7 @@ void period_10Hz(void)
 ////        portENABLE_INTERRUPTS();
 //
 //        motorObj.convertFromIntegerAndApplyServoAndMotorSettings(motorObj.receivedMotorCommands);
-//
+//          lcdObj.getMessageDataFromMotor(motorObj.receivedMotorCommands);
 //        LE.off(led1);
 //    }
 //    else{

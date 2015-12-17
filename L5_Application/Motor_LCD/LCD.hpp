@@ -61,21 +61,21 @@ extern MotorControl motorObj;
 
 class LCD: public MotorControl
 {
-
     public:
         LCD();
         bool LCD_busy();
 
-        char* convertHextoCharSpeed(uint8_t hexSpeedValue);
-        char* convertHextoCharSteer(uint8_t hexSteerValue);
+        char* convertIntToCharSpeed(uint8_t hexSpeedValue);
+        char* convertIntToCharSteer(uint8_t hexSteerValue);
         void initLCD();
-        void initVariables();
 
-        void getMessageDataFromMotor(mast_mot_msg_t *motorControlStruct);
-        void writetoLCD(char *speedVal, char *steerVal); //takes data and displays on the LCD
+        void getMessageDataFromMotor(MASTER_TX_MOTOR_CMD_t *motorControlStruct);
+        void writeSpeedAndSteerToLCD(char *speedVal, char *steerVal); //takes data and displays on the LCD
         void clearLCD(); //clears the entire LCD
         void moveCursor(int row, int column); //moves the cursor to a desired point
 
+        void CanOff();
+        void toggleLCDBrightness();
 
         //float pwmFreqInMs = (ONE_SECOND_MS)/MOTOR_SERVO_PWM_FREQ;
 
@@ -99,6 +99,8 @@ class LCD: public MotorControl
 
     private:
         Uart3& lcd = Uart3::getInstance();
-
+        int currentLCDbrightness;
+        const int LowLCDbrightness = 20;
+        const int HighLCDbrightness = 80;
 };
 #endif
