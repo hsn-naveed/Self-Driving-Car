@@ -92,18 +92,6 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
-    /* Send stop */
-//    if (test.ANDROID_STOP_CMD_signal <= (uint8_t) 10) {
-//        test.ANDROID_STOP_CMD_signal += 1;
-//    } else test.ANDROID_STOP_CMD_signal = 0;
-//    printf("test value: %i\n", (uint8_t) test.ANDROID_STOP_CMD_signal);
-//    msg_hdr_t encoded_message = ANDROID_TX_STOP_GO_CMD_encode(&(msg_tx->data.qword), &test);
-//    encoded_message.mid = ANDROID_TX_STOP_GO_CMD_HDR.mid;
-//    if (iCAN_tx(msg_tx, &encoded_message))
-//    {
-//       printf("%i!\n", (uint32_t)msg_tx->data.qword);
-//    }
-
     if (g_flagTransmitToCAN) //Flag to transmit to CAN
     {
         msg_hdr_t message;

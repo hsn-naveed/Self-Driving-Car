@@ -68,31 +68,24 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
     if (cmdParams.beginsWithIgnoreCase("GO"))
     {
-         android_stop_go_values.ANDROID_STOP_CMD_signal = (uint8_t)1;
-         g_flag_go = true;
+        android_stop_go_values.ANDROID_STOP_CMD_signal = (uint8_t) 1;
+        g_flag_go = true;
     }
 
     else if (cmdParams.beginsWithIgnoreCase("STOP"))
     {
-        android_stop_go_values.ANDROID_STOP_CMD_signal = (uint8_t)0;
+        android_stop_go_values.ANDROID_STOP_CMD_signal = (uint8_t) 0;
         g_flag_stop = true;
     }
 
-    else if (cmdParams.beginsWithIgnoreCase("READ") && !cmdParams.beginsWithIgnoreCase("READSIZE"))
+    else if (cmdParams.beginsWithIgnoreCase("READ")
+            && !cmdParams.beginsWithIgnoreCase("READSIZE"))
     {
         cmdParams.scanf("%*s %s %s", lat, lon);
-
-        printf("LAT_float = %f\n LONG_float = %f\n", atof(lat), atof(lon));
-
-
         android_coordinates_values[g_cp].GPS_INFO_COORDINATES_lat = atof(lat);
         android_coordinates_values[g_cp].GPS_INFO_COORDINATES_long = atof(lon);
-
         g_cp++;
-//        g_checkpoints_control.checkpoints_counter++;    // Counter for checkpoints, adds to total #checkpoints.
-//        g_checkpoints_control.checkpoints_total = g_checkpoints_control.checkpoints_counter;    // Total # of checkpoints
-//        printf("COUNTER = %d\n",g_checkpoints_control.checkpoints_counter);
-         }
+    }
 
     else if (cmdParams.beginsWithIgnoreCase("ENDREAD"))
     {
@@ -103,12 +96,11 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
     else if (cmdParams.beginsWithIgnoreCase("RESET"))
     {
-        printf("\n\nRESET\n\n");
         g_cp = 0;
         android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count = 0;
         g_flagTransmitToCAN = false;
         g_flagTransmitCheckpointCount = false;
-   }
+    }
 
     return true;
 }
