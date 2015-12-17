@@ -10,7 +10,4 @@
 #define L5_APPLICATION_GLOBALVARS_H_
 
 
-static uint8_t currentDest = 0;
-
-
 #endif /* L5_APPLICATION_GLOBALVARS_H_ */

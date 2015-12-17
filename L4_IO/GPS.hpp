@@ -29,7 +29,7 @@ class GPS_parser : public scheduler_task{
         ANDROID_TX_ANDROID_INFO_COORDINATES_t parseCood(const char *longitude, const char *latitude,
                                 const char *nORs, const char *eORw);
         uint32_t calculateCorrectHeading();
-        uint32_t calculateDistance();
+        float calculateDistance();
     private:
         Uart3 &gps_uart;
         ANDROID_TX_ANDROID_INFO_COORDINATES_t currentGPS;

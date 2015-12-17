@@ -5,12 +5,12 @@
 #include <stdio.h>
 #include <cmath>
 
-
+#define offset -26
 
 bool Magnetometer_Sensor::init()
 {
-    writeReg(ConfigA, 0x70); // 8-average, 15Hz default, normal measurement
-    writeReg(ConfigB, 0x20); // gain = 5
+    writeReg(ConfigA, 0x10); // 8-average, 15Hz default, normal measurement
+    writeReg(ConfigB, 0x50); // gain = 5
 //    writeReg(Mode, 0x00); // continuous measurments
 }
 
@@ -94,6 +94,13 @@ float Magnetometer_Sensor::getHeading()
         headingDegrees = (tempheading * 180 / pi);
     }
 
-//    headingDegrees += 35;
+
+    headingDegrees += offset;
+    if(headingDegrees < 0){
+        headingDegrees += 360;
+    }
+    else if (headingDegrees > 360){
+        headingDegrees -= 360;
+    }
     return headingDegrees;
 }

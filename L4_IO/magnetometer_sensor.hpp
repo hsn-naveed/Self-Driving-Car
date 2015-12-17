@@ -40,7 +40,7 @@ class Magnetometer_Sensor : private i2c2_device, public SingletonTemplate<Magnet
             Z_MSB=5, Z_LSB=6,
 
             WhoAmI=10,
-            ConfigA=0, ConfigB=1,
+            ConfigA=0x00, ConfigB=0x01,
             Mode=2
         } __attribute__ ((packed)) RegisterMap;
 };

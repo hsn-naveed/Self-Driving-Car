@@ -37,6 +37,7 @@
 #include "243_can/iCAN.hpp"
 #include "globalVars.h"
 #include <inttypes.h>
+#include <cmath>
 
 //telemtry includes
 #include "c_tlm_comp.h"
@@ -60,8 +61,11 @@ extern GPS_TX_GPS_INFO_HEADING_t headingToTx;
 extern ANDROID_TX_ANDROID_INFO_COORDINATES_t dest[128];
 extern uint64_t num_rx_checkpoints;
 extern ANDROID_TX_ANDROID_INFO_CHECKPOINTS_t lastDest;
-extern uint32_t currentDist;
+extern float currentDist;
+extern uint8_t currentDest;
 ANDROID_TX_ANDROID_INFO_COORDINATES_t temp = {0};
+GPS_TX_GPS_DESTINATION_REACHED_t destReached = {0};
+uint8_t tlm_dest_reached = 0;
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
@@ -80,17 +84,26 @@ bool period_reg_tlm(void)
 {
     // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
     tlm_component *GPS_cmp = tlm_component_add("GPS");
-    TLM_REG_VAR(tlm_component_get_by_name("GPS"), temp.GPS_INFO_COORDINATES_lat, tlm_float);
-    TLM_REG_VAR(tlm_component_get_by_name("GPS"), temp.GPS_INFO_COORDINATES_long, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), dest[3].GPS_INFO_COORDINATES_lat, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), dest[3].GPS_INFO_COORDINATES_long, tlm_float);
     TLM_REG_VAR(tlm_component_get_by_name("GPS"), headingToTx.GPS_INFO_HEADING_current, tlm_uint);
     TLM_REG_VAR(tlm_component_get_by_name("GPS"), headingToTx.GPS_INFO_HEADING_dst, tlm_uint);
     TLM_REG_VAR(tlm_component_get_by_name("GPS"), num_rx_checkpoints, tlm_uint);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), tlm_dest_reached, tlm_uint);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), currentDist, tlm_float);
+    TLM_REG_VAR(tlm_component_get_by_name("GPS"), currentDest, tlm_uint);
     TLM_REG_VAR(tlm_component_get_by_name("GPS"), go, tlm_uint);
     return true; // Must return true upon success
 }
 
 void period_1Hz(void)
 {
+    for(int i = 0; i < lastDest.ANDROID_INFO_CHECKPOINTS_count - 1; i++){
+        printf("Checkpoint #%i\t lat: %f\tlong: %f\n", i,
+                dest[i].GPS_INFO_COORDINATES_lat,
+                dest[i].GPS_INFO_COORDINATES_long);
+    }
+    printf("\n");
 #if CANtest
     LE.toggle(1);
     can_msg_t msg = {0};
@@ -145,27 +158,30 @@ void period_1Hz(void)
 void period_10Hz(void)
 {
     headingToTx.GPS_INFO_HEADING_current = MS.getHeading();
-//    printf("Encoded current heading value: %i\n", headingToTx.GPS_INFO_HEADING_current);
-    LE.toggle(2);
+    LD.setNumber(currentDist);
+//    LE.toggle(2);
 }
 
 void period_100Hz(void)
 {
+    if(tlm_dest_reached == 1){
+        destReached.GPS_DESTINATION_REACHED_signal = tlm_dest_reached;
+        iCAN_tx(&tx_msg, GPS_TX_GPS_DESTINATION_REACHED_encode(&(tx_msg.data.qword), &destReached));
+        tlm_dest_reached = 0;
+    }
     if(iCAN_rx(&rx_msg, ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR)){
         /** If Android is sending a new number of checkpoints then we are receiving a new
          *  final destination point. We need to receive a new array of checkpoints.
          */
-        currentDest = 0;
+        currentDest = 1;
         num_rx_checkpoints = 0;
+        lastDest.ANDROID_INFO_CHECKPOINTS_count = 0;
+        destReached.GPS_DESTINATION_REACHED_signal = 0;
         ANDROID_TX_ANDROID_INFO_CHECKPOINTS_decode(&lastDest, &(rx_msg.data.qword),
                                                     &ANDROID_TX_ANDROID_INFO_CHECKPOINTS_HDR);
         printf("Number of checkpoints: %i\n", lastDest.ANDROID_INFO_CHECKPOINTS_count);
     }
     if(iCAN_rx(&rx_msg, ANDROID_TX_ANDROID_INFO_COORDINATES_HDR)){
-//        printf("Number of checkpoints received: %i\n", (uint8_t)num_rx_checkpoints);
-//        printf("Last destination: %i\n", lastDest.ANDROID_INFO_CHECKPOINTS_count);
-        printf("Received data packet [0]: %x\n", rx_msg.data.dwords[0]);
-        printf("Received data packet [1]: %x\n", rx_msg.data.dwords[1]);
         if(num_rx_checkpoints > (lastDest.ANDROID_INFO_CHECKPOINTS_count)){
             printf("Something is wrong!!! Too many checkpoints!!!");
         }
@@ -173,27 +189,19 @@ void period_100Hz(void)
             ANDROID_TX_ANDROID_INFO_COORDINATES_decode(&dest[num_rx_checkpoints], &(rx_msg.data.qword),
                                                         &ANDROID_TX_ANDROID_INFO_COORDINATES_HDR);
             temp = dest[num_rx_checkpoints];
-
-//            printf("Checkpoint # %i received:\n Lat: %f \n Long: %f\n", num_rx_checkpoints,
-//                    dest[num_rx_checkpoints].GPS_INFO_COORDINATES_lat,
-//                    dest[num_rx_checkpoints].GPS_INFO_COORDINATES_long);
             num_rx_checkpoints++;
         }
     }
-//    tx_msg.msg_id = (uint32_t)716;
     if(iCAN_tx(&tx_msg, GPS_TX_GPS_INFO_HEADING_encode(&(tx_msg.data.qword), &headingToTx))){
 //        printf("CAN message sent!\n");
     }
     else{
         printf("\n\nCould not send can message!!\n\n");
     }
-//    printf("Encoded current heading value: %i\n", tx_msg.data.dwords[0]);
-//    printf("Encoded destination heading value: %i\n", tx_msg.data.dwords[1]);
-
-    LE.toggle(3);
+//    LE.toggle(3);
 }
 
 void period_1000Hz(void)
 {
-    LE.toggle(4);
+//    LE.toggle(4);
 }
