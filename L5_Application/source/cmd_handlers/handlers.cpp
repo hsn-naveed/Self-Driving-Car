@@ -82,7 +82,7 @@ CMD_HANDLER_FUNC(bluetoothHandler)
     {
         cmdParams.scanf("%*s %s %s", lat, lon);
 
-        printf("LAT_float = %f\n LONG_float = %f\n", atof(lat), atof(lon));
+ //       printf("%f, %f\n", atof(lat), atof(lon));
 
 
         android_coordinates_values[g_cp].GPS_INFO_COORDINATES_lat = atof(lat);
@@ -96,6 +96,9 @@ CMD_HANDLER_FUNC(bluetoothHandler)
 
     else if (cmdParams.beginsWithIgnoreCase("ENDREAD"))
     {
+        g_cp++;
+        android_coordinates_values[g_cp].GPS_INFO_COORDINATES_lat = 0.0;
+        android_coordinates_values[g_cp].GPS_INFO_COORDINATES_long = 0.0;
         android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count = g_cp;
         g_flagTransmitToCAN = true;
         g_flagTransmitCheckpointCount = true;

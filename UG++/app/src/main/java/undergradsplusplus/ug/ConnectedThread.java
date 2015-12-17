@@ -16,6 +16,10 @@ public class ConnectedThread extends Thread{
     private final BluetoothSocket mmSocket;
     private final InputStream mmInStream;
     private final OutputStream mmOutStream;
+
+    byte[] SpeedBuff;
+    byte[] HeadingBuff;
+
     private final int MESSAGE_READ = 1;
 
     public ConnectedThread(BluetoothSocket socket) {
@@ -26,7 +30,7 @@ public class ConnectedThread extends Thread{
         // Get the input and output streams, using temp objects because
         // member streams are final
         try {
-//            tmpIn = socket.getInputStream();
+            tmpIn = socket.getInputStream();
             tmpOut = socket.getOutputStream();
         } catch (IOException e) {
             Log.d(APP_TAG, Log.getStackTraceString(e));

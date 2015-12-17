@@ -108,15 +108,9 @@ void period_100Hz(void)
     {
         msg_hdr_t message;
 
-        if (g_checkpoints_counter
-                == (android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count - 1))
-        {
-            g_flagTransmitToCAN = false;
-            g_checkpoints_counter = 0;
-        }
-
         if (g_flagTransmitCheckpointCount)
         {
+            puts("SENDING CHECKPOINTS\n");
             //    Send number of checkpoints
             message = ANDROID_TX_INFO_CHECKPOINTS_encode(&(msg_tx->data.qword),
                     &android_checkpoints_count);
@@ -124,19 +118,27 @@ void period_100Hz(void)
 
             if (iCAN_tx(msg_tx, &message))
             {
+                g_flagTransmitCheckpointCount = false;
                 LE.toggle(4);
             }
-            g_flagTransmitCheckpointCount = false;
         }
 
         //  Send the coordinates incrementally
         message = ANDROID_TX_INFO_COORDINATES_encode(&(msg_tx->data.qword),
-                &android_coordinates_values[g_checkpoints_counter++]);
+                &android_coordinates_values[g_checkpoints_counter]);
         message.mid = (uint32_t) ANDROID_TX_INFO_COORDINATES_HDR.mid;
 
         if (iCAN_tx(msg_tx, &message))
         {
+            g_checkpoints_counter++;
             LE.toggle(3);
+        }
+
+        if (g_checkpoints_counter
+                == (android_checkpoints_count.ANDROID_INFO_CHECKPOINTS_count - 1))
+        {
+            g_flagTransmitToCAN = false;
+            g_checkpoints_counter = 0;
         }
     }
 
